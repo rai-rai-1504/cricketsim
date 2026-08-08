@@ -1,0 +1,32 @@
+now lets talk about building a team 11 players on both sides, now the coach doesn't choose team, he just makes tactical changes in between overs,
+our team : 
+1. daksh dosi batting 75 bowling 87 
+2. shatam rai batting 80 bowling 20
+3. akash Sinha batting 75 bowling 65
+4. pranath v batting 60 bowling 10
+5. vinod Prajapati batting 45 bowling 86
+6. krishiv batting 76 bowling 25
+7. kushagra batting 31 bowling 81
+8. ratna deep batting 85 bowling 79
+9. Rohit Yadav batting 15 bowling 77
+10. krishna Dubey batting 35 bowling 87
+11. teena naruka batting 89 bowling 69
+
+opponent team: 
+| No. | Player Name     | Batting (100) | Bowling (100) |
+| --- | --------------- | ------------- | ------------- |
+| 1   | Vandan          | 84            | 46            |
+| 2   | Atharva Bhavesh | 72            | 65            |
+| 3   | Paradox         | 88            | 39            |
+| 4   | Anto            | 61            | 78            |
+| 5   | Soumyajyoti Dey | 75            | 52            |
+| 6   | Vaibhav Nagpal  | 69            | 81            |
+| 7   | Sai Siddhant    | 83            | 57            |
+| 8   | Arpita Ghosh    | 66            | 74            |
+| 9   | Harishkumarverma| 58            | 85            |
+| 10  | Vecna           | 77            | 63            |
+| 11  | Pushkal Gupta   | 54            | 88            |
+
+
+based on these, coach chooses batting and balling, after every over(in balling)[display balling stats after every over, player can ball only 4 at max] and after every wicket, create an algorithm through which opponent coach chooses their bowlers and batsman, keep it simple for now. ask user for opening pair aswell (display attributes after every wicket (batting and bowling abilities)).
+
