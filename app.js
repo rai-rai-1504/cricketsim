@@ -3452,8 +3452,8 @@ class MatchManager {
             this.threeScene.remove(this.threeNonStrikerGroup);
         }
         this.threeNonStrikerGroup = this.createHumanPlayer(batColor, false);
-        this.threeNonStrikerGroup.position.set(0.8, 0, 9.8); // stands beside wickets at batting end
-        this.threeNonStrikerGroup.lookAt(0, 0, -10);
+        this.threeNonStrikerGroup.position.set(0.4, 0, -9.0); // Non-striker stands at bowling end crease
+        this.threeNonStrikerGroup.lookAt(0, 0, 10); // Looking back towards striker
         this.threeScene.add(this.threeNonStrikerGroup);
 
         // 5. Draw 9 fielders
