@@ -175,15 +175,15 @@ class InningsState {
         this.fielderPositions = [
             { name: "Keeper", x: 300, y: 205, isFixed: true },
             { name: "Bowler", x: 300, y: 380, isFixed: true },
-            { name: "Slip", x: 325, y: 225 },
-            { name: "Point", x: 420, y: 250 },
-            { name: "Cover", x: 390, y: 325 },
-            { name: "Mid Off", x: 340, y: 405 },
-            { name: "Mid On", x: 260, y: 405 },
-            { name: "Mid Wicket", x: 210, y: 325 },
-            { name: "Square Leg", x: 180, y: 250 },
-            { name: "Fine Leg", x: 245, y: 205 },
-            { name: "Third Man", x: 420, y: 160 }
+            { name: "Slip", x: 275, y: 225 },
+            { name: "Point", x: 180, y: 250 },
+            { name: "Cover", x: 210, y: 325 },
+            { name: "Mid Off", x: 260, y: 405 },
+            { name: "Mid On", x: 340, y: 405 },
+            { name: "Mid Wicket", x: 390, y: 325 },
+            { name: "Square Leg", x: 420, y: 250 },
+            { name: "Fine Leg", x: 355, y: 205 },
+            { name: "Third Man", x: 180, y: 160 }
         ];
         this.fieldingPreset = "balanced";
         this.reviewsLeft = 2;
@@ -2282,37 +2282,37 @@ class MatchManager {
 
         const presets = {
             balanced: [
-                { name: "Slip", x: 325, y: 225 },
-                { name: "Point", x: 420, y: 250 },
-                { name: "Cover", x: 390, y: 325 },
-                { name: "Mid Off", x: 340, y: 405 },
-                { name: "Mid On", x: 260, y: 405 },
-                { name: "Mid Wicket", x: 210, y: 325 },
-                { name: "Square Leg", x: 180, y: 250 },
-                { name: "Fine Leg", x: 245, y: 205 },
-                { name: "Third Man", x: 420, y: 160 }
+                { name: "Slip", x: 275, y: 225 },
+                { name: "Point", x: 180, y: 250 },
+                { name: "Cover", x: 210, y: 325 },
+                { name: "Mid Off", x: 260, y: 405 },
+                { name: "Mid On", x: 340, y: 405 },
+                { name: "Mid Wicket", x: 390, y: 325 },
+                { name: "Square Leg", x: 420, y: 250 },
+                { name: "Fine Leg", x: 355, y: 205 },
+                { name: "Third Man", x: 180, y: 160 }
             ],
             attacking: [
-                { name: "Slip", x: 320, y: 225 },
-                { name: "Point", x: 340, y: 245 },
-                { name: "Cover", x: 350, y: 290 },
-                { name: "Mid Off", x: 330, y: 345 },
-                { name: "Mid On", x: 270, y: 345 },
-                { name: "Mid Wicket", x: 250, y: 290 },
-                { name: "Square Leg", x: 260, y: 245 },
-                { name: "Fine Leg", x: 290, y: 220 },
-                { name: "Third Man", x: 335, y: 215 }
+                { name: "Slip", x: 280, y: 225 },
+                { name: "Point", x: 260, y: 245 },
+                { name: "Cover", x: 250, y: 290 },
+                { name: "Mid Off", x: 270, y: 345 },
+                { name: "Mid On", x: 330, y: 345 },
+                { name: "Mid Wicket", x: 350, y: 290 },
+                { name: "Square Leg", x: 340, y: 245 },
+                { name: "Fine Leg", x: 310, y: 220 },
+                { name: "Third Man", x: 265, y: 215 }
             ],
             defensive: [
-                { name: "Slip", x: 345, y: 175 },
-                { name: "Point", x: 480, y: 250 },
-                { name: "Cover", x: 450, y: 350 },
-                { name: "Mid Off", x: 350, y: 470 },
-                { name: "Mid On", x: 250, y: 470 },
-                { name: "Mid Wicket", x: 150, y: 350 },
-                { name: "Square Leg", x: 120, y: 250 },
-                { name: "Fine Leg", x: 180, y: 180 },
-                { name: "Third Man", x: 450, y: 160 }
+                { name: "Slip", x: 255, y: 175 },
+                { name: "Point", x: 120, y: 250 },
+                { name: "Cover", x: 150, y: 350 },
+                { name: "Mid Off", x: 250, y: 470 },
+                { name: "Mid On", x: 350, y: 470 },
+                { name: "Mid Wicket", x: 450, y: 350 },
+                { name: "Square Leg", x: 480, y: 250 },
+                { name: "Fine Leg", x: 420, y: 180 },
+                { name: "Third Man", x: 150, y: 160 }
             ]
         };
 
@@ -2325,10 +2325,89 @@ class MatchManager {
                 bowler,
                 ...presets[presetName].map(f => ({ ...f }))
             ];
+            this.updateAllFielderNames(state);
         }
 
         this.validateFieldingRules();
         this.drawField();
+    }
+
+    getCricketPositionName(x, y) {
+        if (x === 300 && y === 205) return "Keeper";
+        if (x === 300 && y === 380) return "Bowler";
+
+        const dx = x - 300;
+        const dy = y - 240; // Striker is at y = 240
+        const distStriker = Math.sqrt(dx * dx + dy * dy);
+        const distCenter = Math.sqrt((x - 300) * (x - 300) + (y - 300) * (y - 300));
+        const isDeep = distCenter > 160;
+        const isVeryClose = distStriker < 65;
+
+        // Angle clockwise from Bowler direction (+Y)
+        // dx < 0 (left of field) -> clockAngle < 0 (OFF SIDE)
+        // dx > 0 (right of field) -> clockAngle > 0 (LEG SIDE)
+        const clockAngle = Math.atan2(dx, dy) * (180 / Math.PI);
+
+        // OFF SIDE (Left of field, x < 300)
+        if (clockAngle < 0) {
+            if (clockAngle >= -20) {
+                return isDeep ? "Long Off" : "Mid Off";
+            } else if (clockAngle >= -50) {
+                return isDeep ? "Deep Ex Cov" : "Extra Cover";
+            } else if (clockAngle >= -80) {
+                return isDeep ? "Deep Cover" : "Cover";
+            } else if (clockAngle >= -110) {
+                return isDeep ? "Deep Point" : "Point";
+            } else if (clockAngle >= -135) {
+                if (isVeryClose) return "Gully";
+                return isDeep ? "Deep Bwd Pt" : "Bwd Point";
+            } else if (clockAngle >= -165) {
+                if (isVeryClose) return "Slip";
+                return isDeep ? "Deep 3rd Man" : "Third Man";
+            } else {
+                if (isVeryClose) return "Slip";
+                return "Third Man";
+            }
+        } 
+        // LEG SIDE (Right of field, x >= 300)
+        else {
+            if (clockAngle <= 20) {
+                return isDeep ? "Long On" : "Mid On";
+            } else if (clockAngle <= 50) {
+                return isDeep ? "Long On" : "Mid On";
+            } else if (clockAngle <= 80) {
+                return isDeep ? "Cow Corner" : "Mid Wicket";
+            } else if (clockAngle <= 110) {
+                return isDeep ? "Deep Sq Leg" : "Square Leg";
+            } else if (clockAngle <= 135) {
+                return isDeep ? "Deep Bwd Sq Leg" : "Bwd Sq Leg";
+            } else if (clockAngle <= 165) {
+                if (isVeryClose) return "Leg Slip";
+                return isDeep ? "Deep Fine Leg" : "Fine Leg";
+            } else {
+                if (isVeryClose) return "Leg Slip";
+                return "Fine Leg";
+            }
+        }
+    }
+
+    updateAllFielderNames(state) {
+        if (!state || !state.fielderPositions) return;
+
+        state.fielderPositions.forEach(f => {
+            if (!f.isFixed) {
+                f.name = this.getCricketPositionName(f.x, f.y);
+            }
+        });
+
+        // Disambiguate duplicate Slips
+        const slips = state.fielderPositions.filter(f => f.name === "Slip");
+        if (slips.length > 1) {
+            slips.sort((a, b) => Math.abs(a.x - 300) - Math.abs(b.x - 300));
+            slips.forEach((s, idx) => {
+                s.name = `${idx + 1}${idx === 0 ? 'st' : idx === 1 ? 'nd' : 'rd'} Slip`;
+            });
+        }
     }
 
     setupFieldDragHandler() {
@@ -2384,7 +2463,10 @@ class MatchManager {
                 this.fieldingPresetSelect.value = "custom";
             }
             const state = this.getCurrentState();
-            if (state) state.fieldingPreset = "custom";
+            if (state) {
+                state.fieldingPreset = "custom";
+                this.updateAllFielderNames(state);
+            }
 
             this.validateFieldingRules();
             this.drawField();
@@ -2440,8 +2522,11 @@ class MatchManager {
             if (this.fieldingPresetSelect) {
                 this.fieldingPresetSelect.value = "custom";
             }
-            const state = this.getCurrentState();
-            if (state) state.fieldingPreset = "custom";
+            const stateTouch = this.getCurrentState();
+            if (stateTouch) {
+                stateTouch.fieldingPreset = "custom";
+                this.updateAllFielderNames(stateTouch);
+            }
 
             this.validateFieldingRules();
             this.drawField();
