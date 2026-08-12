@@ -234,13 +234,8 @@ class MatchManager {
         this.matchPhaseBadge = document.getElementById("match-phase-badge");
 
         // Live stats cards
-        this.uiStrikerCard = document.getElementById("ui-striker-card");
-        this.uiStrikerName = document.getElementById("ui-striker-name");
-        this.uiStrikerScore = document.getElementById("ui-striker-score");
-        
-        this.uiNonstrikerCard = document.getElementById("ui-nonstriker-card");
-        this.uiNonstrikerName = document.getElementById("ui-nonstriker-name");
-        this.uiNonstrikerScore = document.getElementById("ui-nonstriker-score");
+        this.coachBattingControls = document.getElementById("coach-batting-controls");
+        this.headerBattersUI = document.getElementById("header-batters-ui");
 
         this.uiBowlerName = document.getElementById("ui-bowler-name");
         this.uiBowlerStats = document.getElementById("ui-bowler-stats");
@@ -326,19 +321,7 @@ class MatchManager {
             });
         }
 
-        // Mentality selectors
-        document.querySelectorAll(".mentality-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                const target = e.currentTarget;
-                document.querySelectorAll(".mentality-btn").forEach(b => b.classList.remove("active"));
-                target.classList.add("active");
-                const state = this.getCurrentState();
-                if (state && state.striker) {
-                    state.striker.mentality = target.dataset.mentality;
-                    this.logCommentary(`System`, `Strike batsman ${state.striker.name} mentality set to ${target.dataset.mentality.toUpperCase()}`, "welcome");
-                }
-            });
-        });
+
 
         // Opener changes
         this.opener1Select.addEventListener("change", () => {
@@ -1615,46 +1598,101 @@ class MatchManager {
             }
         });
 
-        // BATTING LIVE CARD (RIGHT SIDE) & MENTALITY LOCKS
-        if (state.striker) {
-            this.uiStrikerName.textContent = state.striker.name;
-            this.uiStrikerScore.textContent = `${state.striker.runsScored}*(${state.striker.ballsFaced})`;
+        // HEADER BATTERS DISPLAY (Top Bar)
+        if (state.striker && state.nonStriker) {
+            this.headerBattersUI.innerHTML = `
+                <span style="font-weight: bold; color: var(--color-primary); border-bottom: 2px solid var(--color-primary); padding-bottom: 2px;">
+                    ${state.striker.name} ${state.striker.runsScored}*(${state.striker.ballsFaced})
+                </span>
+                <span style="color: var(--text-secondary); margin: 0 4px;">|</span>
+                <span style="color: var(--text-primary);">
+                    ${state.nonStriker.name} ${state.nonStriker.runsScored}(${state.nonStriker.ballsFaced})
+                </span>
+            `;
+        } else {
+            this.headerBattersUI.innerHTML = "";
+        }
 
-            // Mentality locks (50 balls faced threshold)
-            const isLocked = state.striker.ballsFaced < 50;
-            const lockLabel = document.getElementById("mentality-lock-label");
-            
-            if (!state.isUserBatting) {
-                lockLabel.textContent = "(Locked: Opponent Batting)";
-                document.getElementById("btn-tactic-defensive").disabled = true;
-                document.getElementById("btn-tactic-normal").disabled = true;
-                document.getElementById("btn-tactic-attack").disabled = true;
-            } else {
-                if (isLocked) {
-                    lockLabel.textContent = `(Locked: faced ${state.striker.ballsFaced}/50 balls)`;
-                    document.getElementById("btn-tactic-defensive").disabled = true;
-                    document.getElementById("btn-tactic-normal").disabled = true;
-                    document.getElementById("btn-tactic-attack").disabled = true;
-                } else {
-                    lockLabel.textContent = "(Unlocked!)";
-                    document.getElementById("btn-tactic-defensive").disabled = false;
-                    document.getElementById("btn-tactic-normal").disabled = false;
-                    document.getElementById("btn-tactic-attack").disabled = false;
-                }
+        // BATTING LIVE CARDS & MENTALITY CONTROLS (RIGHT SIDE)
+        if (!state.isUserBatting) {
+            // Opponent is batting: Hide opponent stats and control options
+            this.coachBattingControls.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: var(--text-secondary); font-size: 0.85rem; border: 1px dashed var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.15); width: 100%;">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--border-color); opacity: 0.7;"></i>
+                    Opponent team is batting.<br>Manage your bowling rotations.
+                </div>
+            `;
+        } else {
+            // User team is batting: Show both batters and their mentality controls respectively
+            this.coachBattingControls.innerHTML = "";
+
+            // 1. Striker
+            if (state.striker) {
+                const card = document.createElement("div");
+                card.className = "coach-batsman-card";
+                card.style.cssText = "padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.15); border-left: 4px solid var(--color-primary); width: 100%; box-sizing: border-box;";
+                
+                const isLocked = state.striker.ballsFaced < 50;
+                const lockText = isLocked ? `(Locked: ${state.striker.ballsFaced}/50 balls)` : `(Unlocked!)`;
+                
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong>${state.striker.name}* <span style="font-size: 0.72rem; font-weight: normal; color: var(--color-primary);">(Striker)</span></strong>
+                        <span style="font-weight: bold; color: var(--color-primary); font-size: 0.9rem;">${state.striker.runsScored}*(${state.striker.ballsFaced})</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 5px; flex-wrap: wrap;">
+                        <span class="lock-label" style="font-size: 0.7rem; color: ${isLocked ? "var(--color-gold)" : "var(--color-success)"}; margin: 0; opacity: 0.85;">${lockText}</span>
+                        <div class="mentality-toggle-mini" style="display: flex; gap: 3px;">
+                            <button class="mentality-btn btn-mini ${state.striker.mentality === "defensive" ? "active" : ""}" data-mentality="defensive" ${isLocked ? "disabled" : ""}>Def</button>
+                            <button class="mentality-btn btn-mini ${state.striker.mentality === "normal" ? "active" : ""}" data-mentality="normal" ${isLocked ? "disabled" : ""}>Bal</button>
+                            <button class="mentality-btn btn-mini ${state.striker.mentality === "attack" ? "active" : ""}" data-mentality="attack" ${isLocked ? "disabled" : ""}>Att</button>
+                        </div>
+                    </div>
+                `;
+
+                card.querySelectorAll(".mentality-btn").forEach(btn => {
+                    btn.onclick = (e) => {
+                        state.striker.mentality = e.currentTarget.dataset.mentality;
+                        this.updateUI();
+                    };
+                });
+
+                this.coachBattingControls.appendChild(card);
             }
 
-            // Sync active button classes
-            document.querySelectorAll(".mentality-btn").forEach(btn => {
-                if (btn.dataset.mentality === state.striker.mentality) {
-                    btn.classList.add("active");
-                } else {
-                    btn.classList.remove("active");
-                }
-            });
-        }
-        if (state.nonStriker) {
-            this.uiNonstrikerName.textContent = state.nonStriker.name;
-            this.uiNonstrikerScore.textContent = `${state.nonStriker.runsScored}(${state.nonStriker.ballsFaced})`;
+            // 2. Non-Striker
+            if (state.nonStriker) {
+                const card = document.createElement("div");
+                card.className = "coach-batsman-card";
+                card.style.cssText = "padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.15); width: 100%; box-sizing: border-box;";
+                
+                const isLocked = state.nonStriker.ballsFaced < 50;
+                const lockText = isLocked ? `(Locked: ${state.nonStriker.ballsFaced}/50 balls)` : `(Unlocked!)`;
+                
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong>${state.nonStriker.name}</strong>
+                        <span style="font-weight: bold; font-size: 0.9rem;">${state.nonStriker.runsScored}(${state.nonStriker.ballsFaced})</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 5px; flex-wrap: wrap;">
+                        <span class="lock-label" style="font-size: 0.7rem; color: ${isLocked ? "var(--color-gold)" : "var(--color-success)"}; margin: 0; opacity: 0.85;">${lockText}</span>
+                        <div class="mentality-toggle-mini" style="display: flex; gap: 3px;">
+                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "defensive" ? "active" : ""}" data-mentality="defensive" ${isLocked ? "disabled" : ""}>Def</button>
+                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "normal" ? "active" : ""}" data-mentality="normal" ${isLocked ? "disabled" : ""}>Bal</button>
+                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "attack" ? "active" : ""}" data-mentality="attack" ${isLocked ? "disabled" : ""}>Att</button>
+                        </div>
+                    </div>
+                `;
+
+                card.querySelectorAll(".mentality-btn").forEach(btn => {
+                    btn.onclick = (e) => {
+                        state.nonStriker.mentality = e.currentTarget.dataset.mentality;
+                        this.updateUI();
+                    };
+                });
+
+                this.coachBattingControls.appendChild(card);
+            }
         }
 
         // BOWLER LIVE CARD (RIGHT SIDE)
@@ -1815,7 +1853,6 @@ class MatchManager {
         this.isSimulatingMatch = true;
         this.simPlayBtn.classList.add("active");
         this.simPlayBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause Simulation';
-        this.logCommentary("System", "Continuous simulation started.", "welcome");
 
         this.disableActions(true);
         this.simulateBallCall();
@@ -1832,10 +1869,6 @@ class MatchManager {
         }
 
         this.disableActions(false);
-
-        if (reason) {
-            this.logCommentary("System", `Simulation paused: ${reason}`, "welcome");
-        }
     }
 
     logCommentary(over, text, outcome) {
@@ -1952,7 +1985,7 @@ class MatchManager {
 
         // If no commentary items
         if (items.length === 0) {
-            feed.innerHTML = `<div class="commentary-ball-item welcome"><span class="tag">System</span> No commentary for Over ${overIndexToShow}.</div>`;
+            feed.innerHTML = `<div class="commentary-ball-item welcome"><span class="tag">Match</span> No commentary for Over ${overIndexToShow}.</div>`;
         }
     }
 }

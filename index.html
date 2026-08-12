@@ -125,16 +125,19 @@
                     <span class="divider">|</span>
                     <span id="pitch-report-ui">Pitch: Flat</span>
                 </div>
-                <div class="score-row">
+                <div class="score-row" style="display: flex; align-items: center;">
                     <div class="main-score-block">
                         <h2 id="batting-team-name-ui">IND</h2>
                         <span id="batting-runs-wickets-ui" class="runs">0/0</span>
                         <span id="batting-overs-ui" class="overs">(0.0 Overs)</span>
                     </div>
-                    <div id="chase-details-ui" class="chase-status">
+                    <div id="header-batters-ui" class="header-batters" style="font-size: 0.85rem; color: var(--text-primary); margin-left: 20px; display: flex; gap: 12px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 15px;">
+                        <!-- Injected dynamically -->
+                    </div>
+                    <div id="chase-details-ui" class="chase-status" style="margin-left: auto;">
                         <!-- Target/Required runs info -->
                     </div>
-                    <div class="header-right-controls" style="display: flex; align-items: center; gap: 15px;">
+                    <div class="header-right-controls" style="display: flex; align-items: center; gap: 15px; margin-left: 15px;">
                         <button id="sim-play-btn" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem; height: 36px; white-space: nowrap;">
                             <i class="fa-solid fa-play"></i> Start Simulation
                         </button>
@@ -275,34 +278,9 @@
                             <span id="active-bowler-overs-left" class="badge bg-secondary">Bowler: Ready</span>
                         </div>
 
-                        <!-- Current Batsmen Focus Stats Card -->
-                        <div class="batsmen-live-card">
-                            <div class="batsman-stat-row active-striker" id="ui-striker-card">
-                                <span class="indicator"><i class="fa-solid fa-circle-dot"></i></span>
-                                <span class="player-name" id="ui-striker-name">Batsman 1</span>
-                                <span class="player-score" id="ui-striker-score">0*(0)</span>
-                            </div>
-                            <div class="batsman-stat-row" id="ui-nonstriker-card">
-                                <span class="indicator"><i class="fa-solid fa-circle"></i></span>
-                                <span class="player-name" id="ui-nonstriker-name">Batsman 2</span>
-                                <span class="player-score" id="ui-nonstriker-score">0(0)</span>
-                            </div>
-                        </div>
-
-                        <!-- Mentality Selection -->
-                        <div class="tactic-section">
-                            <h4>Batting Mentality <span id="mentality-lock-label" class="lock-label">(Locked: faced 0/50 balls)</span></h4>
-                            <div class="mentality-toggle">
-                                <button class="mentality-btn btn-tactic" id="btn-tactic-defensive" data-mentality="defensive">
-                                    <i class="fa-solid fa-shield-halved"></i> Defensive
-                                </button>
-                                <button class="mentality-btn btn-tactic active" id="btn-tactic-normal" data-mentality="normal">
-                                    <i class="fa-solid fa-gavel"></i> Balanced
-                                </button>
-                                <button class="mentality-btn btn-tactic" id="btn-tactic-attack" data-mentality="attack">
-                                    <i class="fa-solid fa-fire"></i> Aggressive
-                                </button>
-                            </div>
+                        <!-- Coach Batting Controls container -->
+                        <div id="coach-batting-controls" style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                            <!-- Injected dynamically based on active batting team -->
                         </div>
 
                         <!-- Bowler current status card -->
@@ -335,7 +313,7 @@
                         </div>
                         <div id="commentary-feed" class="commentary-feed" style="max-height: 200px; min-height: 140px;">
                             <div class="commentary-ball-item welcome">
-                                <span class="tag">System</span> Welcome to Cricket Sim Pro! Press "Bowl Ball" or "Start Simulation" to start.
+                                <span class="tag">Match</span> Welcome to Cricket Sim Pro! Press "Bowl Ball" or "Start Simulation" to start.
                             </div>
                         </div>
                         <div class="commentary-selector-wrapper" style="margin-top: 12px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">

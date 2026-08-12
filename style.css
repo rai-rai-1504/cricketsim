@@ -1229,3 +1229,12 @@ select:focus {
     border-radius: 1px;
     align-self: center;
 }
+
+.btn-mini {
+    padding: 3px 8px !important;
+    font-size: 0.72rem !important;
+    min-width: unset !important;
+    border-radius: 4px !important;
+    height: 24px !important;
+    line-height: 1 !important;
+}
