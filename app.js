@@ -186,6 +186,8 @@ class InningsState {
             { name: "Third Man", x: 420, y: 160 }
         ];
         this.fieldingPreset = "balanced";
+        this.reviewsLeft = 2;
+        this.opponentReviewsLeft = 2;
         
         this.isCompleted = false;
     }
@@ -261,6 +263,13 @@ class MatchManager {
         this.svgSectorLines = document.getElementById("svg-sector-lines");
         this.svgGapLabels = document.getElementById("svg-gap-labels");
         this.cricketField = document.getElementById("cricket-field");
+
+        // DRS Controls
+        this.appealModal = document.getElementById("appeal-modal");
+        this.drsModal = document.getElementById("drs-modal");
+        this.btnDrsReview = document.getElementById("btn-drs-review");
+        this.btnDrsAccept = document.getElementById("btn-drs-accept");
+        this.btnDrsClose = document.getElementById("btn-drs-close");
 
         // Action Buttons
         this.simPlayBtn = document.getElementById("sim-play-btn");
@@ -366,6 +375,11 @@ class MatchManager {
 
         // Setup Drag and Drop Fielding
         this.setupFieldDragHandler();
+
+        // DRS Review Listeners
+        this.btnDrsReview.addEventListener("click", () => this.executeUserReview());
+        this.btnDrsAccept.addEventListener("click", () => this.executeUserAccept());
+        this.btnDrsClose.addEventListener("click", () => this.closeDrsVisualizer());
     }
 
     renderRoster(team) {
@@ -1013,6 +1027,16 @@ class MatchManager {
     processBallOutcome(result) {
         const state = this.getCurrentState();
         if (!state) return;
+
+        // Check if we should trigger an appeal (only for DOT/W and if not bypassed)
+        if ((result === "DOT" || result === "W") && !this.bypassAppeal) {
+            // 7.5% chance of a close appeal
+            if (Math.random() < 0.075) {
+                this.triggerCloseAppeal(result);
+                return; // Suspend processing this ball!
+            }
+        }
+        this.bypassAppeal = false;
 
         let legal = true;
         let commentaryMsg = "";
@@ -1702,6 +1726,12 @@ class MatchManager {
         this.battingOversUI.textContent = `(${overs}.${balls} Overs)`;
 
         this.matchStatusLabel.textContent = `${state.teamName.includes("1st") ? "1st Innings" : "2nd Innings"}`;
+
+        // Update DRS reviews counter
+        const reviewsUI = document.getElementById("header-reviews-ui");
+        if (reviewsUI) {
+            reviewsUI.innerHTML = `<span>DRS: IND ${state.reviewsLeft}</span><span>|</span><span>AUS ${state.opponentReviewsLeft}</span>`;
+        }
 
         if (state.target) {
             const needed = state.target - state.totalRuns;
@@ -2432,6 +2462,381 @@ class MatchManager {
             text.textContent = `${Math.round(gap)}°${isDeepCovered ? '(D)' : ''}`;
             this.svgGapLabels.appendChild(text);
         }
+    }
+
+    triggerCloseAppeal(originalResult) {
+        const state = this.getCurrentState();
+        if (!state) return;
+
+        this.activeAppeal = {
+            originalResult: originalResult,
+            appealType: Math.random() < 0.6 ? "LBW" : "Caught Behind",
+            actualOutcome: originalResult === "W" ? "OUT" : "NOT OUT"
+        };
+
+        const isUmpireCorrect = Math.random() < 0.75;
+        this.activeAppeal.umpireDecision = isUmpireCorrect ? this.activeAppeal.actualOutcome : (this.activeAppeal.actualOutcome === "OUT" ? "NOT OUT" : "OUT");
+
+        if (this.activeAppeal.appealType === "Caught Behind") {
+            this.activeAppeal.snickoSpike = this.activeAppeal.actualOutcome === "OUT";
+            this.activeAppeal.pitching = "In Line";
+            this.activeAppeal.impact = "In Line";
+            this.activeAppeal.wickets = "Missing";
+        } else {
+            this.activeAppeal.snickoSpike = false;
+            if (this.activeAppeal.actualOutcome === "OUT") {
+                this.activeAppeal.pitching = Math.random() < 0.9 ? "In Line" : "Outside Off";
+                this.activeAppeal.impact = "In Line";
+                this.activeAppeal.wickets = Math.random() < 0.8 ? "Hitting" : "Umpire's Call";
+            } else {
+                const rand = Math.random();
+                if (rand < 0.4) {
+                    this.activeAppeal.pitching = "Outside Leg";
+                    this.activeAppeal.impact = "In Line";
+                    this.activeAppeal.wickets = "Hitting";
+                } else if (rand < 0.7) {
+                    this.activeAppeal.pitching = "In Line";
+                    this.activeAppeal.impact = "Outside";
+                    this.activeAppeal.wickets = "Hitting";
+                } else {
+                    this.activeAppeal.pitching = "In Line";
+                    this.activeAppeal.impact = "In Line";
+                    this.activeAppeal.wickets = "Missing";
+                }
+            }
+        }
+
+        this.pauseMatchSimulation("Appeal");
+
+        document.getElementById("appeal-type-text").textContent = `Loud appeal for ${this.activeAppeal.appealType}!`;
+        const decisionText = document.getElementById("umpire-decision-text");
+        decisionText.textContent = this.activeAppeal.umpireDecision;
+        
+        if (this.activeAppeal.umpireDecision === "OUT") {
+            decisionText.style.color = "#E74C3C";
+        } else {
+            decisionText.style.color = "#2ECC71";
+        }
+
+        const userReviews = state.reviewsLeft;
+        const oppReviews = state.opponentReviewsLeft;
+        document.getElementById("appeal-reviews-info").textContent = `Reviews Left: IND (User) ${userReviews} | AUS (Opponent) ${oppReviews}`;
+
+        this.appealModal.classList.remove("hidden");
+
+        const isUserTurnToReview = (this.activeAppeal.umpireDecision === "OUT" && state.isUserBatting) ||
+                                   (this.activeAppeal.umpireDecision === "NOT OUT" && !state.isUserBatting);
+
+        if (isUserTurnToReview) {
+            this.btnDrsReview.disabled = userReviews <= 0;
+            this.btnDrsReview.style.opacity = userReviews <= 0 ? 0.5 : 1;
+            this.btnDrsAccept.disabled = false;
+            this.btnDrsAccept.style.opacity = 1;
+            this.btnDrsReview.textContent = `Review Decision (DRS) (${userReviews})`;
+        } else {
+            this.btnDrsReview.disabled = true;
+            this.btnDrsReview.style.opacity = 0.5;
+            this.btnDrsAccept.disabled = true;
+            this.btnDrsAccept.style.opacity = 0.5;
+            this.btnDrsReview.textContent = "Review (Opponent Turn)";
+            
+            setTimeout(() => {
+                this.handleOpponentReviewDecision();
+            }, 1800);
+        }
+    }
+
+    handleOpponentReviewDecision() {
+        const state = this.getCurrentState();
+        if (!state || !this.activeAppeal) return;
+
+        const oppReviews = state.opponentReviewsLeft;
+        let aiWillReview = false;
+
+        if (oppReviews > 0) {
+            const umpireError = this.activeAppeal.umpireDecision !== this.activeAppeal.actualOutcome;
+            if (umpireError) {
+                aiWillReview = Math.random() < 0.85;
+            } else {
+                if (this.activeAppeal.wickets === "Umpire's Call") {
+                    aiWillReview = Math.random() < 0.3;
+                }
+            }
+        }
+
+        if (aiWillReview) {
+            state.opponentReviewsLeft--;
+            this.logCommentary("Match", "AUS (Opponent) requests a review! Umpire signals DRS.", "welcome");
+            this.appealModal.classList.add("hidden");
+            this.runDRSReviewProcess(false);
+        } else {
+            this.logCommentary("Match", `AUS (Opponent) accepts the umpire's decision.`, "welcome");
+            this.appealModal.classList.add("hidden");
+            
+            const resolved = this.activeAppeal.umpireDecision === "OUT" ? "W" : "DOT";
+            this.activeAppeal = null;
+            this.bypassAppeal = true;
+            this.processBallOutcome(resolved);
+        }
+    }
+
+    executeUserReview() {
+        const state = this.getCurrentState();
+        if (!state || !this.activeAppeal) return;
+
+        if (state.reviewsLeft <= 0) return;
+        state.reviewsLeft--;
+
+        this.logCommentary("Match", "IND (User) requests a player review! The umpire signals DRS.", "welcome");
+        this.appealModal.classList.add("hidden");
+        this.runDRSReviewProcess(true);
+    }
+
+    executeUserAccept() {
+        if (!this.activeAppeal) return;
+        
+        this.appealModal.classList.add("hidden");
+        
+        const resolved = this.activeAppeal.umpireDecision === "OUT" ? "W" : "DOT";
+        this.activeAppeal = null;
+        this.bypassAppeal = true;
+        this.processBallOutcome(resolved);
+    }
+
+    runDRSReviewProcess(isUserReview) {
+        const state = this.getCurrentState();
+        if (!state || !this.activeAppeal) return;
+
+        this.drsModal.classList.remove("hidden");
+        document.getElementById("drs-snicko-screen").classList.remove("hidden");
+        document.getElementById("drs-hawkeye-screen").classList.add("hidden");
+        document.getElementById("drs-verdict-screen").classList.add("hidden");
+
+        const appeal = this.activeAppeal;
+
+        const hasSpike = appeal.snickoSpike;
+        this.startSnickoWaveAnimation(hasSpike);
+        document.getElementById("drs-snicko-status").textContent = "Checking UltraEdge...";
+
+        setTimeout(() => {
+            if (hasSpike) {
+                document.getElementById("drs-snicko-status").textContent = "Spike on UltraEdge! Caught Behind - OUT!";
+                
+                setTimeout(() => {
+                    this.showDRSVerdictScreen(isUserReview, "OUT");
+                }, 1500);
+            } else {
+                document.getElementById("drs-snicko-status").textContent = "Flatline on UltraEdge. Proceeding to Hawkeye...";
+
+                setTimeout(() => {
+                    this.runDRSHawkeyeProcess(isUserReview);
+                }, 1500);
+            }
+        }, 2000);
+    }
+
+    startSnickoWaveAnimation(hasSpike) {
+        const path = document.getElementById("snicko-wave-path");
+        const ballDot = document.getElementById("snicko-ball-dot");
+        if (!path || !ballDot) return;
+
+        ballDot.style.opacity = 1;
+        ballDot.style.left = "60px";
+        ballDot.style.top = "38px";
+
+        setTimeout(() => {
+            ballDot.style.left = "260px";
+        }, 50);
+
+        let startTime = performance.now();
+        let animationFrameId;
+
+        const animateWave = (now) => {
+            const elapsed = now - startTime;
+            if (elapsed > 1800) {
+                cancelAnimationFrame(animationFrameId);
+                ballDot.style.opacity = 0;
+                return;
+            }
+
+            let pathD = "M 0 40";
+            for (let x = 1; x <= 450; x++) {
+                let y = 40;
+                y += Math.sin(x / 6 + now / 40) * 1.5 + (Math.random() - 0.5) * 0.8;
+
+                if (hasSpike) {
+                    const spikeX = 225;
+                    const distToSpike = Math.abs(x - spikeX);
+                    
+                    if (elapsed > 700 && elapsed < 1100) {
+                        const intensity = Math.sin(x / 1.5 + now / 10) * 22;
+                        const envelope = Math.exp(-distToSpike / 12);
+                        y += intensity * envelope;
+                    }
+                }
+                pathD += ` L ${x} ${y}`;
+            }
+
+            path.setAttribute("d", pathD);
+            animationFrameId = requestAnimationFrame(animateWave);
+        };
+
+        animationFrameId = requestAnimationFrame(animateWave);
+    }
+
+    runDRSHawkeyeProcess(isUserReview) {
+        const appeal = this.activeAppeal;
+        document.getElementById("drs-snicko-screen").classList.add("hidden");
+        document.getElementById("drs-hawkeye-screen").classList.remove("hidden");
+        
+        const pBadge = document.getElementById("drs-pitching-badge");
+        const iBadge = document.getElementById("drs-impact-badge");
+        const wBadge = document.getElementById("drs-wickets-badge");
+        
+        pBadge.textContent = "Pending"; pBadge.className = "badge";
+        iBadge.textContent = "Pending"; iBadge.className = "badge";
+        wBadge.textContent = "Pending"; wBadge.className = "badge";
+
+        document.getElementById("drs-hawkeye-status").textContent = "Projecting trajectory...";
+        this.startHawkeyeAnimation(appeal.pitching, appeal.impact, appeal.wickets);
+
+        setTimeout(() => {
+            pBadge.textContent = appeal.pitching;
+            pBadge.className = appeal.pitching === "In Line" ? "badge bg-success" : "badge bg-danger";
+            document.getElementById("drs-hawkeye-status").textContent = `Pitching: ${appeal.pitching}`;
+        }, 1200);
+
+        setTimeout(() => {
+            iBadge.textContent = appeal.impact;
+            iBadge.className = appeal.impact === "In Line" ? "badge bg-success" : "badge bg-danger";
+            document.getElementById("drs-hawkeye-status").textContent = `Impact: ${appeal.impact}`;
+        }, 2400);
+
+        setTimeout(() => {
+            wBadge.textContent = appeal.wickets;
+            if (appeal.wickets === "Hitting") {
+                wBadge.className = "badge bg-success";
+            } else if (appeal.wickets === "Missing") {
+                wBadge.className = "badge bg-danger";
+            } else {
+                wBadge.className = "badge bg-warning";
+                wBadge.style.backgroundColor = "rgba(243, 156, 18, 0.2)";
+                wBadge.style.color = "#f39c12";
+                wBadge.style.border = "1px solid rgba(243, 156, 18, 0.4)";
+            }
+            document.getElementById("drs-hawkeye-status").textContent = `Wickets: ${appeal.wickets}`;
+        }, 3600);
+
+        setTimeout(() => {
+            let finalVerdict = "OUT";
+            
+            if (appeal.pitching === "Outside Leg" || appeal.pitching === "Outside Off") {
+                finalVerdict = "NOT OUT";
+            } else if (appeal.impact === "Outside") {
+                finalVerdict = "NOT OUT";
+            } else if (appeal.wickets === "Missing") {
+                finalVerdict = "NOT OUT";
+            }
+
+            const isUmpiresCall = appeal.wickets === "Umpire's Call" || appeal.impact === "Umpire's Call";
+            if (isUmpiresCall) {
+                finalVerdict = appeal.umpireDecision;
+            }
+
+            this.showDRSVerdictScreen(isUserReview, finalVerdict, isUmpiresCall);
+        }, 4800);
+    }
+
+    startHawkeyeAnimation(pitching, impact, wickets) {
+        const impactDot = document.getElementById("hawkeye-ball-impact");
+        if (!impactDot) return;
+
+        impactDot.style.display = "block";
+        impactDot.setAttribute("cx", "50");
+        impactDot.setAttribute("cy", "140");
+        impactDot.setAttribute("r", "9");
+        impactDot.setAttribute("fill", "#e74c3c");
+
+        let targetX = 50;
+        if (pitching === "Outside Leg") targetX = 20;
+        else if (pitching === "Outside Off") targetX = 80;
+
+        let targetY = 80;
+        if (wickets === "Missing") {
+            targetY = 15;
+        }
+
+        let startTime = performance.now();
+        const animateBall = (now) => {
+            const elapsed = now - startTime;
+            if (elapsed > 1200) {
+                return;
+            }
+            
+            const progress = elapsed / 1200;
+            const currentX = 50 + (targetX - 50) * progress;
+            const height = 40 * Math.sin(progress * Math.PI);
+            const currentY = 140 + (targetY - 140) * progress - height;
+            const currentR = 9 - 4 * progress;
+
+            impactDot.setAttribute("cx", currentX.toString());
+            impactDot.setAttribute("cy", currentY.toString());
+            impactDot.setAttribute("r", currentR.toString());
+
+            requestAnimationFrame(animateBall);
+        };
+        requestAnimationFrame(animateBall);
+    }
+
+    showDRSVerdictScreen(isUserReview, finalVerdict, isUmpiresCall = false) {
+        const state = this.getCurrentState();
+        const appeal = this.activeAppeal;
+        
+        document.getElementById("drs-snicko-screen").classList.add("hidden");
+        document.getElementById("drs-hawkeye-screen").classList.add("hidden");
+        document.getElementById("drs-verdict-screen").classList.remove("hidden");
+
+        const verdictTitle = document.getElementById("drs-verdict-text");
+        verdictTitle.textContent = finalVerdict;
+        verdictTitle.style.color = finalVerdict === "OUT" ? "#E74C3C" : "#2ECC71";
+
+        const hasOverturned = finalVerdict !== appeal.umpireDecision;
+        
+        let decisionSummary = "";
+        if (hasOverturned) {
+            decisionSummary = "Decision OVERTURNED! Umpire call reversed.";
+            if (isUserReview) {
+                state.reviewsLeft++;
+            } else {
+                state.opponentReviewsLeft++;
+            }
+        } else {
+            decisionSummary = "Decision UPHELD! Original decision stands.";
+            if (isUmpiresCall) {
+                decisionSummary += " Review Retained (Umpire's Call).";
+                if (isUserReview) {
+                    state.reviewsLeft++;
+                } else {
+                    state.opponentReviewsLeft++;
+                }
+            }
+        }
+
+        this.logCommentary("Match", `DRS Verdict: ${finalVerdict}. ${decisionSummary}`, "welcome");
+
+        this.resolvedDRSOutcome = finalVerdict === "OUT" ? "W" : "DOT";
+        this.updateUI();
+    }
+
+    closeDrsVisualizer() {
+        this.drsModal.classList.add("hidden");
+
+        const outcome = this.resolvedDRSOutcome;
+        this.activeAppeal = null;
+        this.resolvedDRSOutcome = null;
+
+        this.bypassAppeal = true;
+        this.processBallOutcome(outcome);
     }
 }
 

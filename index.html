@@ -138,6 +138,10 @@
                         <!-- Target/Required runs info -->
                     </div>
                     <div class="header-right-controls" style="display: flex; align-items: center; gap: 15px; margin-left: 15px;">
+                        <!-- DRS Reviews Left HUD -->
+                        <div id="header-reviews-ui" style="font-size: 0.72rem; color: var(--text-secondary); background: rgba(0,0,0,0.35); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 10px; display: flex; gap: 8px; font-family: monospace;">
+                            <span>DRS: IND 2</span><span>|</span><span>AUS 2</span>
+                        </div>
                         <button id="sim-play-btn" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem; height: 36px; white-space: nowrap;">
                             <i class="fa-solid fa-play"></i> Start Simulation
                         </button>
@@ -383,6 +387,107 @@
                             <!-- Injected dynamically -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: DRS APPEAL OPTIONS -->
+        <div id="appeal-modal" class="modal-overlay hidden">
+            <div class="modal-content glass-card fade-in" style="max-width: 450px; text-align: center; padding: 25px;">
+                <h2 style="color: var(--color-gold); font-size: 1.8rem; margin-bottom: 5px;">
+                    <i class="fa-solid fa-gavel"></i> Loud Appeal!
+                </h2>
+                <p id="appeal-type-text" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 15px;">Appeal for LBW!</p>
+                
+                <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Umpire Decision</span>
+                    <h1 id="umpire-decision-text" style="margin: 0; font-size: 2.2rem; font-weight: 800; letter-spacing: 1px;">OUT</h1>
+                </div>
+
+                <p id="appeal-reviews-info" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Reviews Left: User 2 | Opponent 2</p>
+
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="btn-drs-review" class="btn btn-primary" style="flex: 1; padding: 12px 18px;">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i> Review Decision (DRS)
+                    </button>
+                    <button id="btn-drs-accept" class="btn btn-secondary" style="flex: 1; padding: 12px 18px;">
+                        <i class="fa-solid fa-check"></i> Accept Decision
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: DRS TRACKING VISUALIZER -->
+        <div id="drs-modal" class="modal-overlay hidden">
+            <div class="modal-content glass-card fade-in" style="max-width: 500px; padding: 25px; text-align: center; overflow: hidden;">
+                <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.4rem;">
+                    <i class="fa-solid fa-tower-broadcast" style="color: var(--color-primary);"></i> DRS Decision Review
+                </h2>
+
+                <!-- Tab 1: UltraEdge / Snicko -->
+                <div id="drs-snicko-screen" class="drs-screen">
+                    <h4 style="margin-bottom: 12px; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Step 1: UltraEdge (Caught Behind)</h4>
+                    
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 40px; margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; height: 90px; position: relative;">
+                        <div style="width: 12px; height: 70px; background: #855e42; border-radius: 3px; transform: rotate(15deg); border: 1.5px solid #fff; box-shadow: 0px 0px 8px rgba(255,255,255,0.2);"></div>
+                        <div id="snicko-ball-dot" style="width: 14px; height: 14px; background: #e74c3c; border-radius: 50%; border: 1px solid #fff; position: absolute; left: 140px; top: 38px; opacity: 0;"></div>
+                    </div>
+
+                    <div style="background: #000; border: 1px solid var(--border-color); border-radius: 8px; height: 80px; position: relative; overflow: hidden; margin-bottom: 15px;">
+                        <svg width="100%" height="80" style="position: absolute; left: 0; top: 0;">
+                            <path id="snicko-wave-path" d="M 0 40 L 450 40" fill="none" stroke="#2ecc71" stroke-width="1.5" />
+                        </svg>
+                        <div style="position: absolute; right: 10px; bottom: 8px; font-size: 0.65rem; color: #2ecc71; font-family: monospace; letter-spacing: 1px;">ULTRAEDGE LIVE</div>
+                    </div>
+
+                    <h3 id="drs-snicko-status" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; min-height: 25px;">Checking UltraEdge...</h3>
+                </div>
+
+                <!-- Tab 2: Hawkeye / Ball Tracking -->
+                <div id="drs-hawkeye-screen" class="drs-screen hidden">
+                    <h4 style="margin-bottom: 12px; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Step 2: Hawkeye (Ball Tracking)</h4>
+                    
+                    <div style="display: flex; gap: 30px; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <svg width="140" height="150" viewBox="0 0 100 120" style="background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid var(--border-color);">
+                            <rect x="30" y="35" width="6" height="80" fill="#f39c12" rx="2" />
+                            <rect x="47" y="35" width="6" height="80" fill="#f39c12" rx="2" />
+                            <rect x="64" y="35" width="6" height="80" fill="#f39c12" rx="2" />
+                            <rect x="27" y="30" width="22" height="5" fill="#d35400" rx="1.5" />
+                            <rect x="51" y="30" width="22" height="5" fill="#d35400" rx="1.5" />
+                            <circle id="hawkeye-ball-impact" cx="50" cy="80" r="6.5" fill="#e74c3c" stroke="#fff" stroke-width="1.5" style="display: none;" />
+                        </svg>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start; flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; width: 100%;">
+                                <span style="color: var(--text-secondary); font-weight: bold; width: 65px; text-align: left;">Pitching:</span>
+                                <span id="drs-pitching-badge" class="badge" style="font-size: 0.72rem; flex: 1; text-align: center;">Pending</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; width: 100%;">
+                                <span style="color: var(--text-secondary); font-weight: bold; width: 65px; text-align: left;">Impact:</span>
+                                <span id="drs-impact-badge" class="badge" style="font-size: 0.72rem; flex: 1; text-align: center;">Pending</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; width: 100%;">
+                                <span style="color: var(--text-secondary); font-weight: bold; width: 65px; text-align: left;">Wickets:</span>
+                                <span id="drs-wickets-badge" class="badge" style="font-size: 0.72rem; flex: 1; text-align: center;">Pending</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 id="drs-hawkeye-status" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; min-height: 25px;">Checking Ball Tracking...</h3>
+                </div>
+
+                <!-- Tab 3: Final Verdict -->
+                <div id="drs-verdict-screen" class="drs-screen hidden">
+                    <h4 style="margin-bottom: 12px; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Step 3: Final Decision</h4>
+                    
+                    <div style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 25px; margin-bottom: 25px; border: 1.5px solid var(--border-color); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px;">
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">DRS Verdict</span>
+                        <h1 id="drs-verdict-text" style="font-size: 2.2rem; font-weight: 800; letter-spacing: 1px; margin: 0; line-height: 1.1;">DECISION UPHELD</h1>
+                    </div>
+
+                    <button id="btn-drs-close" class="btn btn-primary" style="padding: 10px 20px; font-size: 0.9rem; min-width: 140px;">
+                        Close Tracker
+                    </button>
                 </div>
             </div>
         </div>
