@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
     <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js for 3D View -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -215,10 +217,15 @@
                                 <option value="custom">Custom Field</option>
                             </select>
                             <span id="fielding-validation-badge" class="badge bg-success" style="font-size: 0.75rem;">Field Valid</span>
+                            <button id="btn-toggle-view-3d" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; background: rgba(25, 118, 210, 0.25); border: 1px solid rgba(25, 118, 210, 0.4); color: #90CAF9; cursor: pointer; outline: none; display: flex; align-items: center; gap: 4px; font-weight: 600; transition: all 0.2s ease;">
+                                <i class="fa-solid fa-cube"></i> 3D View
+                            </button>
                         </div>
                         <span id="match-phase-badge" class="badge">Powerplay</span>
                     </div>
-                    <div class="field-container">
+                    <div class="field-container" style="position: relative;">
+                        <!-- The 3D WebGL Canvas Container -->
+                        <div id="three-canvas-container" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; border-radius: 8px; overflow: hidden; background: #0b2210;"></div>
                         <!-- The Animated SVG Field -->
                         <svg id="cricket-field" viewBox="0 0 600 600" width="100%" height="100%">
                             <!-- Grass Gradient Defs -->

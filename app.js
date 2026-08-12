@@ -271,6 +271,11 @@ class MatchManager {
         this.btnDrsAccept = document.getElementById("btn-drs-accept");
         this.btnDrsClose = document.getElementById("btn-drs-close");
 
+        // 3D View Controls
+        this.btnToggleView3D = document.getElementById("btn-toggle-view-3d");
+        this.threeCanvasContainer = document.getElementById("three-canvas-container");
+        this.is3DViewActive = false;
+
         // Action Buttons
         this.simPlayBtn = document.getElementById("sim-play-btn");
         this.simBallBtn = document.getElementById("sim-ball-btn");
@@ -380,6 +385,11 @@ class MatchManager {
         this.btnDrsReview.addEventListener("click", () => this.executeUserReview());
         this.btnDrsAccept.addEventListener("click", () => this.executeUserAccept());
         this.btnDrsClose.addEventListener("click", () => this.closeDrsVisualizer());
+
+        // 3D View Toggle Listener
+        if (this.btnToggleView3D) {
+            this.btnToggleView3D.addEventListener("click", () => this.toggle3DView());
+        }
     }
 
     renderRoster(team) {
@@ -574,6 +584,10 @@ class MatchManager {
     drawField() {
         const state = this.getCurrentState();
         if (!state) return;
+
+        if (this.is3DViewActive) {
+            this.draw3DField();
+        }
 
         // Colors
         const batColor = "#60A5FA"; // Blue for IND
@@ -891,6 +905,11 @@ class MatchManager {
     }
 
     animateBall(targetX, targetY, type, callback) {
+        if (this.is3DViewActive) {
+            this.animate3DBall(targetX, targetY, type, callback);
+            return;
+        }
+
         this.svgBall.style.display = "block";
         
         // Bowler starts delivery at bottom (300, 380)
@@ -2832,6 +2851,446 @@ class MatchManager {
 
         this.bypassAppeal = true;
         this.processBallOutcome(outcome);
+    }
+
+    // =========================================================
+    // 3D WEBGL GRAPHICS (THREE.JS)
+    // =========================================================
+
+    toggle3DView() {
+        this.is3DViewActive = !this.is3DViewActive;
+
+        if (this.is3DViewActive) {
+            this.cricketField.classList.add("hidden");
+            this.threeCanvasContainer.classList.remove("hidden");
+            this.btnToggleView3D.innerHTML = '<i class="fa-solid fa-compass"></i> 2D View';
+            this.btnToggleView3D.style.background = "rgba(46, 204, 113, 0.25)";
+            this.btnToggleView3D.style.borderColor = "rgba(46, 204, 113, 0.4)";
+            this.btnToggleView3D.style.color = "#a3e635";
+
+            this.init3DScene();
+            this.draw3DField();
+        } else {
+            this.cricketField.classList.remove("hidden");
+            this.threeCanvasContainer.classList.add("hidden");
+            this.btnToggleView3D.innerHTML = '<i class="fa-solid fa-cube"></i> 3D View';
+            this.btnToggleView3D.style.background = "rgba(25, 118, 210, 0.25)";
+            this.btnToggleView3D.style.borderColor = "rgba(25, 118, 210, 0.4)";
+            this.btnToggleView3D.style.color = "#90CAF9";
+        }
+    }
+
+    resize3DCanvas() {
+        if (!this.is3DViewActive || !this.threeRenderer || !this.threeCamera) return;
+        const width = this.threeCanvasContainer.clientWidth;
+        const height = this.threeCanvasContainer.clientHeight;
+        this.threeCamera.aspect = width / height;
+        this.threeCamera.updateProjectionMatrix();
+        this.threeRenderer.setSize(width, height);
+    }
+
+    init3DScene() {
+        if (this.threeRenderer) {
+            this.resize3DCanvas();
+            return;
+        }
+
+        const width = this.threeCanvasContainer.clientWidth || 500;
+        const height = this.threeCanvasContainer.clientHeight || 500;
+
+        // Scene
+        this.threeScene = new THREE.Scene();
+        this.threeScene.background = new THREE.Color(0x0a1c0f);
+
+        // Camera
+        this.threeCamera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
+        this.threeCamera.position.set(0, 2.5, 14.5);
+        this.threeCamera.lookAt(0, 0.4, -5);
+
+        // Renderer
+        this.threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+        this.threeRenderer.setSize(width, height);
+        this.threeRenderer.shadowMap.enabled = true;
+        this.threeCanvasContainer.appendChild(this.threeRenderer.domElement);
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+        this.threeScene.add(ambient);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        this.threeScene.add(dirLight);
+
+        // Grass Disc
+        const grassGeo = new THREE.CircleGeometry(38, 32);
+        const grassMat = new THREE.MeshLambertMaterial({ color: 0x1f5624 });
+        const grass = new THREE.Mesh(grassGeo, grassMat);
+        grass.rotation.x = -Math.PI / 2;
+        grass.receiveShadow = true;
+        this.threeScene.add(grass);
+
+        // White boundary ring
+        const boundaryGeo = new THREE.RingGeometry(37.8, 38, 64);
+        const boundaryMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+        const boundary = new THREE.Mesh(boundaryGeo, boundaryMat);
+        boundary.rotation.x = -Math.PI / 2;
+        this.threeScene.add(boundary);
+
+        // Pitch box
+        const pitchGeo = new THREE.BoxGeometry(2.2, 0.02, 22);
+        const pitchMat = new THREE.MeshLambertMaterial({ color: 0xd6b88a });
+        const pitch = new THREE.Mesh(pitchGeo, pitchMat);
+        pitch.position.y = 0.01;
+        pitch.receiveShadow = true;
+        this.threeScene.add(pitch);
+
+        // Wickets Group (Batting End z=10)
+        this.threeWicketsGroup = new THREE.Group();
+        this.threeScene.add(this.threeWicketsGroup);
+
+        const stumpGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.72, 8);
+        const stumpMat = new THREE.MeshLambertMaterial({ color: 0xd4af37 });
+
+        this.threeStumpMeshes = [];
+        for (let i = 0; i < 3; i++) {
+            const stump = new THREE.Mesh(stumpGeo, stumpMat);
+            stump.position.set(-0.14 + i * 0.14, 0.36, 10);
+            stump.castShadow = true;
+            this.threeWicketsGroup.add(stump);
+            this.threeStumpMeshes.push(stump);
+        }
+
+        // Bails (Batting End)
+        const bailGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.13, 8);
+        const bailMat = new THREE.MeshLambertMaterial({ color: 0xb38612 });
+        this.threeBailMeshes = [];
+
+        const bailLeft = new THREE.Mesh(bailGeo, bailMat);
+        bailLeft.rotation.z = Math.PI / 2;
+        bailLeft.position.set(-0.07, 0.73, 10);
+        this.threeWicketsGroup.add(bailLeft);
+        this.threeBailMeshes.push(bailLeft);
+
+        const bailRight = new THREE.Mesh(bailGeo, bailMat);
+        bailRight.rotation.z = Math.PI / 2;
+        bailRight.position.set(0.07, 0.73, 10);
+        this.threeWicketsGroup.add(bailRight);
+        this.threeBailMeshes.push(bailRight);
+
+        // Stumps (Bowling End z=-10)
+        for (let i = 0; i < 3; i++) {
+            const stump = new THREE.Mesh(stumpGeo, stumpMat);
+            stump.position.set(-0.14 + i * 0.14, 0.36, -10);
+            this.threeScene.add(stump);
+        }
+
+        // Fielders Group
+        this.threeFieldersGroup = new THREE.Group();
+        this.threeScene.add(this.threeFieldersGroup);
+
+        // Ball Mesh
+        const ballGeo = new THREE.SphereGeometry(0.075, 16, 16);
+        const ballMat = new THREE.MeshLambertMaterial({ color: 0x9e1b1b });
+        this.threeBallMesh = new THREE.Mesh(ballGeo, ballMat);
+        this.threeBallMesh.castShadow = true;
+        this.threeScene.add(this.threeBallMesh);
+        this.threeBallMesh.position.set(0, -5, 0); // hide initially
+
+        // Striker Group
+        this.threeBatsmanGroup = new THREE.Group();
+        this.threeBatsmanGroup.position.set(-0.5, 0, 9.8);
+        this.threeScene.add(this.threeBatsmanGroup);
+
+        const bodyGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.85, 8);
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1e88e5 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.425;
+        body.castShadow = true;
+        this.threeBatsmanGroup.add(body);
+
+        const headGeo = new THREE.SphereGeometry(0.12, 8, 8);
+        const headMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.y = 0.95;
+        this.threeBatsmanGroup.add(head);
+
+        // Bat
+        const batGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.65, 8);
+        const batMat = new THREE.MeshLambertMaterial({ color: 0x7c5427 });
+        this.threeBatMesh = new THREE.Mesh(batGeo, batMat);
+        this.threeBatMesh.position.set(0.25, 0.32, 0.15);
+        this.threeBatMesh.rotation.z = Math.PI / 8;
+        this.threeBatsmanGroup.add(this.threeBatMesh);
+
+        // Bowler
+        const bowlerGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.85, 8);
+        const bowlerMat = new THREE.MeshLambertMaterial({ color: 0xe53935 });
+        this.threeBowlerMesh = new THREE.Mesh(bowlerGeo, bowlerMat);
+        this.threeBowlerMesh.position.set(0, 0.425, -11);
+        this.threeBowlerMesh.castShadow = true;
+        this.threeScene.add(this.threeBowlerMesh);
+
+        this.animate3DLoop();
+    }
+
+    draw3DField() {
+        const state = this.getCurrentState();
+        if (!state || !this.threeScene) return;
+
+        while(this.threeFieldersGroup.children.length > 0){ 
+            this.threeFieldersGroup.remove(this.threeFieldersGroup.children[0]); 
+        }
+
+        const batColor = state.isUserBatting ? 0x1e88e5 : 0xe53935;
+        const bowlColor = state.isUserBatting ? 0xe53935 : 0x1e88e5;
+
+        // Update body colors
+        if (this.threeBatsmanGroup.children[0]) {
+            this.threeBatsmanGroup.children[0].material.color.setHex(batColor);
+        }
+        if (this.threeBowlerMesh) {
+            this.threeBowlerMesh.material.color.setHex(bowlColor);
+        }
+
+        const activeFielders = state.fielderPositions.filter(f => !f.isFixed);
+        const bodyGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.82, 8);
+        const bodyMat = new THREE.MeshLambertMaterial({ color: bowlColor });
+        const headGeo = new THREE.SphereGeometry(0.11, 8, 8);
+        const headMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
+
+        activeFielders.forEach(f => {
+            const x3d = (f.x - 300) / 10;
+            const z3d = (f.y - 300) / 10;
+
+            const fGroup = new THREE.Group();
+            fGroup.position.set(x3d, 0, z3d);
+
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.41;
+            body.castShadow = true;
+            fGroup.add(body);
+
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 0.92;
+            fGroup.add(head);
+
+            this.threeFieldersGroup.add(fGroup);
+        });
+
+        this.reset3DStumps();
+    }
+
+    reset3DStumps() {
+        if (!this.threeStumpMeshes || !this.threeBailMeshes) return;
+        
+        this.threeStumpMeshes.forEach((stump, i) => {
+            stump.position.set(-0.14 + i * 0.14, 0.36, 10);
+            stump.rotation.set(0, 0, 0);
+        });
+
+        this.threeBailMeshes[0].position.set(-0.07, 0.73, 10);
+        this.threeBailMeshes[0].rotation.set(0, 0, Math.PI / 2);
+        
+        this.threeBailMeshes[1].position.set(0.07, 0.73, 10);
+        this.threeBailMeshes[1].rotation.set(0, 0, Math.PI / 2);
+    }
+
+    animate3DLoop() {
+        if (!this.is3DViewActive) return;
+
+        this.threeRenderer.render(this.threeScene, this.threeCamera);
+        requestAnimationFrame(() => this.animate3DLoop());
+    }
+
+    animate3DBall(targetX, targetY, type, callback) {
+        if (!this.threeScene) {
+            callback();
+            return;
+        }
+
+        this.reset3DStumps();
+
+        const targetX_3d = (targetX - 300) / 10;
+        const targetZ_3d = (targetY - 300) / 10;
+
+        const ball = this.threeBallMesh;
+        ball.position.set(0, 1.8, -10);
+
+        let startTime = performance.now();
+        const deliveryDuration = 400;
+
+        this.threeBatMesh.rotation.set(0, 0, Math.PI / 8);
+
+        const animateBallDelivery = (now) => {
+            const elapsed = now - startTime;
+            if (elapsed < deliveryDuration) {
+                const progress = elapsed / deliveryDuration;
+                
+                const z = -10 + 20 * progress;
+                let y = 1.8;
+                if (progress < 0.65) {
+                    const progNorm = progress / 0.65;
+                    const h = Math.sin(progNorm * Math.PI) * 0.8;
+                    y = 1.8 + (0.08 - 1.8) * progNorm + h;
+                } else {
+                    const progNorm = (progress - 0.65) / 0.35;
+                    const h = Math.sin(progNorm * Math.PI) * 0.6;
+                    y = 0.08 + (0.6 - 0.08) * progNorm + h;
+                }
+
+                ball.position.set(0, y, z);
+                requestAnimationFrame(animateBallDelivery);
+            } else {
+                ball.position.set(0, 0.6, 9.8);
+                this.animate3DBatSwing();
+
+                setTimeout(() => {
+                    startTime = performance.now();
+                    this.animate3DHitOutcome(targetX_3d, targetZ_3d, type, callback);
+                }, 100);
+            }
+        };
+
+        requestAnimationFrame(animateBallDelivery);
+    }
+
+    animate3DBatSwing() {
+        let startTime = performance.now();
+        const duration = 250;
+        
+        const swing = (now) => {
+            const elapsed = now - startTime;
+            if (elapsed < duration) {
+                const progress = elapsed / duration;
+                this.threeBatMesh.rotation.y = -Math.sin(progress * Math.PI) * Math.PI / 2;
+                requestAnimationFrame(swing);
+            } else {
+                this.threeBatMesh.rotation.set(0, 0, Math.PI / 8);
+            }
+        };
+        requestAnimationFrame(swing);
+    }
+
+    animate3DHitOutcome(targetX, targetZ, type, callback) {
+        const ball = this.threeBallMesh;
+        const startTime = performance.now();
+        const duration = 650;
+
+        if (type === "W") {
+            const rand = Math.random();
+            if (rand < 0.4) {
+                const bowledAnim = (now) => {
+                    const elapsed = now - startTime;
+                    if (elapsed < 200) {
+                        const progress = elapsed / 200;
+                        ball.position.set(0, 0.45, 9.8 + 0.2 * progress);
+                        requestAnimationFrame(bowledAnim);
+                    } else {
+                        this.triggerFlyingStumps();
+                        setTimeout(() => {
+                            ball.position.set(0, -5, 0);
+                            this.triggerFlashEffects(type);
+                            callback();
+                        }, 500);
+                    }
+                };
+                requestAnimationFrame(bowledAnim);
+            } else if (rand < 0.7) {
+                const lbwAnim = (now) => {
+                    const elapsed = now - startTime;
+                    if (elapsed < 150) {
+                        const progress = elapsed / 150;
+                        ball.position.set(-0.15 * progress, 0.4, 9.8);
+                        requestAnimationFrame(lbwAnim);
+                    } else {
+                        setTimeout(() => {
+                            ball.position.set(0, -5, 0);
+                            this.triggerFlashEffects(type);
+                            callback();
+                        }, 500);
+                    }
+                };
+                requestAnimationFrame(lbwAnim);
+            } else {
+                const catchAnim = (now) => {
+                    const elapsed = now - startTime;
+                    if (elapsed < duration) {
+                        const progress = elapsed / duration;
+                        const x = targetX * progress;
+                        const z = 9.8 + (targetZ - 9.8) * progress;
+                        const y = 0.5 + Math.sin(progress * Math.PI) * 6;
+                        ball.position.set(x, y, z);
+                        requestAnimationFrame(catchAnim);
+                    } else {
+                        setTimeout(() => {
+                            ball.position.set(0, -5, 0);
+                            this.triggerFlashEffects(type);
+                            callback();
+                        }, 500);
+                    }
+                };
+                requestAnimationFrame(catchAnim);
+            }
+        } else {
+            const isSix = type === "SIX";
+            const hitAnim = (now) => {
+                const elapsed = now - startTime;
+                if (elapsed < duration) {
+                    const progress = elapsed / duration;
+                    const x = targetX * progress;
+                    const z = 9.8 + (targetZ - 9.8) * progress;
+                    
+                    let y = 0.5;
+                    if (isSix) {
+                        y = 0.5 + Math.sin(progress * Math.PI) * 4.5;
+                    } else {
+                        y = 0.08 + Math.abs(Math.sin(progress * Math.PI * 4) * 0.15 * (1 - progress));
+                    }
+                    
+                    ball.position.set(x, y, z);
+                    requestAnimationFrame(hitAnim);
+                } else {
+                    ball.position.set(0, -5, 0);
+                    this.triggerFlashEffects(type);
+                    callback();
+                }
+            };
+            requestAnimationFrame(hitAnim);
+        }
+    }
+
+    triggerFlyingStumps() {
+        this.threeStumpMeshes.forEach((stump) => {
+            stump.rotation.x = Math.PI / 5 + Math.random() * 0.1;
+            stump.position.z += 0.15;
+        });
+
+        let startTime = performance.now();
+        const duration = 600;
+        
+        const leftBail = this.threeBailMeshes[0];
+        const rightBail = this.threeBailMeshes[1];
+
+        const animateBails = (now) => {
+            const elapsed = now - startTime;
+            if (elapsed < duration) {
+                const progress = elapsed / duration;
+                const yOffset = Math.sin(progress * Math.PI) * 0.8;
+                const zOffset = progress * 1.5;
+
+                leftBail.position.set(-0.07 - progress * 0.5, 0.73 + yOffset, 10 + zOffset);
+                leftBail.rotation.x = progress * Math.PI * 4;
+                leftBail.rotation.y = progress * Math.PI * 2;
+
+                rightBail.position.set(0.07 + progress * 0.5, 0.73 + yOffset, 10 + zOffset);
+                rightBail.rotation.x = progress * Math.PI * 4;
+                rightBail.rotation.z = progress * Math.PI * 2;
+
+                requestAnimationFrame(animateBails);
+            }
+        };
+        requestAnimationFrame(animateBails);
     }
 }
 
