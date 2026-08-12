@@ -322,7 +322,7 @@ class MatchManager {
         this.chooseBatBtn.addEventListener("click", () => this.handleTossDecision("bat"));
         this.chooseBowlBtn.addEventListener("click", () => this.handleTossDecision("bowl"));
 
-        this.startMatchBtn.addEventListener("click", () => this.startInnings());
+        this.startMatchBtn.addEventListener("click", () => this.handleStartMatchBtnClick());
 
         this.simPlayBtn.addEventListener("click", () => this.toggleMatchSimulation());
         this.simBallBtn.addEventListener("click", () => this.simulateBallCall());
@@ -533,17 +533,22 @@ class MatchManager {
         const state = this.getCurrentState();
         
         // Assign openers
-        const op1Idx = parseInt(this.opener1Select.value);
-        const op2Idx = parseInt(this.opener2Select.value);
-        state.striker = state.battingTeam[op1Idx];
-        state.nonStriker = state.battingTeam[op2Idx];
-        state.striker.hasBatted = true;
-        state.nonStriker.hasBatted = true;
-
         if (state.isUserBatting) {
+            const op1Idx = parseInt(this.opener1Select.value);
+            const op2Idx = parseInt(this.opener2Select.value);
+            state.striker = state.battingTeam[op1Idx];
+            state.nonStriker = state.battingTeam[op2Idx];
+            state.striker.hasBatted = true;
+            state.nonStriker.hasBatted = true;
             state.striker.mentality = document.getElementById("opener-1-mentality").value;
             state.nonStriker.mentality = document.getElementById("opener-2-mentality").value;
         } else {
+            // Opponent batting first: select top 2 by batting rating
+            const sortedAI = [...state.battingTeam].sort((a,b) => b.batting - a.batting);
+            state.striker = sortedAI[0];
+            state.nonStriker = sortedAI[1];
+            state.striker.hasBatted = true;
+            state.nonStriker.hasBatted = true;
             state.striker.mentality = "normal";
             state.nonStriker.mentality = "normal";
         }
@@ -772,51 +777,43 @@ class MatchManager {
                     const gap = chosenSector.gapSize;
                     const isDeep = chosenSector.isDeepCovered;
 
-                    if (gap < 25) {
+                    if (gap < 28) {
                         // Narrow inner gap (Closed inside)
                         if (!isDeep) {
                             // Open deep: high risk of catches but high boundary reward
                             if (batsman.mentality === "attack") {
-                                probs["W"] += 3;
-                                probs["4"] += 5;
-                                probs["DOT"] = Math.max(2, probs["DOT"] - 4);
+                                probs["W"] += 1.5;
+                                probs["4"] += 2;
+                                probs["DOT"] = Math.max(5, probs["DOT"] - 2);
                             } else {
-                                probs["DOT"] += 8;
-                                probs["1"] = Math.max(2, probs["1"] - 4);
-                                probs["4"] = Math.max(0, probs["4"] - 3);
+                                probs["DOT"] += 5;
+                                probs["1"] = Math.max(2, probs["1"] - 2);
+                                probs["4"] = Math.max(0, probs["4"] - 2);
                             }
                         } else {
                             // Closed deep: high risk of dot/catch, low boundaries
-                            probs["DOT"] += 12;
-                            probs["W"] += 2;
-                            probs["4"] = Math.max(0, probs["4"] - 5);
-                            probs["6"] = Math.max(0, probs["6"] - 3);
+                            probs["DOT"] += 6;
+                            probs["W"] += 1;
+                            probs["4"] = Math.max(0, probs["4"] - 3);
+                            probs["6"] = Math.max(0, probs["6"] - 2);
                         }
-                    } else if (gap >= 35) {
+                    } else if (gap >= 45) {
                         // Wide gap (Open inside)
                         if (isDeep) {
                             // Covered deep: easy singles/doubles, low boundary
-                            probs["1"] += 15;
-                            probs["2"] += 8;
-                            probs["DOT"] = Math.max(2, probs["DOT"] - 10);
-                            probs["4"] = Math.max(1, probs["4"] - 6);
-                            probs["W"] = Math.max(0.5, probs["W"] - 3);
+                            probs["1"] += 6;
+                            probs["2"] += 2;
+                            probs["DOT"] = Math.max(5, probs["DOT"] - 4);
+                            probs["4"] = Math.max(1, probs["4"] - 2);
                         } else {
                             // Open deep: boundary bonanza, low wicket
-                            probs["4"] += 12;
-                            probs["6"] += 6;
-                            probs["DOT"] = Math.max(2, probs["DOT"] - 8);
-                            probs["W"] = Math.max(0.5, probs["W"] - 4);
+                            probs["4"] += 4;
+                            probs["6"] += 2;
+                            probs["DOT"] = Math.max(5, probs["DOT"] - 4);
+                            probs["W"] = Math.max(0.5, probs["W"] - 1);
                         }
                     } else {
-                        // Moderate gap
-                        if (isDeep) {
-                            probs["1"] += 5;
-                            probs["DOT"] += 3;
-                        } else {
-                            probs["2"] += 4;
-                            probs["4"] += 3;
-                        }
+                        // Moderate gap (28 to 44 degrees): no adjustments, keep natural base ratings differences
                     }
                 }
             }
@@ -1500,27 +1497,36 @@ class MatchManager {
         });
         this.opener2Select.selectedIndex = 1;
         this.validateOpeners();
-        
-        this.startMatchBtn.onclick = () => {
-            this.openersScreen.classList.add("hidden");
-            this.matchScreen.classList.remove("hidden");
+    }
 
-            const state2 = this.inningsList[1];
-            const op1Idx = parseInt(this.opener1Select.value);
-            const op2Idx = parseInt(this.opener2Select.value);
-            state2.striker = state2.battingTeam[op1Idx];
-            state2.nonStriker = state2.battingTeam[op2Idx];
-            state2.striker.hasBatted = true;
-            state2.nonStriker.hasBatted = true;
+    handleStartMatchBtnClick() {
+        const state = this.getCurrentState();
+        if (!state) {
+            this.startInnings();
+        } else if (this.currentInningsIndex === 1 && !state.striker) {
+            this.startSecondInningsAfterSelection();
+        }
+    }
 
-            state2.striker.mentality = document.getElementById("opener-1-mentality").value;
-            state2.nonStriker.mentality = document.getElementById("opener-2-mentality").value;
+    startSecondInningsAfterSelection() {
+        this.openersScreen.classList.add("hidden");
+        this.matchScreen.classList.remove("hidden");
 
-            this.logCommentary("Innings 2", `Innings 2 starts. Target is ${state2.target}. Openers: ${state2.striker.name} with ${state2.striker.mentality.toUpperCase()} & ${state2.nonStriker.name} with ${state2.nonStriker.mentality.toUpperCase()} mentality.`, "welcome");
-            this.updateUI();
-            this.drawField();
-            this.triggerBowlerSelection();
-        };
+        const state2 = this.inningsList[1];
+        const op1Idx = parseInt(this.opener1Select.value);
+        const op2Idx = parseInt(this.opener2Select.value);
+        state2.striker = state2.battingTeam[op1Idx];
+        state2.nonStriker = state2.battingTeam[op2Idx];
+        state2.striker.hasBatted = true;
+        state2.nonStriker.hasBatted = true;
+
+        state2.striker.mentality = document.getElementById("opener-1-mentality").value;
+        state2.nonStriker.mentality = document.getElementById("opener-2-mentality").value;
+
+        this.logCommentary("Innings 2", `Innings 2 starts. Target is ${state2.target}. Openers: ${state2.striker.name} with ${state2.striker.mentality.toUpperCase()} & ${state2.nonStriker.name} with ${state2.nonStriker.mentality.toUpperCase()} mentality.`, "welcome");
+        this.updateUI();
+        this.drawField();
+        this.triggerBowlerSelection();
     }
 
     setupNextTestInnings() {
@@ -2449,9 +2455,9 @@ class MatchManager {
             const isDeepCovered = f1DistCenter > 160 || f2DistCenter > 160;
 
             let statusClass = "closed";
-            if (gap >= 35) {
+            if (gap >= 45) {
                 statusClass = "open";
-            } else if (gap >= 25) {
+            } else if (gap >= 28) {
                 statusClass = "partial";
             }
 
