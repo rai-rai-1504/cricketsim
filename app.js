@@ -2953,13 +2953,11 @@ class MatchManager {
         this.processBallOutcome(outcome);
     }
 
-    closeDrsVisualizer() {
-        this.drsModal.classList.add("hidden");
 
-        const outcome = this.resolvedDRSOutcome;
     // =========================================================
     // 3D WEBGL GRAPHICS (THREE.JS) - HIGH HIGH GRAPHICS
     // =========================================================
+
 
     toggle3DView() {
         this.is3DViewActive = !this.is3DViewActive;
