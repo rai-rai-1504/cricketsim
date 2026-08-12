@@ -160,6 +160,7 @@ class InningsState {
         this.wickets = 0;
         this.ballsBowled = 0;
         this.freeHit = false;
+        this.partnershipRuns = 0;
         
         this.striker = null;
         this.nonStriker = null;
@@ -186,7 +187,7 @@ class MatchManager {
 
         this.inningsList = [];
         this.currentInningsIndex = 0;
-        this.autoplayInterval = null;
+        this.isSimulatingMatch = false;
         this.isAnimating = false;
         
         this.initDOM();
@@ -245,9 +246,9 @@ class MatchManager {
         this.bowlerOversLeftUI = document.getElementById("active-bowler-overs-left");
 
         // Action Buttons
+        this.simPlayBtn = document.getElementById("sim-play-btn");
         this.simBallBtn = document.getElementById("sim-ball-btn");
         this.simOverBtn = document.getElementById("sim-over-btn");
-        this.autoplayBtn = document.getElementById("autoplay-btn");
         this.clearCommentaryBtn = document.getElementById("clear-commentary");
         this.commentaryFeed = document.getElementById("commentary-feed");
 
@@ -297,9 +298,9 @@ class MatchManager {
 
         this.startMatchBtn.addEventListener("click", () => this.startInnings());
 
+        this.simPlayBtn.addEventListener("click", () => this.toggleMatchSimulation());
         this.simBallBtn.addEventListener("click", () => this.simulateBallCall());
         this.simOverBtn.addEventListener("click", () => this.simulateOverCall());
-        this.autoplayBtn.addEventListener("click", () => this.toggleAutoplay());
 
         this.clearCommentaryBtn.addEventListener("click", () => {
             this.commentaryFeed.innerHTML = '<div class="commentary-ball-item welcome"><span class="tag">System</span> Logs cleared.</div>';
@@ -472,6 +473,14 @@ class MatchManager {
         state.striker.hasBatted = true;
         state.nonStriker.hasBatted = true;
 
+        if (state.isUserBatting) {
+            state.striker.mentality = document.getElementById("opener-1-mentality").value;
+            state.nonStriker.mentality = document.getElementById("opener-2-mentality").value;
+        } else {
+            state.striker.mentality = "normal";
+            state.nonStriker.mentality = "normal";
+        }
+
         this.logCommentary("Match", `Match starts! Format: ${this.format} | Pitch: ${this.pitch.toUpperCase()}`, "welcome");
         this.logCommentary("Toss", `${this.userWonToss ? 'You' : 'Opponent'} won the toss and elected to ${this.userBatsFirst ? 'Bat' : 'Bowl'} first.`, "welcome");
         this.logCommentary("Innings", `Innings 1: ${state.teamName} starts batting. Openers: ${state.striker.name} & ${state.nonStriker.name}.`, "welcome");
@@ -502,33 +511,33 @@ class MatchManager {
         const fielderFill = state.isUserBatting ? bowlColor : batColor;
 
         // Render Batsmen
-        // Striker at bottom (300, 360), Non-striker at top (300, 240)
+        // Striker at top (300, 240), Non-striker at bottom (300, 360)
         this.svgBatsmen.innerHTML = `
             <!-- Striker -->
-            <g transform="translate(300, 360)">
+            <g transform="translate(300, 240)">
                 <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5" class="pulsate-node" />
                 <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">${state.striker ? this.getInitials(state.striker.name) : 'STR'}*</text>
             </g>
             <!-- Non Striker -->
-            <g transform="translate(300, 240)">
+            <g transform="translate(300, 360)">
                 <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5" />
                 <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">${state.nonStriker ? this.getInitials(state.nonStriker.name) : 'NON'}</text>
             </g>
         `;
 
-        // Render Fielders at standard coordinates
+        // Render Fielders at inverted standard coordinates
         const fielderPositions = [
-            { name: "Keeper", x: 300, y: 395 },
-            { name: "Bowler", x: 300, y: 220 },
-            { name: "First Slip", x: 325, y: 375 },
-            { name: "Point", x: 420, y: 350 },
-            { name: "Cover", x: 390, y: 275 },
-            { name: "Mid Off", x: 340, y: 195 },
-            { name: "Mid On", x: 260, y: 195 },
-            { name: "Mid Wicket", x: 210, y: 275 },
-            { name: "Square Leg", x: 180, y: 350 },
-            { name: "Fine Leg", x: 245, y: 395 },
-            { name: "Third Man", x: 420, y: 440 }
+            { name: "Keeper", x: 300, y: 205 },
+            { name: "Bowler", x: 300, y: 380 },
+            { name: "First Slip", x: 325, y: 225 },
+            { name: "Point", x: 420, y: 250 },
+            { name: "Cover", x: 390, y: 325 },
+            { name: "Mid Off", x: 340, y: 405 },
+            { name: "Mid On", x: 260, y: 405 },
+            { name: "Mid Wicket", x: 210, y: 325 },
+            { name: "Square Leg", x: 180, y: 250 },
+            { name: "Fine Leg", x: 245, y: 205 },
+            { name: "Third Man", x: 420, y: 160 }
         ];
 
         let fieldersHTML = "";
@@ -677,23 +686,23 @@ class MatchManager {
 
         // SVG animation values
         let targetX = 300;
-        let targetY = 385; // Default keeper
+        let targetY = 205; // Default keeper
         let animType = "DOT";
 
         if (result === "WIDE" || result === "NO BALL") {
             animType = "EXTRA";
             targetX = result === "WIDE" ? 275 : 300;
-            targetY = 360;
+            targetY = 240;
         } else if (result === "W") {
             animType = "WICKET";
             const catchOut = Math.random() > 0.4;
             if (catchOut) {
-                // flies to a fielder
+                // flies to a fielder (inverted positions)
                 const positions = [
-                    { x: 325, y: 375 }, // Slip
-                    { x: 420, y: 350 }, // Point
-                    { x: 390, y: 275 }, // Cover
-                    { x: 210, y: 275 }  // Mid Wicket
+                    { x: 325, y: 225 }, // Slip
+                    { x: 420, y: 250 }, // Point
+                    { x: 390, y: 325 }, // Cover
+                    { x: 210, y: 325 }  // Mid Wicket
                 ];
                 const selectedPos = positions[Math.floor(Math.random() * positions.length)];
                 targetX = selectedPos.x;
@@ -701,12 +710,12 @@ class MatchManager {
             } else {
                 // bowled
                 targetX = 300;
-                targetY = 364; // hits stumps
+                targetY = 236; // hits top stumps
             }
         } else if (result === "DOT") {
             animType = "DOT";
             targetX = 300;
-            targetY = 395; // wicket keeper
+            targetY = 205; // wicket keeper
         } else {
             // runs
             const runs = parseInt(result);
@@ -728,14 +737,14 @@ class MatchManager {
     animateBall(targetX, targetY, type, callback) {
         this.svgBall.style.display = "block";
         
-        // Bowler coordinate is (300, 220)
-        // Strikers coordinate is (300, 360)
+        // Bowler starts delivery at bottom (300, 380)
+        // Striker stands at top (300, 240)
         this.svgBall.setAttribute("cx", 300);
-        this.svgBall.setAttribute("cy", 220);
+        this.svgBall.setAttribute("cy", 380);
         this.svgBall.setAttribute("r", 5.5);
 
-        // Step 1: Bowl to striker (250ms)
-        this.animateElement(this.svgBall, { cy: 360 }, 250, () => {
+        // Step 1: Bowl to striker at y=240 (250ms)
+        this.animateElement(this.svgBall, { cy: 240 }, 250, () => {
             // Step 2: Hit to target (350ms)
             let duration = 350;
             let animProps = { cx: targetX, cy: targetY };
@@ -745,7 +754,7 @@ class MatchManager {
                 let steps = 15;
                 let currentStep = 0;
                 const startX = 300;
-                const startY = 360;
+                const startY = 240;
 
                 const arcInterval = setInterval(() => {
                     currentStep++;
@@ -856,6 +865,7 @@ class MatchManager {
         if (result === "WIDE") {
             state.totalRuns += 1;
             state.runsThisOver += 1;
+            state.partnershipRuns += 1; // Increment partnership
             state.overEvents.push("Wd");
             state.recentBalls.push("Wd");
             commentaryMsg = "Wide ball down the leg side, extra run conceded.";
@@ -863,6 +873,7 @@ class MatchManager {
         } else if (result === "NO BALL") {
             state.totalRuns += 1;
             state.runsThisOver += 1;
+            state.partnershipRuns += 1; // Increment partnership
             state.freeHit = true;
             state.overEvents.push("Nb");
             state.recentBalls.push("Nb");
@@ -885,6 +896,7 @@ class MatchManager {
                 state.wickets += 1;
                 state.striker.isOut = true;
                 state.currentBowler.wickets += 1;
+                state.partnershipRuns = 0; // Reset partnership on wicket down
                 state.overEvents.push("W");
                 state.recentBalls.push("W");
                 
@@ -895,6 +907,7 @@ class MatchManager {
                 const runs = parseInt(result);
                 state.totalRuns += runs;
                 state.runsThisOver += runs;
+                state.partnershipRuns += runs; // Increment partnership
                 
                 state.striker.runsScored += runs;
                 state.currentBowler.runsConceded += runs;
@@ -955,8 +968,8 @@ class MatchManager {
         this.isAnimating = false;
         this.disableActions(false);
 
-        // Autoplay check
-        if (this.autoplayInterval) {
+        // Continuous simulation check
+        if (this.isSimulatingMatch) {
             this.autoplayTimer = setTimeout(() => this.simulateBallCall(), 1500);
         }
     }
@@ -1007,17 +1020,14 @@ class MatchManager {
         const state = this.getCurrentState();
         if (!state) return;
 
-        // If AI is bowling, make selection automatically
-        if (!state.isUserBatting) {
+        // If User is batting (AI is bowling), select bowler automatically
+        if (state.isUserBatting) {
             this.selectAIBowler();
             return;
         }
 
-        this.autoplayBtn.classList.remove("active");
-        if (this.autoplayInterval) {
-            clearInterval(this.autoplayInterval);
-            this.autoplayInterval = null;
-        }
+        // User is bowling: Pause simulation to select bowler
+        this.pauseMatchSimulation("Select Bowler");
 
         this.modalOverNumber.textContent = Math.floor(state.ballsBowled / 6) + 1;
         this.bowlerSelectionTbody.innerHTML = "";
@@ -1029,7 +1039,7 @@ class MatchManager {
             return !consec && !t20Limit;
         });
 
-        // If no bowler available (should rarely happen), allow any except last
+        // If no bowler available, allow any except last
         const selectionList = available.length > 0 ? available : state.bowlingTeam.filter(p => p !== state.lastBowler);
 
         selectionList.forEach((p, index) => {
@@ -1060,25 +1070,88 @@ class MatchManager {
                 
                 this.isAnimating = false;
                 this.disableActions(false);
+
+                // Resume auto-simulation if active
+                if (this.isSimulatingMatch) {
+                    this.autoplayTimer = setTimeout(() => this.simulateBallCall(), 1500);
+                }
             });
         });
     }
 
-    selectAIBowler() {
-        const state = this.getCurrentState();
-        // Choose best bowler sorted by rating who hasn't exceeded limits
+    getStrategicAIBowler(state) {
+        // Respect consecutive overs and over caps (T20 max 4 overs, or 24 balls)
         const available = state.bowlingTeam.filter(p => {
             const consec = p === state.lastBowler;
             const t20Limit = this.format === "T20" && (p.ballsBowled >= 24);
             return !consec && !t20Limit;
         });
 
-        const choiceList = available.length > 0 ? available : state.bowlingTeam.filter(p => p !== state.lastBowler);
-        // Sort by bowling skill
-        const selected = choiceList.sort((a,b) => b.bowling - a.bowling)[0];
+        if (available.length === 0) {
+            return state.bowlingTeam.find(p => p !== state.lastBowler) || state.bowlingTeam[0];
+        }
+
+        const overNum = Math.floor(state.ballsBowled / 6) + 1;
+
+        // 1. Partnership Breaker Override (runs >= 35)
+        if (state.partnershipRuns >= 35) {
+            const bestBowler = [...available].sort((a,b) => b.bowling - a.bowling)[0];
+            return bestBowler;
+        }
+
+        if (this.format === "T20") {
+            // 2. Powerplay (Overs 1-6)
+            if (overNum <= 6) {
+                const sortedBowlers = [...state.bowlingTeam].sort((a,b) => b.bowling - a.bowling);
+                const openersList = sortedBowlers.slice(0, 3);
+                
+                const availableOpeners = available.filter(p => openersList.includes(p));
+                if (availableOpeners.length > 0) {
+                    return availableOpeners.sort((a,b) => a.ballsBowled - b.ballsBowled)[0];
+                }
+            }
+
+            // 3. Death Overs (Overs 16-20)
+            if (overNum >= 16) {
+                const sortedBowlers = [...state.bowlingTeam].sort((a,b) => b.bowling - a.bowling);
+                const deathSpecialists = sortedBowlers.slice(0, 2);
+                
+                const availableDeath = available.filter(p => deathSpecialists.includes(p));
+                if (availableDeath.length > 0) {
+                    return availableDeath.sort((a,b) => a.ballsBowled - b.ballsBowled)[0];
+                }
+            }
+
+            // 4. Middle Overs (Overs 7-15)
+            // Use secondary/supporting bowlers (ratings rank 4 to 8) to preserve opening/death bowlers
+            const sortedBowlers = [...state.bowlingTeam].sort((a,b) => b.bowling - a.bowling);
+            const midSpecialists = sortedBowlers.slice(3, 8);
+            
+            const availableMid = available.filter(p => midSpecialists.includes(p));
+            if (availableMid.length > 0) {
+                return availableMid.sort((a,b) => a.ballsBowled - b.ballsBowled)[0];
+            }
+        } else {
+            // Test Match bowler rotation
+            const sortedBowlers = [...state.bowlingTeam].sort((a,b) => b.bowling - a.bowling);
+            const mainBowlers = sortedBowlers.slice(0, 5);
+            const availableMain = available.filter(p => mainBowlers.includes(p));
+            
+            if (availableMain.length > 0) {
+                return availableMain.sort((a,b) => a.ballsBowled - b.ballsBowled)[0];
+            }
+        }
+
+        // Fallback: choose highest rated bowler
+        return [...available].sort((a,b) => b.bowling - a.bowling)[0];
+    }
+
+    selectAIBowler() {
+        const state = this.getCurrentState();
+        const selected = this.getStrategicAIBowler(state);
         
         state.currentBowler = selected;
-        this.logCommentary("AI Bowling Change", `${state.currentBowler.name} is chosen by opponent coach to bowl.`, "welcome");
+        this.logCommentary("AI Bowling Change", `Opponent coach brings on ${state.currentBowler.name} to bowl.`, "welcome");
         
         this.updateUI();
         this.drawField();
@@ -1086,8 +1159,8 @@ class MatchManager {
         this.isAnimating = false;
         this.disableActions(false);
 
-        // Resume autoplay if enabled
-        if (this.autoplayInterval) {
+        // Resume continuous simulation if enabled
+        if (this.isSimulatingMatch) {
             this.autoplayTimer = setTimeout(() => this.simulateBallCall(), 1500);
         }
     }
@@ -1098,11 +1171,7 @@ class MatchManager {
 
         // If AI is batting, select next batsman automatically
         if (state.isUserBatting) {
-            this.autoplayBtn.classList.remove("active");
-            if (this.autoplayInterval) {
-                clearInterval(this.autoplayInterval);
-                this.autoplayInterval = null;
-            }
+            this.pauseMatchSimulation("Wicket Down");
 
             this.batsmanSelectionTbody.innerHTML = "";
             const unbatted = state.battingTeam.filter(p => !p.hasBatted && !p.isOut);
@@ -1112,7 +1181,13 @@ class MatchManager {
                 tr.innerHTML = `
                     <td><strong>${p.name}</strong></td>
                     <td>${p.batting}</td>
-                    <td>${p.bowling}</td>
+                    <td>
+                        <select class="player-dropdown modal-mentality-select" style="width: auto; padding: 6px;">
+                            <option value="defensive">Defensive</option>
+                            <option value="normal" selected>Balanced</option>
+                            <option value="attack">Aggressive</option>
+                        </select>
+                    </td>
                     <td><button class="btn btn-primary select-bat-btn" data-idx="${state.battingTeam.indexOf(p)}">Walk In</button></td>
                 `;
                 this.batsmanSelectionTbody.appendChild(tr);
@@ -1125,11 +1200,15 @@ class MatchManager {
                 btn.addEventListener("click", (e) => {
                     const idx = parseInt(e.currentTarget.dataset.idx);
                     const selected = state.battingTeam[idx];
+                    
+                    const selectEl = e.currentTarget.closest("tr").querySelector(".modal-mentality-select");
+                    selected.mentality = selectEl.value;
+
                     selected.hasBatted = true;
                     state.striker = selected;
                     
                     this.batsmanModal.classList.add("hidden");
-                    this.logCommentary("Select Batter", `${state.striker.name} walks out to the crease under pressure.`, "welcome");
+                    this.logCommentary("Select Batter", `${state.striker.name} walks out to the crease under pressure with ${selected.mentality.toUpperCase()} mentality.`, "welcome");
                     this.updateUI();
                     this.drawField();
 
@@ -1143,6 +1222,7 @@ class MatchManager {
             const selected = unbatted.sort((a,b) => b.batting - a.batting)[0];
             
             selected.hasBatted = true;
+            selected.mentality = "normal";
             state.striker = selected;
             
             this.logCommentary("AI Batting Change", `${state.striker.name} comes in next to bat.`, "welcome");
@@ -1153,8 +1233,8 @@ class MatchManager {
             this.isAnimating = false;
             this.disableActions(false);
 
-            // Resume autoplay if enabled
-            if (this.autoplayInterval) {
+            // Resume continuous simulation if enabled
+            if (this.isSimulatingMatch) {
                 this.autoplayTimer = setTimeout(() => this.simulateBallCall(), 1500);
             }
         }
@@ -1169,11 +1249,7 @@ class MatchManager {
         state.isCompleted = true;
         this.logCommentary("Innings Complete", `Innings complete! ${state.teamName} finish with ${state.totalRuns}/${state.wickets}.`, "over-conclusion-item");
 
-        if (this.autoplayInterval) {
-            clearInterval(this.autoplayInterval);
-            this.autoplayInterval = null;
-            this.autoplayBtn.classList.remove("active");
-        }
+        this.pauseMatchSimulation("Innings Completed");
 
         if (this.format === "T20") {
             if (this.currentInningsIndex === 0) {
@@ -1247,7 +1323,10 @@ class MatchManager {
             state2.striker.hasBatted = true;
             state2.nonStriker.hasBatted = true;
 
-            this.logCommentary("Innings 2", `Innings 2 starts. Target is ${state2.target}. Openers: ${state2.striker.name} & ${state2.nonStriker.name}.`, "welcome");
+            state2.striker.mentality = document.getElementById("opener-1-mentality").value;
+            state2.nonStriker.mentality = document.getElementById("opener-2-mentality").value;
+
+            this.logCommentary("Innings 2", `Innings 2 starts. Target is ${state2.target}. Openers: ${state2.striker.name} with ${state2.striker.mentality.toUpperCase()} & ${state2.nonStriker.name} with ${state2.nonStriker.mentality.toUpperCase()} mentality.`, "welcome");
             this.updateUI();
             this.drawField();
             this.triggerBowlerSelection();
@@ -1481,10 +1560,42 @@ class MatchManager {
             this.recentBallsUI.appendChild(span);
         });
 
-        // BATTING LIVE CARD (RIGHT SIDE)
+        // BATTING LIVE CARD (RIGHT SIDE) & MENTALITY LOCKS
         if (state.striker) {
             this.uiStrikerName.textContent = state.striker.name;
             this.uiStrikerScore.textContent = `${state.striker.runsScored}*(${state.striker.ballsFaced})`;
+
+            // Mentality locks (50 balls faced threshold)
+            const isLocked = state.striker.ballsFaced < 50;
+            const lockLabel = document.getElementById("mentality-lock-label");
+            
+            if (!state.isUserBatting) {
+                lockLabel.textContent = "(Locked: Opponent Batting)";
+                document.getElementById("btn-tactic-defensive").disabled = true;
+                document.getElementById("btn-tactic-normal").disabled = true;
+                document.getElementById("btn-tactic-attack").disabled = true;
+            } else {
+                if (isLocked) {
+                    lockLabel.textContent = `(Locked: faced ${state.striker.ballsFaced}/50 balls)`;
+                    document.getElementById("btn-tactic-defensive").disabled = true;
+                    document.getElementById("btn-tactic-normal").disabled = true;
+                    document.getElementById("btn-tactic-attack").disabled = true;
+                } else {
+                    lockLabel.textContent = "(Unlocked!)";
+                    document.getElementById("btn-tactic-defensive").disabled = false;
+                    document.getElementById("btn-tactic-normal").disabled = false;
+                    document.getElementById("btn-tactic-attack").disabled = false;
+                }
+            }
+
+            // Sync active button classes
+            document.querySelectorAll(".mentality-btn").forEach(btn => {
+                if (btn.dataset.mentality === state.striker.mentality) {
+                    btn.classList.add("active");
+                } else {
+                    btn.classList.remove("active");
+                }
+            });
         }
         if (state.nonStriker) {
             this.uiNonstrikerName.textContent = state.nonStriker.name;
@@ -1566,13 +1677,25 @@ class MatchManager {
     }
 
     disableActions(disabled) {
+        if (this.isSimulatingMatch) {
+            this.simPlayBtn.disabled = false;
+            this.simBallBtn.disabled = true;
+            this.simOverBtn.disabled = true;
+            this.simBallBtn.style.opacity = 0.5;
+            this.simOverBtn.style.opacity = 0.5;
+            return;
+        }
+
+        this.simPlayBtn.disabled = disabled;
         this.simBallBtn.disabled = disabled;
         this.simOverBtn.disabled = disabled;
         
         if (disabled) {
+            this.simPlayBtn.style.opacity = 0.5;
             this.simBallBtn.style.opacity = 0.5;
             this.simOverBtn.style.opacity = 0.5;
         } else {
+            this.simPlayBtn.style.opacity = 1;
             this.simBallBtn.style.opacity = 1;
             this.simOverBtn.style.opacity = 1;
         }
@@ -1618,22 +1741,41 @@ class MatchManager {
         }, 300);
     }
 
-    toggleAutoplay() {
-        if (this.autoplayInterval) {
-            // Stop Autoplay
-            clearInterval(this.autoplayInterval);
-            if (this.autoplayTimer) clearTimeout(this.autoplayTimer);
-            this.autoplayInterval = null;
-            this.autoplayBtn.classList.remove("active");
-            this.autoplayBtn.innerHTML = '<i class="fa-solid fa-angles-right"></i> Auto-Play';
-            this.logCommentary("System", "Autoplay stopped.", "welcome");
+    toggleMatchSimulation() {
+        if (this.isSimulatingMatch) {
+            this.pauseMatchSimulation("Paused by user");
         } else {
-            // Start Autoplay
-            this.autoplayInterval = true;
-            this.autoplayBtn.classList.add("active");
-            this.autoplayBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
-            this.logCommentary("System", "Autoplay started. Simulation running...", "welcome");
-            this.simulateBallCall();
+            this.startMatchSimulation();
+        }
+    }
+
+    startMatchSimulation() {
+        const state = this.getCurrentState();
+        if (!state || state.isCompleted) return;
+
+        this.isSimulatingMatch = true;
+        this.simPlayBtn.classList.add("active");
+        this.simPlayBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause Simulation';
+        this.logCommentary("System", "Continuous simulation started.", "welcome");
+
+        this.disableActions(true);
+        this.simulateBallCall();
+    }
+
+    pauseMatchSimulation(reason = "") {
+        this.isSimulatingMatch = false;
+        this.simPlayBtn.classList.remove("active");
+        this.simPlayBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Simulation';
+
+        if (this.autoplayTimer) {
+            clearTimeout(this.autoplayTimer);
+            this.autoplayTimer = null;
+        }
+
+        this.disableActions(false);
+
+        if (reason) {
+            this.logCommentary("System", `Simulation paused: ${reason}`, "welcome");
         }
     }
 

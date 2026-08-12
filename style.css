@@ -1194,3 +1194,23 @@ select:focus {
 .summary-actions button {
     max-width: 300px;
 }
+
+/* Mentality Locking Styles */
+.lock-label {
+    font-size: 0.72rem;
+    color: var(--color-gold);
+    font-weight: normal;
+    text-transform: none;
+    margin-left: 8px;
+    letter-spacing: 0px;
+    opacity: 0.85;
+}
+
+.mentality-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.25) !important;
+    color: var(--text-secondary) !important;
+    border: 1px dashed var(--border-color) !important;
+    pointer-events: none;
+}

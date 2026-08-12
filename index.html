@@ -93,13 +93,23 @@
                 <div class="opener-selector">
                     <h3>First Opener</h3>
                     <select id="opener-1" class="player-dropdown"></select>
-                    <div id="opener-1-stats" class="player-mini-stats"></div>
+                    <select id="opener-1-mentality" class="player-dropdown mentality-select" style="margin-top: 5px;">
+                        <option value="defensive">Defensive Mentality</option>
+                        <option value="normal" selected>Balanced Mentality</option>
+                        <option value="attack">Aggressive Mentality</option>
+                    </select>
+                    <div id="opener-1-stats" class="player-mini-stats" style="margin-top: 8px;"></div>
                 </div>
                 <div class="opener-separator"><i class="fa-solid fa-hands-clapping"></i></div>
                 <div class="opener-selector">
                     <h3>Second Opener</h3>
                     <select id="opener-2" class="player-dropdown"></select>
-                    <div id="opener-2-stats" class="player-mini-stats"></div>
+                    <select id="opener-2-mentality" class="player-dropdown mentality-select" style="margin-top: 5px;">
+                        <option value="defensive">Defensive Mentality</option>
+                        <option value="normal" selected>Balanced Mentality</option>
+                        <option value="attack">Aggressive Mentality</option>
+                    </select>
+                    <div id="opener-2-stats" class="player-mini-stats" style="margin-top: 8px;"></div>
                 </div>
             </div>
             <button id="start-match-btn" class="btn btn-primary btn-large">Start Innings</button>
@@ -274,15 +284,15 @@
 
                     <!-- Mentality Selection -->
                     <div class="tactic-section">
-                        <h4>Batting Mentality</h4>
+                        <h4>Batting Mentality <span id="mentality-lock-label" class="lock-label">(Locked: faced 0/50 balls)</span></h4>
                         <div class="mentality-toggle">
-                            <button class="mentality-btn btn-tactic" data-mentality="defensive">
+                            <button class="mentality-btn btn-tactic" id="btn-tactic-defensive" data-mentality="defensive">
                                 <i class="fa-solid fa-shield-halved"></i> Defensive
                             </button>
-                            <button class="mentality-btn btn-tactic active" data-mentality="normal">
+                            <button class="mentality-btn btn-tactic active" id="btn-tactic-normal" data-mentality="normal">
                                 <i class="fa-solid fa-gavel"></i> Balanced
                             </button>
-                            <button class="mentality-btn btn-tactic" data-mentality="attack">
+                            <button class="mentality-btn btn-tactic" id="btn-tactic-attack" data-mentality="attack">
                                 <i class="fa-solid fa-fire"></i> Aggressive
                             </button>
                         </div>
@@ -299,16 +309,16 @@
 
                     <!-- Action buttons -->
                     <div class="action-buttons-group">
-                        <button id="sim-ball-btn" class="btn btn-primary btn-large">
-                            <i class="fa-solid fa-play"></i> Bowl Ball
+                        <button id="sim-play-btn" class="btn btn-primary btn-large">
+                            <i class="fa-solid fa-play"></i> Start Simulation
                         </button>
                         
                         <div class="sub-actions">
+                            <button id="sim-ball-btn" class="btn btn-secondary">
+                                <i class="fa-solid fa-baseball-bat-ball"></i> Bowl Ball
+                            </button>
                             <button id="sim-over-btn" class="btn btn-secondary">
                                 <i class="fa-solid fa-forward-step"></i> Bowl Over
-                            </button>
-                            <button id="autoplay-btn" class="btn btn-secondary">
-                                <i class="fa-solid fa-angles-right"></i> Auto-Play
                             </button>
                         </div>
                     </div>
@@ -368,7 +378,7 @@
                             <tr>
                                 <th>Batsman</th>
                                 <th>Batting Rating</th>
-                                <th>Bowling Rating</th>
+                                <th>Initial Mentality</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
