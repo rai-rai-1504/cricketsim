@@ -1214,3 +1214,18 @@ select:focus {
     border: 1px dashed var(--border-color) !important;
     pointer-events: none;
 }
+
+.panel-right {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.recent-divider {
+    width: 2px;
+    height: 18px;
+    background-color: var(--border-color);
+    margin: 4px 6px;
+    border-radius: 1px;
+    align-self: center;
+}

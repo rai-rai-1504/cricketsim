@@ -134,8 +134,13 @@
                     <div id="chase-details-ui" class="chase-status">
                         <!-- Target/Required runs info -->
                     </div>
-                    <div class="innings-label">
-                        <span id="match-status-label">1st Innings</span>
+                    <div class="header-right-controls" style="display: flex; align-items: center; gap: 15px;">
+                        <button id="sim-play-btn" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem; height: 36px; white-space: nowrap;">
+                            <i class="fa-solid fa-play"></i> Start Simulation
+                        </button>
+                        <div class="innings-label">
+                            <span id="match-status-label">1st Innings</span>
+                        </div>
                     </div>
                 </div>
                 <div class="recent-balls-container">
@@ -262,84 +267,86 @@
                 </div>
 
                 <!-- Right: Tactical Controls & Settings -->
-                <div class="dashboard-panel panel-controls glass-card">
-                    <div class="panel-header">
-                        <h3><i class="fa-solid fa-gamepad"></i> Coach Tactical Box</h3>
-                        <span id="active-bowler-overs-left" class="badge bg-secondary">Bowler: Ready</span>
+                <div class="dashboard-panel panel-right">
+                    <!-- Coach Tactical Box -->
+                    <div class="glass-card panel-controls" style="margin-bottom: 20px;">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-gamepad"></i> Coach Tactical Box</h3>
+                            <span id="active-bowler-overs-left" class="badge bg-secondary">Bowler: Ready</span>
+                        </div>
+
+                        <!-- Current Batsmen Focus Stats Card -->
+                        <div class="batsmen-live-card">
+                            <div class="batsman-stat-row active-striker" id="ui-striker-card">
+                                <span class="indicator"><i class="fa-solid fa-circle-dot"></i></span>
+                                <span class="player-name" id="ui-striker-name">Batsman 1</span>
+                                <span class="player-score" id="ui-striker-score">0*(0)</span>
+                            </div>
+                            <div class="batsman-stat-row" id="ui-nonstriker-card">
+                                <span class="indicator"><i class="fa-solid fa-circle"></i></span>
+                                <span class="player-name" id="ui-nonstriker-name">Batsman 2</span>
+                                <span class="player-score" id="ui-nonstriker-score">0(0)</span>
+                            </div>
+                        </div>
+
+                        <!-- Mentality Selection -->
+                        <div class="tactic-section">
+                            <h4>Batting Mentality <span id="mentality-lock-label" class="lock-label">(Locked: faced 0/50 balls)</span></h4>
+                            <div class="mentality-toggle">
+                                <button class="mentality-btn btn-tactic" id="btn-tactic-defensive" data-mentality="defensive">
+                                    <i class="fa-solid fa-shield-halved"></i> Defensive
+                                </button>
+                                <button class="mentality-btn btn-tactic active" id="btn-tactic-normal" data-mentality="normal">
+                                    <i class="fa-solid fa-gavel"></i> Balanced
+                                </button>
+                                <button class="mentality-btn btn-tactic" id="btn-tactic-attack" data-mentality="attack">
+                                    <i class="fa-solid fa-fire"></i> Aggressive
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bowler current status card -->
+                        <div class="bowler-live-card" id="ui-bowler-card-container">
+                            <div class="label"><i class="fa-solid fa-baseball"></i> Active Bowler</div>
+                            <div class="bowler-info">
+                                <span class="name" id="ui-bowler-name">Bowler Name</span>
+                                <span class="stats" id="ui-bowler-stats">0.0 - 0 - 0 - 0</span>
+                            </div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="action-buttons-group">
+                            <div class="sub-actions" style="grid-template-columns: 1fr 1fr; width: 100%;">
+                                <button id="sim-ball-btn" class="btn btn-secondary">
+                                    <i class="fa-solid fa-baseball-bat-ball"></i> Bowl Ball
+                                </button>
+                                <button id="sim-over-btn" class="btn btn-secondary">
+                                    <i class="fa-solid fa-forward-step"></i> Bowl Over
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Current Batsmen Focus Stats Card -->
-                    <div class="batsmen-live-card">
-                        <div class="batsman-stat-row active-striker" id="ui-striker-card">
-                            <span class="indicator"><i class="fa-solid fa-circle-dot"></i></span>
-                            <span class="player-name" id="ui-striker-name">Batsman 1</span>
-                            <span class="player-score" id="ui-striker-score">0*(0)</span>
+                    <!-- Over Commentary Box -->
+                    <div class="glass-card panel-over-commentary">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-comment-dots"></i> Over Commentary</h3>
+                            <button id="clear-commentary" class="btn-icon" title="Clear log" style="font-size: 0.9rem;"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                        <div class="batsman-stat-row" id="ui-nonstriker-card">
-                            <span class="indicator"><i class="fa-solid fa-circle"></i></span>
-                            <span class="player-name" id="ui-nonstriker-name">Batsman 2</span>
-                            <span class="player-score" id="ui-nonstriker-score">0(0)</span>
+                        <div id="commentary-feed" class="commentary-feed" style="max-height: 200px; min-height: 140px;">
+                            <div class="commentary-ball-item welcome">
+                                <span class="tag">System</span> Welcome to Cricket Sim Pro! Press "Bowl Ball" or "Start Simulation" to start.
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Mentality Selection -->
-                    <div class="tactic-section">
-                        <h4>Batting Mentality <span id="mentality-lock-label" class="lock-label">(Locked: faced 0/50 balls)</span></h4>
-                        <div class="mentality-toggle">
-                            <button class="mentality-btn btn-tactic" id="btn-tactic-defensive" data-mentality="defensive">
-                                <i class="fa-solid fa-shield-halved"></i> Defensive
-                            </button>
-                            <button class="mentality-btn btn-tactic active" id="btn-tactic-normal" data-mentality="normal">
-                                <i class="fa-solid fa-gavel"></i> Balanced
-                            </button>
-                            <button class="mentality-btn btn-tactic" id="btn-tactic-attack" data-mentality="attack">
-                                <i class="fa-solid fa-fire"></i> Aggressive
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Bowler current status card -->
-                    <div class="bowler-live-card" id="ui-bowler-card-container">
-                        <div class="label"><i class="fa-solid fa-baseball"></i> Active Bowler</div>
-                        <div class="bowler-info">
-                            <span class="name" id="ui-bowler-name">Bowler Name</span>
-                            <span class="stats" id="ui-bowler-stats">0.0 - 0 - 0 - 0</span>
-                        </div>
-                    </div>
-
-                    <!-- Action buttons -->
-                    <div class="action-buttons-group">
-                        <button id="sim-play-btn" class="btn btn-primary btn-large">
-                            <i class="fa-solid fa-play"></i> Start Simulation
-                        </button>
-                        
-                        <div class="sub-actions">
-                            <button id="sim-ball-btn" class="btn btn-secondary">
-                                <i class="fa-solid fa-baseball-bat-ball"></i> Bowl Ball
-                            </button>
-                            <button id="sim-over-btn" class="btn btn-secondary">
-                                <i class="fa-solid fa-forward-step"></i> Bowl Over
-                            </button>
+                        <div class="commentary-selector-wrapper" style="margin-top: 12px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                            <label for="commentary-over-select" style="font-size: 0.8rem; color: var(--text-secondary);">View Over:</label>
+                            <select id="commentary-over-select" style="padding: 6px; font-size: 0.8rem; flex: 1;">
+                                <option value="current">Current Over</option>
+                            </select>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Bottom: Scrollable Commentary log -->
-            <footer class="commentary-panel glass-card">
-                <div class="panel-header">
-                    <h3><i class="fa-solid fa-comment-dots"></i> Commentary</h3>
-                    <div class="actions">
-                        <button id="clear-commentary" class="btn-icon" title="Clear log"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>
-                <div id="commentary-feed" class="commentary-feed">
-                    <!-- Ball by ball items -->
-                    <div class="commentary-ball-item welcome">
-                        <span class="tag">System</span> Welcome to Cricket Sim Pro! Press "Bowl Ball" to start.
-                    </div>
-                </div>
-            </footer>
         </section>
 
         <!-- MODAL: SELECT BOWLER FOR OVER -->

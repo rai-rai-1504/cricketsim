@@ -171,6 +171,7 @@ class InningsState {
         this.runsThisOver = 0;
         this.overEvents = [];
         this.recentBalls = [];
+        this.overCommentary = {};
         
         this.isCompleted = false;
     }
@@ -303,8 +304,27 @@ class MatchManager {
         this.simOverBtn.addEventListener("click", () => this.simulateOverCall());
 
         this.clearCommentaryBtn.addEventListener("click", () => {
-            this.commentaryFeed.innerHTML = '<div class="commentary-ball-item welcome"><span class="tag">System</span> Logs cleared.</div>';
+            const state = this.getCurrentState();
+            if (state) {
+                const select = document.getElementById("commentary-over-select");
+                const currentSelected = select ? select.value : "current";
+                let overToClear = 1;
+                if (currentSelected === "current") {
+                    overToClear = Math.floor(state.ballsBowled / 6) + 1;
+                } else {
+                    overToClear = parseInt(currentSelected);
+                }
+                state.overCommentary[overToClear] = [];
+                this.renderCommentary();
+            }
         });
+
+        const overSelectEl = document.getElementById("commentary-over-select");
+        if (overSelectEl) {
+            overSelectEl.addEventListener("change", () => {
+                this.renderCommentary();
+            });
+        }
 
         // Mentality selectors
         document.querySelectorAll(".mentality-btn").forEach(btn => {
@@ -1020,12 +1040,21 @@ class MatchManager {
         state.lastBowler = state.currentBowler;
         state.currentBowler = null;
 
+        // Push over separator to recent list
+        state.recentBalls.push("|");
+
         // Strike rotation at end of over
         this.rotateStrike();
 
         state.ballsThisOver = 0;
         state.runsThisOver = 0;
         state.overEvents = [];
+
+        // Auto-reset commentary view to the active over
+        const select = document.getElementById("commentary-over-select");
+        if (select) {
+            select.value = "current";
+        }
 
         this.isAnimating = false;
         this.triggerBowlerSelection();
@@ -1569,15 +1598,21 @@ class MatchManager {
         // Recent balls list
         this.recentBallsUI.innerHTML = "";
         state.recentBalls.forEach(ev => {
-            const span = document.createElement("span");
-            span.className = "ball-bubble";
-            if (ev === "4") span.classList.add("four");
-            else if (ev === "6") span.classList.add("six");
-            else if (ev === "W") span.classList.add("wicket");
-            else if (ev === "Wd" || ev === "Nb") span.classList.add("extra");
-            
-            span.textContent = ev;
-            this.recentBallsUI.appendChild(span);
+            if (ev === "|") {
+                const div = document.createElement("div");
+                div.className = "recent-divider";
+                this.recentBallsUI.appendChild(div);
+            } else {
+                const span = document.createElement("span");
+                span.className = "ball-bubble";
+                if (ev === "4") span.classList.add("four");
+                else if (ev === "6") span.classList.add("six");
+                else if (ev === "W") span.classList.add("wicket");
+                else if (ev === "Wd" || ev === "Nb") span.classList.add("extra");
+                
+                span.textContent = ev;
+                this.recentBallsUI.appendChild(span);
+            }
         });
 
         // BATTING LIVE CARD (RIGHT SIDE) & MENTALITY LOCKS
@@ -1694,6 +1729,10 @@ class MatchManager {
         } else {
             this.matchPhaseBadge.textContent = `Pitch: ${this.pitch} | Session: Test`;
         }
+
+        // Render over commentary
+        this.updateCommentarySelect();
+        this.renderCommentary();
     }
 
     disableActions(disabled) {
@@ -1800,33 +1839,121 @@ class MatchManager {
     }
 
     logCommentary(over, text, outcome) {
-        const item = document.createElement("div");
-        item.className = "commentary-ball-item";
-        
-        let tagHTML = "";
-        if (outcome === "welcome" || outcome === "over-conclusion-item") {
-            item.classList.add(outcome);
-            tagHTML = `<span class="tag">${over}</span>`;
-        } else {
-            let badgeClass = "runs";
-            if (outcome === "W") badgeClass = "out";
-            else if (outcome === "4") badgeClass = "boundary-4";
-            else if (outcome === "6") badgeClass = "boundary-6";
-            else if (outcome === "•") badgeClass = "dot";
-            else if (outcome === "Wd" || outcome === "Nb") badgeClass = "extra";
+        const state = this.getCurrentState();
+        if (!state) return;
 
-            tagHTML = `
-                <span class="ball-num-badge">${over}</span>
-                <span class="outcome-tag ${badgeClass}">${outcome}</span>
-            `;
+        let overIndex = 1;
+        const parts = over.split('.');
+        if (parts.length === 2 && !isNaN(parts[0])) {
+            overIndex = parseInt(parts[0]) + 1;
+        } else {
+            overIndex = Math.floor((state.ballsBowled - 1) / 6) + 1;
+            if (overIndex < 1) overIndex = 1;
         }
 
-        item.innerHTML = `
-            ${tagHTML}
-            <div class="commentary-text">${text}</div>
-        `;
+        if (!state.overCommentary[overIndex]) {
+            state.overCommentary[overIndex] = [];
+        }
 
-        this.commentaryFeed.insertBefore(item, this.commentaryFeed.firstChild);
+        state.overCommentary[overIndex].push({ over, text, outcome });
+
+        // Update commentary select dropdown options
+        this.updateCommentarySelect();
+
+        // Refresh the commentary panel
+        this.renderCommentary();
+    }
+
+    updateCommentarySelect() {
+        const state = this.getCurrentState();
+        if (!state) return;
+
+        const select = document.getElementById("commentary-over-select");
+        if (!select) return;
+
+        const currentSelected = select.value;
+
+        // Reset to default
+        select.innerHTML = '<option value="current">Current Over</option>';
+
+        // Get sorted over numbers
+        const overs = Object.keys(state.overCommentary).map(Number).sort((a, b) => a - b);
+        
+        overs.forEach(o => {
+            const opt = new Option(`Over ${o}`, o);
+            select.add(opt);
+        });
+
+        // Restore selection
+        if (currentSelected && [...select.options].some(opt => opt.value === currentSelected)) {
+            select.value = currentSelected;
+        } else {
+            select.value = "current";
+        }
+    }
+
+    renderCommentary() {
+        const state = this.getCurrentState();
+        if (!state) return;
+
+        const feed = this.commentaryFeed;
+        if (!feed) return;
+
+        feed.innerHTML = "";
+
+        const select = document.getElementById("commentary-over-select");
+        let selectedOver = select ? select.value : "current";
+
+        let overIndexToShow = 1;
+        if (selectedOver === "current") {
+            overIndexToShow = Math.floor(state.ballsBowled / 6) + 1;
+            if (state.isCompleted && !state.overCommentary[overIndexToShow]) {
+                const overs = Object.keys(state.overCommentary).map(Number).sort((a,b) => b - a);
+                if (overs.length > 0) {
+                    overIndexToShow = overs[0];
+                }
+            }
+        } else {
+            overIndexToShow = parseInt(selectedOver);
+        }
+
+        const items = state.overCommentary[overIndexToShow] || [];
+
+        // Render from newest to oldest
+        for (let i = items.length - 1; i >= 0; i--) {
+            const logItem = items[i];
+            const item = document.createElement("div");
+            item.className = "commentary-ball-item";
+
+            let tagHTML = "";
+            if (logItem.outcome === "welcome" || logItem.outcome === "over-conclusion-item") {
+                item.classList.add(logItem.outcome);
+                tagHTML = `<span class="tag">${logItem.over}</span>`;
+            } else {
+                let badgeClass = "runs";
+                if (logItem.outcome === "W") badgeClass = "out";
+                else if (logItem.outcome === "4") badgeClass = "boundary-4";
+                else if (logItem.outcome === "6") badgeClass = "boundary-6";
+                else if (logItem.outcome === "•") badgeClass = "dot";
+                else if (logItem.outcome === "Wd" || logItem.outcome === "Nb") badgeClass = "extra";
+
+                tagHTML = `
+                    <span class="ball-num-badge">${logItem.over}</span>
+                    <span class="outcome-tag ${badgeClass}">${logItem.outcome}</span>
+                `;
+            }
+
+            item.innerHTML = `
+                ${tagHTML}
+                <div class="commentary-text">${logItem.text}</div>
+            `;
+            feed.appendChild(item);
+        }
+
+        // If no commentary items
+        if (items.length === 0) {
+            feed.innerHTML = `<div class="commentary-ball-item welcome"><span class="tag">System</span> No commentary for Over ${overIndexToShow}.</div>`;
+        }
     }
 }
 
