@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Sim Pro - Live Simulator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <!-- SCREEN 1: SETUP & TOSS -->
+        <section id="setup-screen" class="glass-panel fade-in">
+            <div class="setup-header">
+                <i class="fa-solid fa-circle-nodes logo-icon"></i>
+                <h1>CRICKET SIM <span>PRO</span></h1>
+                <p>Advanced Management & Match Simulation Engine</p>
+            </div>
+            
+            <div class="setup-grid">
+                <!-- Left: Format & Settings -->
+                <div class="setup-card settings-card">
+                    <h2><i class="fa-solid fa-sliders"></i> Match Configuration</h2>
+                    <div class="form-group">
+                        <label for="match-format">Select Format</label>
+                        <select id="match-format">
+                            <option value="T20" selected>Twenty20 (T20)</option>
+                            <option value="TEST">Test Match (4 Innings)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pitch-type">Pitch Condition</label>
+                        <select id="pitch-type">
+                            <option value="FLAT">Flat Pitch (Batting Friendly)</option>
+                            <option value="GREEN">Green Pitch (Bowling Friendly)</option>
+                            <option value="RANDOM" selected>Random (Pitch Report On Toss)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Center: Toss Choice -->
+                <div class="setup-card toss-card">
+                    <h2><i class="fa-solid fa-coins"></i> The Coin Toss</h2>
+                    <p class="instruction">Choose your side to toss the coin</p>
+                    <div class="toss-buttons">
+                        <button id="toss-heads" class="btn btn-secondary">Heads</button>
+                        <button id="toss-tails" class="btn btn-secondary">Tails</button>
+                    </div>
+                    <div id="toss-animation-container">
+                        <div id="coin" class="coin">
+                            <div class="front">H</div>
+                            <div class="back">T</div>
+                        </div>
+                    </div>
+                    <div id="toss-result-text" class="toss-result"></div>
+                    <div id="toss-decision-container" class="hidden">
+                        <p>You won the toss! Choose your decision:</p>
+                        <div class="decision-buttons">
+                            <button id="choose-bat" class="btn btn-primary">Bat</button>
+                            <button id="choose-bowl" class="btn btn-primary">Bowl</button>
+                        </div>
+                    </div>
+                </div >
+
+                <!-- Right: Teams Preview -->
+                <div class="setup-card teams-card">
+                    <h2><i class="fa-solid fa-users"></i> Rosters</h2>
+                    <div class="teams-tabs">
+                        <button id="tab-our-team" class="tab-btn active">IND (Our Team)</button>
+                        <button id="tab-opp-team" class="tab-btn">AUS (Opponent)</button>
+                    </div>
+                    <div class="roster-list-wrapper">
+                        <ul id="roster-list" class="roster-list">
+                            <!-- Populated dynamically via JS -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: OPENERS SELECTION -->
+        <section id="openers-screen" class="glass-panel hidden fade-in">
+            <div class="setup-header">
+                <h2><i class="fa-solid fa-people-group"></i> Select Opening Batsmen</h2>
+                <p>Choose two batsmen from your lineup to open the innings</p>
+            </div>
+            <div class="openers-grid">
+                <div class="opener-selector">
+                    <h3>First Opener</h3>
+                    <select id="opener-1" class="player-dropdown"></select>
+                    <div id="opener-1-stats" class="player-mini-stats"></div>
+                </div>
+                <div class="opener-separator"><i class="fa-solid fa-hands-clapping"></i></div>
+                <div class="opener-selector">
+                    <h3>Second Opener</h3>
+                    <select id="opener-2" class="player-dropdown"></select>
+                    <div id="opener-2-stats" class="player-mini-stats"></div>
+                </div>
+            </div>
+            <button id="start-match-btn" class="btn btn-primary btn-large">Start Innings</button>
+        </section>
+
+        <!-- SCREEN 3: MAIN SIMULATION DASHBOARD -->
+        <section id="match-screen" class="hidden">
+            <!-- Top bar: Crickbuzz Scorecard Header -->
+            <header class="crickbuzz-header glass-card">
+                <div class="match-info">
+                    <span class="match-badge">LIVE</span>
+                    <span id="match-title-ui">IND vs AUS - T20 Match</span>
+                    <span class="divider">|</span>
+                    <span id="pitch-report-ui">Pitch: Flat</span>
+                </div>
+                <div class="score-row">
+                    <div class="main-score-block">
+                        <h2 id="batting-team-name-ui">IND</h2>
+                        <span id="batting-runs-wickets-ui" class="runs">0/0</span>
+                        <span id="batting-overs-ui" class="overs">(0.0 Overs)</span>
+                    </div>
+                    <div id="chase-details-ui" class="chase-status">
+                        <!-- Target/Required runs info -->
+                    </div>
+                    <div class="innings-label">
+                        <span id="match-status-label">1st Innings</span>
+                    </div>
+                </div>
+                <div class="recent-balls-container">
+                    <span class="recent-label">Recent:</span>
+                    <div id="recent-balls-ui" class="recent-balls">
+                        <!-- balls history -->
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-dashboard-grid">
+                <!-- Left: Detailed Scorecard -->
+                <div class="dashboard-panel panel-scorecard glass-card">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-table-list"></i> Scorecard</h3>
+                        <span id="scorecard-innings-title">IND 1st Innings</span>
+                    </div>
+                    <div class="scorecard-tables-wrapper">
+                        <!-- Batting Table -->
+                        <table class="card-table batting-table">
+                            <thead>
+                                <tr>
+                                    <th>Batter</th>
+                                    <th></th>
+                                    <th class="text-right">R</th>
+                                    <th class="text-right">B</th>
+                                    <th class="text-right">4s</th>
+                                    <th class="text-right">6s</th>
+                                    <th class="text-right">SR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="batting-scorecard-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+
+                        <!-- Bowling Table -->
+                        <table class="card-table bowling-table">
+                            <thead>
+                                <tr>
+                                    <th>Bowler</th>
+                                    <th class="text-right">O</th>
+                                    <th class="text-right">M</th>
+                                    <th class="text-right">R</th>
+                                    <th class="text-right">W</th>
+                                    <th class="text-right">ER</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bowling-scorecard-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Center: Interactive SVG Cricket Field -->
+                <div class="dashboard-panel panel-field glass-card">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-compass"></i> Field View</h3>
+                        <span id="match-phase-badge" class="badge">Powerplay</span>
+                    </div>
+                    <div class="field-container">
+                        <!-- The Animated SVG Field -->
+                        <svg id="cricket-field" viewBox="0 0 600 600" width="100%" height="100%">
+                            <!-- Grass Gradient Defs -->
+                            <defs>
+                                <radialGradient id="grass-grad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                                    <stop offset="0%" stop-color="#145A32" />
+                                    <stop offset="60%" stop-color="#0E6251" />
+                                    <stop offset="100%" stop-color="#0B5345" />
+                                </radialGradient>
+                                <linearGradient id="pitch-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#E5C494" />
+                                    <stop offset="50%" stop-color="#F3E5AB" />
+                                    <stop offset="100%" stop-color="#E5C494" />
+                                </linearGradient>
+                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feGaussianBlur stdDeviation="5" result="blur" />
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                </filter>
+                            </defs>
+
+                            <!-- Outer Boundary Line -->
+                            <circle cx="300" cy="300" r="280" fill="url(#grass-grad)" stroke="#fff" stroke-width="3" stroke-dasharray="8 4" />
+                            
+                            <!-- 30-Yard Circle (Powerplay boundary) -->
+                            <circle cx="300" cy="300" r="160" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="4 4" />
+                            
+                            <!-- Center Pitch -->
+                            <rect x="288" y="220" width="24" height="160" rx="3" fill="url(#pitch-grad)" stroke="#D4AC0D" stroke-width="1" />
+                            
+                            <!-- Crease Lines -->
+                            <!-- Bowling end crease (top) -->
+                            <line x1="284" y1="240" x2="316" y2="240" stroke="#fff" stroke-width="2" />
+                            <line x1="288" y1="230" x2="288" y2="250" stroke="#fff" stroke-width="1.5" />
+                            <line x1="312" y1="230" x2="312" y2="250" stroke="#fff" stroke-width="1.5" />
+                            
+                            <!-- Batting end crease (bottom) -->
+                            <line x1="284" y1="360" x2="316" y2="360" stroke="#fff" stroke-width="2" />
+                            <line x1="288" y1="350" x2="288" y2="370" stroke="#fff" stroke-width="1.5" />
+                            <line x1="312" y1="350" x2="312" y2="370" stroke="#fff" stroke-width="1.5" />
+
+                            <!-- Wickets -->
+                            <line x1="294" y1="236" x2="306" y2="236" stroke="#000" stroke-width="3.5" /> <!-- Bowler's wickets -->
+                            <line x1="294" y1="364" x2="306" y2="364" stroke="#000" stroke-width="3.5" /> <!-- Striker's wickets -->
+                            
+                            <!-- Ball Trajectory Path (Invisible helper path for animation) -->
+                            <path id="ball-flight" d="" fill="none" stroke="none" />
+
+                            <!-- Dynamic SVG Elements (Batsmen, Bowler, Fielders, Ball) will be injected & managed by JS -->
+                            <g id="svg-fielders"></g>
+                            <g id="svg-batsmen"></g>
+                            <circle id="svg-ball" r="5.5" fill="#E74C3C" stroke="#fff" stroke-width="1" style="display: none; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));" />
+                            
+                            <!-- Boundary Flash Overlays -->
+                            <rect id="four-flash" x="0" y="0" width="600" height="600" fill="rgba(46, 204, 113, 0.25)" class="flash-overlay" />
+                            <rect id="six-flash" x="0" y="0" width="600" height="600" fill="rgba(241, 196, 15, 0.3)" class="flash-overlay" />
+                            <rect id="wicket-flash" x="0" y="0" width="600" height="600" fill="rgba(231, 76, 60, 0.3)" class="flash-overlay" />
+                            
+                            <!-- Big Display Texts on boundaries/wickets -->
+                            <text id="field-overlay-text" x="300" y="300" text-anchor="middle" fill="#fff" font-family="'Space Grotesk', sans-serif" font-weight="bold" font-size="70" style="display: none; filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.8));"></text>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Right: Tactical Controls & Settings -->
+                <div class="dashboard-panel panel-controls glass-card">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-gamepad"></i> Coach Tactical Box</h3>
+                        <span id="active-bowler-overs-left" class="badge bg-secondary">Bowler: Ready</span>
+                    </div>
+
+                    <!-- Current Batsmen Focus Stats Card -->
+                    <div class="batsmen-live-card">
+                        <div class="batsman-stat-row active-striker" id="ui-striker-card">
+                            <span class="indicator"><i class="fa-solid fa-circle-dot"></i></span>
+                            <span class="player-name" id="ui-striker-name">Batsman 1</span>
+                            <span class="player-score" id="ui-striker-score">0*(0)</span>
+                        </div>
+                        <div class="batsman-stat-row" id="ui-nonstriker-card">
+                            <span class="indicator"><i class="fa-solid fa-circle"></i></span>
+                            <span class="player-name" id="ui-nonstriker-name">Batsman 2</span>
+                            <span class="player-score" id="ui-nonstriker-score">0(0)</span>
+                        </div>
+                    </div>
+
+                    <!-- Mentality Selection -->
+                    <div class="tactic-section">
+                        <h4>Batting Mentality</h4>
+                        <div class="mentality-toggle">
+                            <button class="mentality-btn btn-tactic" data-mentality="defensive">
+                                <i class="fa-solid fa-shield-halved"></i> Defensive
+                            </button>
+                            <button class="mentality-btn btn-tactic active" data-mentality="normal">
+                                <i class="fa-solid fa-gavel"></i> Balanced
+                            </button>
+                            <button class="mentality-btn btn-tactic" data-mentality="attack">
+                                <i class="fa-solid fa-fire"></i> Aggressive
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bowler current status card -->
+                    <div class="bowler-live-card" id="ui-bowler-card-container">
+                        <div class="label"><i class="fa-solid fa-baseball"></i> Active Bowler</div>
+                        <div class="bowler-info">
+                            <span class="name" id="ui-bowler-name">Bowler Name</span>
+                            <span class="stats" id="ui-bowler-stats">0.0 - 0 - 0 - 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="action-buttons-group">
+                        <button id="sim-ball-btn" class="btn btn-primary btn-large">
+                            <i class="fa-solid fa-play"></i> Bowl Ball
+                        </button>
+                        
+                        <div class="sub-actions">
+                            <button id="sim-over-btn" class="btn btn-secondary">
+                                <i class="fa-solid fa-forward-step"></i> Bowl Over
+                            </button>
+                            <button id="autoplay-btn" class="btn btn-secondary">
+                                <i class="fa-solid fa-angles-right"></i> Auto-Play
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom: Scrollable Commentary log -->
+            <footer class="commentary-panel glass-card">
+                <div class="panel-header">
+                    <h3><i class="fa-solid fa-comment-dots"></i> Commentary</h3>
+                    <div class="actions">
+                        <button id="clear-commentary" class="btn-icon" title="Clear log"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                <div id="commentary-feed" class="commentary-feed">
+                    <!-- Ball by ball items -->
+                    <div class="commentary-ball-item welcome">
+                        <span class="tag">System</span> Welcome to Cricket Sim Pro! Press "Bowl Ball" to start.
+                    </div>
+                </div>
+            </footer>
+        </section>
+
+        <!-- MODAL: SELECT BOWLER FOR OVER -->
+        <div id="bowler-modal" class="modal-overlay hidden">
+            <div class="modal-content glass-card fade-in">
+                <h2>Select Bowler for Over <span id="modal-over-number">1</span></h2>
+                <p>Choose a bowler from your team. Remember: a bowler cannot bowl consecutive overs, and has a max limit of 4 overs (T20).</p>
+                <div class="modal-table-container">
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>Bowler</th>
+                                <th>Rating</th>
+                                <th>Overs</th>
+                                <th>Runs</th>
+                                <th>Wkts</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bowler-selection-tbody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: SELECT NEXT BATSMAN -->
+        <div id="batsman-modal" class="modal-overlay hidden">
+            <div class="modal-content glass-card fade-in">
+                <h2>Wicket Down! Select Next Batsman</h2>
+                <p>A batsman has departed. Pick the next batsman from your remaining players to walk into the crease.</p>
+                <div class="modal-table-container">
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>Batsman</th>
+                                <th>Batting Rating</th>
+                                <th>Bowling Rating</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batsman-selection-tbody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: MATCH SUMMARY / GAME OVER -->
+        <section id="summary-screen" class="glass-panel hidden fade-in">
+            <div class="setup-header">
+                <h2><i class="fa-solid fa-trophy"></i> Match Completed</h2>
+                <h1 id="match-winner-text" class="winner-headline">IND Wins by 5 Wickets!</h1>
+                <p>Review the final match scorecard below</p>
+            </div>
+            
+            <div class="summary-results-container">
+                <div class="summary-tabs">
+                    <button id="summary-tab-innings-1" class="summary-tab-btn active">1st Innings</button>
+                    <button id="summary-tab-innings-2" class="summary-tab-btn">2nd Innings</button>
+                </div>
+                
+                <div class="scorecard-tables-wrapper">
+                    <!-- Dynamic summary scorecards injected here -->
+                    <div id="summary-scorecards-container"></div>
+                </div>
+            </div>
+
+            <div class="summary-actions">
+                <button id="restart-game-btn" class="btn btn-primary btn-large">
+                    <i class="fa-solid fa-rotate-left"></i> Play Another Match
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Main Application Javascript -->
+    <script src="app.js"></script>
+</body>
+</html>
