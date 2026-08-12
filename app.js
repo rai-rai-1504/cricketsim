@@ -277,6 +277,20 @@ class MatchManager {
         this.btnFullscreen3D = document.getElementById("btn-fullscreen-3d");
         this.is3DViewActive = false;
 
+        // 3D HUD & Selection overlays
+        this.threeHUDScoreboard = document.getElementById("three-hud-scoreboard");
+        this.threeHUDScoreVal = document.getElementById("three-hud-score-val");
+        this.threeHUDOversVal = document.getElementById("three-hud-overs-val");
+        this.threeHUDBatTeam = document.getElementById("three-hud-bat-team");
+        this.threeHUDBatsmen = document.getElementById("three-hud-batsmen");
+        this.threeHUDBowler = document.getElementById("three-hud-bowler");
+        this.threeSelectionOverlay = document.getElementById("three-selection-overlay");
+        this.threeSelectTitle = document.getElementById("three-select-title");
+        this.threeSelectDropdown = document.getElementById("three-select-dropdown");
+        this.threeSelectMentality = document.getElementById("three-select-mentality");
+        this.threeSelectExtraOptions = document.getElementById("three-select-extra-options");
+        this.btnThreeSelectSubmit = document.getElementById("btn-three-select-submit");
+
         // Action Buttons
         this.simPlayBtn = document.getElementById("sim-play-btn");
         this.simBallBtn = document.getElementById("sim-ball-btn");
@@ -859,6 +873,31 @@ class MatchManager {
         const probs = this.getProbabilities(overNum, state.striker, state.currentBowler, state.freeHit);
         const result = this.chooseOutcome(probs);
 
+        // Pre-select commentary text so the 3D animation knows what the batsman is doing
+        this.preSelectedCommentaryMsg = "";
+        this.preSelectedWicketType = ""; // "BOWLED", "LBW", "CATCH"
+
+        if (result === "DOT") {
+            this.preSelectedCommentaryMsg = commentaryLines.DOT[Math.floor(Math.random() * commentaryLines.DOT.length)];
+        } else if (result === "W") {
+            const wtype = Math.random() < 0.35 ? "BOWLED" : (Math.random() < 0.65 ? "LBW" : "CATCH");
+            this.preSelectedWicketType = wtype;
+            
+            let desc = "";
+            if (wtype === "BOWLED") {
+                desc = "Bowled! Stumps shattered.";
+            } else if (wtype === "LBW") {
+                desc = "Plumb LBW! Hit on the pads in front of middle stump.";
+            } else {
+                desc = "Caught! Hit straight into the fielder's hands.";
+            }
+            this.preSelectedCommentaryMsg = `${state.striker.name} departs! ` + desc + ` Out for ${state.striker.runsScored} (${state.striker.ballsFaced} balls).`;
+        } else if (result === "WIDE" || result === "NO BALL") {
+            this.preSelectedCommentaryMsg = result === "WIDE" ? "Wide ball down the leg side, extra run conceded." : "No ball! Bowler overstepped the crease. Free hit coming up!";
+        } else {
+            this.preSelectedCommentaryMsg = commentaryLines[result][Math.floor(Math.random() * commentaryLines[result].length)];
+        }
+
         // SVG animation values
         let targetX = 300;
         let targetY = 205; // Default keeper
@@ -870,7 +909,7 @@ class MatchManager {
             targetY = 240;
         } else if (result === "W") {
             animType = "WICKET";
-            const catchOut = Math.random() > 0.4;
+            const catchOut = this.preSelectedWicketType === "CATCH";
             if (catchOut) {
                 // flies to a fielder (inverted positions)
                 const positions = [
@@ -882,6 +921,9 @@ class MatchManager {
                 const selectedPos = positions[Math.floor(Math.random() * positions.length)];
                 targetX = selectedPos.x;
                 targetY = selectedPos.y;
+            } else if (this.preSelectedWicketType === "LBW") {
+                targetX = 300;
+                targetY = 242; // pad impact
             } else {
                 // bowled
                 targetX = 300;
@@ -1080,7 +1122,7 @@ class MatchManager {
             if (result === "DOT") {
                 state.overEvents.push("0");
                 state.recentBalls.push("0");
-                commentaryMsg = commentaryLines.DOT[Math.floor(Math.random() * commentaryLines.DOT.length)];
+                commentaryMsg = this.preSelectedCommentaryMsg || "Dot ball.";
                 eventCode = "•";
             } else if (result === "W") {
                 state.wickets += 1;
@@ -1090,8 +1132,7 @@ class MatchManager {
                 state.overEvents.push("W");
                 state.recentBalls.push("W");
                 
-                commentaryMsg = `${state.striker.name} departs! ` + commentaryLines.W[Math.floor(Math.random() * commentaryLines.W.length)];
-                commentaryMsg += ` Out for ${state.striker.runsScored} (${state.striker.ballsFaced} balls).`;
+                commentaryMsg = this.preSelectedCommentaryMsg || `${state.striker.name} departs!`;
                 eventCode = "W";
             } else {
                 const runs = parseInt(result);
@@ -1110,7 +1151,7 @@ class MatchManager {
 
                 state.overEvents.push(result);
                 state.recentBalls.push(result);
-                commentaryMsg = commentaryLines[result][Math.floor(Math.random() * commentaryLines[result].length)];
+                commentaryMsg = this.preSelectedCommentaryMsg || "Runs scored.";
                 eventCode = result;
 
                 // Strike rotation
@@ -1226,6 +1267,36 @@ class MatchManager {
         }
 
         // User is bowling: Pause simulation to select bowler
+        if (this.is3DViewActive) {
+            this.pauseMatchSimulation("Select Bowler");
+            const available = state.bowlingTeam.filter(p => {
+                const consec = p === state.lastBowler;
+                const t20Limit = this.format === "T20" && (p.ballsBowled >= 24);
+                return !consec && !t20Limit;
+            });
+            const selectionList = available.length > 0 ? available : state.bowlingTeam.filter(p => p !== state.lastBowler);
+
+            const selectionMapped = selectionList.map(p => ({
+                player: p,
+                originalIndex: state.bowlingTeam.indexOf(p)
+            }));
+
+            this.show3DSelectionOverlay("BOWLER", selectionMapped, (originalIndex) => {
+                state.currentBowler = state.bowlingTeam[originalIndex];
+                this.logCommentary("Select Bowler", `${state.currentBowler.name} comes on to bowl over ${Math.floor(state.ballsBowled/6)+1}.`, "welcome");
+                this.updateUI();
+                this.drawField();
+                this.isAnimating = false;
+                this.disableActions(false);
+
+                // Resume auto-simulation if active
+                if (this.isSimulatingMatch) {
+                    this.toggleMatchSimulation(true);
+                }
+            });
+            return;
+        }
+
         this.pauseMatchSimulation("Select Bowler");
 
         this.modalOverNumber.textContent = Math.floor(state.ballsBowled / 6) + 1;
@@ -1367,6 +1438,26 @@ class MatchManager {
     triggerBatsmanSelection() {
         const state = this.getCurrentState();
         if (!state) return;
+
+        if (this.is3DViewActive) {
+            this.pauseMatchSimulation("Wicket Down");
+            const unbatted = state.battingTeam
+                .map((p, originalIndex) => ({ player: p, originalIndex }))
+                .filter(item => !item.player.hasBatted && !item.player.isOut);
+
+            this.show3DSelectionOverlay("BATSMAN", unbatted, (originalIndex, mentality) => {
+                const selected = state.battingTeam[originalIndex];
+                selected.mentality = mentality;
+                selected.hasBatted = true;
+                state.striker = selected;
+                this.logCommentary("Select Batter", `${state.striker.name} walks out to the crease under pressure with ${selected.mentality.toUpperCase()} mentality.`, "welcome");
+                this.updateUI();
+                this.drawField();
+                this.isAnimating = false;
+                this.disableActions(false);
+            });
+            return;
+        }
 
         // If AI is batting, select next batsman automatically
         if (state.isUserBatting) {
@@ -1735,6 +1826,10 @@ class MatchManager {
     updateUI() {
         const state = this.getCurrentState();
         if (!state) return;
+
+        if (this.is3DViewActive) {
+            this.update3DHUD();
+        }
 
         // CRICKBUZZ HEADER
         this.battingTeamNameUI.textContent = state.teamName;
@@ -2862,13 +2957,6 @@ class MatchManager {
         this.drsModal.classList.add("hidden");
 
         const outcome = this.resolvedDRSOutcome;
-        this.activeAppeal = null;
-        this.resolvedDRSOutcome = null;
-
-        this.bypassAppeal = true;
-        this.processBallOutcome(outcome);
-    }
-
     // =========================================================
     // 3D WEBGL GRAPHICS (THREE.JS) - HIGH HIGH GRAPHICS
     // =========================================================
@@ -2886,6 +2974,7 @@ class MatchManager {
 
             this.init3DScene();
             this.draw3DField();
+            this.update3DHUD();
         } else {
             this.cricketField.classList.remove("hidden");
             this.threeCanvasContainer.classList.add("hidden");
@@ -2923,63 +3012,86 @@ class MatchManager {
         this.threeRenderer.setSize(width, height);
     }
 
-    createHumanPlayer(shirtColor) {
+    createHumanPlayer(shirtColor, isStriker = false) {
         const playerGroup = new THREE.Group();
 
         // 1. Torso/Jersey
-        const torsoGeo = new THREE.CylinderGeometry(0.14, 0.11, 0.52, 8);
+        const torsoGeo = new THREE.CylinderGeometry(0.12, 0.09, 0.5, 8);
         const torsoMat = new THREE.MeshLambertMaterial({ color: shirtColor });
         const torso = new THREE.Mesh(torsoGeo, torsoMat);
-        torso.position.y = 0.55;
+        torso.position.y = 0.52;
         torso.castShadow = true;
         torso.receiveShadow = true;
         playerGroup.add(torso);
 
         // 2. Head
-        const headGeo = new THREE.SphereGeometry(0.09, 8, 8);
+        const headGeo = new THREE.SphereGeometry(0.08, 8, 8);
         const headMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
         const head = new THREE.Mesh(headGeo, headMat);
-        head.position.y = 0.87;
+        head.position.y = 0.83;
         head.castShadow = true;
         playerGroup.add(head);
 
         // 3. Helmet
-        const helmetGeo = new THREE.SphereGeometry(0.1, 8, 8, 0, Math.PI * 2, 0, Math.PI / 1.7);
+        const helmetGeo = new THREE.SphereGeometry(0.09, 8, 8, 0, Math.PI * 2, 0, Math.PI / 1.7);
         const helmetMat = new THREE.MeshLambertMaterial({ color: shirtColor });
         const helmet = new THREE.Mesh(helmetGeo, helmetMat);
-        helmet.position.y = 0.89;
-        helmet.rotation.x = -0.15;
+        helmet.position.y = 0.85;
+        helmet.rotation.x = -0.12;
         helmet.castShadow = true;
         playerGroup.add(helmet);
 
-        // 4. Arms
-        const armGeo = new THREE.CylinderGeometry(0.04, 0.035, 0.35, 8);
+        // 4. Arms (Stance dependent)
+        const armGeo = new THREE.CylinderGeometry(0.035, 0.03, 0.32, 8);
         const armMat = new THREE.MeshLambertMaterial({ color: shirtColor });
         
-        const leftArm = new THREE.Mesh(armGeo, armMat);
-        leftArm.position.set(-0.16, 0.55, 0);
-        leftArm.rotation.z = Math.PI / 12;
-        leftArm.castShadow = true;
-        playerGroup.add(leftArm);
+        if (isStriker) {
+            // Attacking grip stance: arms forward holding bat
+            const leftArm = new THREE.Mesh(armGeo, armMat);
+            leftArm.position.set(-0.1, 0.48, 0.12);
+            leftArm.rotation.set(-Math.PI / 3, 0, Math.PI / 4);
+            leftArm.castShadow = true;
+            playerGroup.add(leftArm);
 
-        const rightArm = new THREE.Mesh(armGeo, armMat);
-        rightArm.position.set(0.16, 0.55, 0);
-        rightArm.rotation.z = -Math.PI / 12;
-        rightArm.castShadow = true;
-        playerGroup.add(rightArm);
+            const rightArm = new THREE.Mesh(armGeo, armMat);
+            rightArm.position.set(0.08, 0.42, 0.12);
+            rightArm.rotation.set(-Math.PI / 4, 0, -Math.PI / 6);
+            rightArm.castShadow = true;
+            playerGroup.add(rightArm);
+
+            // Add the bat directly to the player group in hands
+            const bat = this.createDetailedBat();
+            bat.position.set(0.08, 0.15, 0.22);
+            bat.rotation.set(-Math.PI / 6, 0, Math.PI / 12);
+            playerGroup.add(bat);
+            playerGroup.userData = { bat: bat };
+        } else {
+            // Standard standing arms
+            const leftArm = new THREE.Mesh(armGeo, armMat);
+            leftArm.position.set(-0.14, 0.52, 0);
+            leftArm.rotation.z = Math.PI / 10;
+            leftArm.castShadow = true;
+            playerGroup.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeo, armMat);
+            rightArm.position.set(0.14, 0.52, 0);
+            rightArm.rotation.z = -Math.PI / 10;
+            rightArm.castShadow = true;
+            playerGroup.add(rightArm);
+        }
 
         // 5. Pants & Pads (Legs)
-        const padGeo = new THREE.CylinderGeometry(0.05, 0.045, 0.35, 8);
-        const padMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f5 }); // white pads
+        const padGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.35, 8);
+        const padMat = new THREE.MeshLambertMaterial({ color: 0xf2f2f2 }); // white pads
 
         const leftLeg = new THREE.Mesh(padGeo, padMat);
-        leftLeg.position.set(-0.07, 0.175, 0);
+        leftLeg.position.set(-0.06, 0.175, 0);
         leftLeg.castShadow = true;
         leftLeg.receiveShadow = true;
         playerGroup.add(leftLeg);
 
         const rightLeg = new THREE.Mesh(padGeo, padMat);
-        rightLeg.position.set(0.07, 0.175, 0);
+        rightLeg.position.set(0.06, 0.175, 0);
         rightLeg.castShadow = true;
         rightLeg.receiveShadow = true;
         playerGroup.add(rightLeg);
@@ -2991,18 +3103,18 @@ class MatchManager {
         const batGroup = new THREE.Group();
 
         // Flat wooden blade
-        const bladeGeo = new THREE.BoxGeometry(0.08, 0.45, 0.025);
+        const bladeGeo = new THREE.BoxGeometry(0.06, 0.4, 0.02);
         const bladeMat = new THREE.MeshLambertMaterial({ color: 0xd2b48c }); // wood willow
         const blade = new THREE.Mesh(bladeGeo, bladeMat);
-        blade.position.y = 0.225;
+        blade.position.y = 0.2;
         blade.castShadow = true;
         batGroup.add(blade);
 
         // Rubber grip handle
-        const handleGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.22, 8);
+        const handleGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.18, 8);
         const handleMat = new THREE.MeshLambertMaterial({ color: 0x111111 }); // black grip
         const handle = new THREE.Mesh(handleGeo, handleMat);
-        handle.position.y = 0.56;
+        handle.position.y = 0.49;
         batGroup.add(handle);
 
         return batGroup;
@@ -3312,35 +3424,47 @@ class MatchManager {
         const batColor = state.isUserBatting ? 0x1976d2 : 0xd32f2f;
         const bowlColor = state.isUserBatting ? 0xd32f2f : 0x1976d2;
 
-        // Redraw striker (detailed humanoid)
+        // 1. Redraw striker (detailed humanoid holding bat)
         while (this.threeBatsmanGroup.children.length > 0) {
             this.threeBatsmanGroup.remove(this.threeBatsmanGroup.children[0]);
         }
-
-        const batsmanBody = this.createHumanPlayer(batColor);
+        const batsmanBody = this.createHumanPlayer(batColor, true);
         this.threeBatsmanGroup.add(batsmanBody);
 
-        this.threeBatMesh = this.createDetailedBat();
-        this.threeBatMesh.position.set(0.2, 0.25, 0.1);
-        this.threeBatMesh.rotation.z = Math.PI / 8;
-        this.threeBatsmanGroup.add(this.threeBatMesh);
-
-        // Redraw Bowler
+        // 2. Redraw Bowler
         if (this.threeBowlerGroup) {
             this.threeScene.remove(this.threeBowlerGroup);
         }
-        this.threeBowlerGroup = this.createHumanPlayer(bowlColor);
+        this.threeBowlerGroup = this.createHumanPlayer(bowlColor, false);
         this.threeBowlerGroup.position.set(0, 0, -11);
         this.threeBowlerGroup.lookAt(0, 0, 9.8);
         this.threeScene.add(this.threeBowlerGroup);
 
-        // Draw 9 fielders
+        // 3. Redraw Keeper (behind batting end wickets)
+        if (this.threeKeeperGroup) {
+            this.threeScene.remove(this.threeKeeperGroup);
+        }
+        this.threeKeeperGroup = this.createHumanPlayer(bowlColor, false);
+        this.threeKeeperGroup.position.set(0, 0, 11.2);
+        this.threeKeeperGroup.lookAt(0, 0, -10);
+        this.threeScene.add(this.threeKeeperGroup);
+
+        // 4. Redraw Non-Striker
+        if (this.threeNonStrikerGroup) {
+            this.threeScene.remove(this.threeNonStrikerGroup);
+        }
+        this.threeNonStrikerGroup = this.createHumanPlayer(batColor, false);
+        this.threeNonStrikerGroup.position.set(0.8, 0, 9.8); // stands beside wickets at batting end
+        this.threeNonStrikerGroup.lookAt(0, 0, -10);
+        this.threeScene.add(this.threeNonStrikerGroup);
+
+        // 5. Draw 9 fielders
         const activeFielders = state.fielderPositions.filter(f => !f.isFixed);
         activeFielders.forEach(f => {
             const x3d = (f.x - 300) / 10;
             const z3d = (f.y - 300) / 10;
 
-            const fGroup = this.createHumanPlayer(bowlColor);
+            const fGroup = this.createHumanPlayer(bowlColor, false);
             fGroup.position.set(x3d, 0, z3d);
             fGroup.lookAt(0, 0, 9.8); // Face batsman
 
@@ -3348,6 +3472,7 @@ class MatchManager {
         });
 
         this.reset3DStumps();
+        this.update3DHUD();
     }
 
     reset3DStumps() {
@@ -3373,6 +3498,71 @@ class MatchManager {
         requestAnimationFrame(() => this.animate3DLoop());
     }
 
+    update3DHUD() {
+        if (!this.is3DViewActive) return;
+        const state = this.getCurrentState();
+        if (!state) return;
+
+        // 1. Team & Score
+        this.threeHUDBatTeam.textContent = state.teamName.split(" ")[0];
+        let scoreText = `${state.totalRuns}/${state.wickets}`;
+        if (state.target) {
+            scoreText += ` (Target: ${state.target})`;
+        }
+        this.threeHUDScoreVal.textContent = scoreText;
+
+        // 2. Overs
+        const overs = Math.floor(state.ballsBowled / 6) + "." + (state.ballsBowled % 6);
+        this.threeHUDOversVal.textContent = overs;
+
+        // 3. Batsmen names
+        let batsmenHTML = "";
+        if (state.striker) {
+            batsmenHTML += `<span style="color: #a3e635; font-weight: 600;">${this.getInitials(state.striker.name)}*: ${state.striker.runsScored}(${state.striker.ballsFaced}) [${state.striker.mentality.toUpperCase()}]</span>`;
+        }
+        if (state.nonStriker) {
+            batsmenHTML += `<span style="color: rgba(255,255,255,0.7); font-weight: 500;">${this.getInitials(state.nonStriker.name)}: ${state.nonStriker.runsScored}(${state.nonStriker.ballsFaced}) [${state.nonStriker.mentality.toUpperCase()}]</span>`;
+        }
+        this.threeHUDBatsmen.innerHTML = batsmenHTML;
+
+        // 4. Bowler figures
+        if (state.currentBowler) {
+            const bOvers = Math.floor(state.currentBowler.ballsBowled / 6) + "." + (state.currentBowler.ballsBowled % 6);
+            this.threeHUDBowler.innerHTML = `Bowler: <strong style="color: #fca5a5;">${this.getInitials(state.currentBowler.name)}</strong> (${state.currentBowler.runsConceded}/${state.currentBowler.wickets} in ${bOvers})`;
+        } else {
+            this.threeHUDBowler.textContent = "Select Bowler";
+        }
+    }
+
+    show3DSelectionOverlay(type, list, callback) {
+        this.threeSelectTitle.textContent = type === "BATSMAN" ? "Select Next Batsman" : "Select Next Bowler";
+        
+        // Populate dropdown
+        this.threeSelectDropdown.innerHTML = "";
+        list.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.originalIndex;
+            opt.textContent = `${p.player.name} (${type === "BATSMAN" ? 'Bat: ' + p.player.batting : 'Bowl: ' + p.player.bowling})`;
+            this.threeSelectDropdown.appendChild(opt);
+        });
+
+        // Show/hide batsman mentality select
+        if (type === "BATSMAN") {
+            this.threeSelectExtraOptions.style.display = "block";
+        } else {
+            this.threeSelectExtraOptions.style.display = "none";
+        }
+
+        this.threeSelectionOverlay.classList.remove("hidden");
+
+        this.btnThreeSelectSubmit.onclick = () => {
+            const selectedVal = parseInt(this.threeSelectDropdown.value);
+            const mentality = this.threeSelectMentality.value;
+            this.threeSelectionOverlay.classList.add("hidden");
+            callback(selectedVal, mentality);
+        };
+    }
+
     animate3DBall(targetX, targetY, type, callback) {
         if (!this.threeScene) {
             callback();
@@ -3390,7 +3580,19 @@ class MatchManager {
         let startTime = performance.now();
         const deliveryDuration = 400;
 
-        this.threeBatMesh.rotation.set(0, 0, Math.PI / 8);
+        // Reset bat rotation
+        this.threeBatsmanGroup.rotation.set(0, 0, 0);
+
+        // Classify batsman response type from pre-selected commentary
+        const msg = (this.preSelectedCommentaryMsg || "").toLowerCase();
+        let shotType = "ATTACK"; // default
+        if (msg.includes("leave") || msg.includes("alone") || msg.includes("watchful")) {
+            shotType = "LEAVE";
+        } else if (msg.includes("miss") || msg.includes("beaten") || msg.includes("play and a miss")) {
+            shotType = "PLAY_AND_MISS";
+        } else if (msg.includes("defend") || msg.includes("defence") || msg.includes("block")) {
+            shotType = "DEFENSIVE";
+        }
 
         const animateBallDelivery = (now) => {
             const elapsed = now - startTime;
@@ -3413,11 +3615,11 @@ class MatchManager {
                 requestAnimationFrame(animateBallDelivery);
             } else {
                 ball.position.set(0, 0.6, 9.8);
-                this.animate3DBatSwing();
+                this.animate3DBatSwing(shotType);
 
                 setTimeout(() => {
                     startTime = performance.now();
-                    this.animate3DHitOutcome(targetX_3d, targetZ_3d, type, callback);
+                    this.animate3DHitOutcome(targetX_3d, targetZ_3d, type, shotType, callback);
                 }, 100);
             }
         };
@@ -3425,7 +3627,7 @@ class MatchManager {
         requestAnimationFrame(animateBallDelivery);
     }
 
-    animate3DBatSwing() {
+    animate3DBatSwing(shotType) {
         let startTime = performance.now();
         const duration = 250;
         
@@ -3433,23 +3635,75 @@ class MatchManager {
             const elapsed = now - startTime;
             if (elapsed < duration) {
                 const progress = elapsed / duration;
-                this.threeBatMesh.rotation.y = -Math.sin(progress * Math.PI) * Math.PI / 2;
+                if (shotType === "LEAVE") {
+                    // Lift bat high and away
+                    this.threeBatsmanGroup.rotation.y = Math.sin(progress * Math.PI) * Math.PI / 4;
+                    this.threeBatsmanGroup.rotation.x = -Math.sin(progress * Math.PI) * 0.15;
+                } else if (shotType === "DEFENSIVE") {
+                    // Gentle forward block
+                    this.threeBatsmanGroup.rotation.x = Math.sin(progress * Math.PI) * 0.18;
+                    this.threeBatsmanGroup.rotation.y = -Math.sin(progress * Math.PI) * 0.08;
+                } else {
+                    // Full drive swing
+                    this.threeBatsmanGroup.rotation.y = -Math.sin(progress * Math.PI) * Math.PI / 2.5;
+                    this.threeBatsmanGroup.rotation.x = Math.sin(progress * Math.PI) * 0.22;
+                }
                 requestAnimationFrame(swing);
             } else {
-                this.threeBatMesh.rotation.set(0, 0, Math.PI / 8);
+                this.threeBatsmanGroup.rotation.set(0, 0, 0);
             }
         };
         requestAnimationFrame(swing);
     }
 
-    animate3DHitOutcome(targetX, targetZ, type, callback) {
+    animate3DHitOutcome(targetX, targetZ, type, shotType, callback) {
         const ball = this.threeBallMesh;
         const startTime = performance.now();
         const duration = 650;
 
+        // 1. Check leave or play and a miss: Ball goes to Wicketkeeper
+        if (shotType === "LEAVE" || shotType === "PLAY_AND_MISS") {
+            const leaveAnim = (now) => {
+                const elapsed = now - startTime;
+                if (elapsed < 200) {
+                    const progress = elapsed / 200;
+                    ball.position.set(0, 0.6 + (0.8 - 0.6) * progress, 9.8 + (11.2 - 9.8) * progress);
+                    requestAnimationFrame(leaveAnim);
+                } else {
+                    setTimeout(() => {
+                        ball.position.set(0, -5, 0);
+                        this.triggerFlashEffects(type);
+                        callback();
+                    }, 400);
+                }
+            };
+            requestAnimationFrame(leaveAnim);
+            return;
+        }
+
+        // 2. Check defensive block: Ball drops onto pitch and stops
+        if (shotType === "DEFENSIVE") {
+            const defAnim = (now) => {
+                const elapsed = now - startTime;
+                if (elapsed < 250) {
+                    const progress = elapsed / 250;
+                    ball.position.set(0, 0.6 + (0.08 - 0.6) * progress, 9.8 + (9.2 - 9.8) * progress);
+                    requestAnimationFrame(defAnim);
+                } else {
+                    setTimeout(() => {
+                        ball.position.set(0, -5, 0);
+                        this.triggerFlashEffects(type);
+                        callback();
+                    }, 400);
+                }
+            };
+            requestAnimationFrame(defAnim);
+            return;
+        }
+
+        // 3. Wicket Outcomes
         if (type === "W") {
-            const rand = Math.random();
-            if (rand < 0.4) {
+            if (this.preSelectedWicketType === "BOWLED") {
                 const bowledAnim = (now) => {
                     const elapsed = now - startTime;
                     if (elapsed < 200) {
@@ -3466,23 +3720,43 @@ class MatchManager {
                     }
                 };
                 requestAnimationFrame(bowledAnim);
-            } else if (rand < 0.7) {
+            } else if (this.preSelectedWicketType === "LBW") {
                 const lbwAnim = (now) => {
                     const elapsed = now - startTime;
                     if (elapsed < 150) {
                         const progress = elapsed / 150;
-                        ball.position.set(-0.15 * progress, 0.4, 9.8);
+                        ball.position.set(-0.05 * progress, 0.4, 9.8);
                         requestAnimationFrame(lbwAnim);
                     } else {
+                        // Create a red impact marker
+                        const markerGeo = new THREE.SphereGeometry(0.06, 8, 8);
+                        const markerMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                        const marker = new THREE.Mesh(markerGeo, markerMat);
+                        marker.position.copy(ball.position);
+                        this.threeScene.add(marker);
+                        
                         setTimeout(() => {
+                            this.threeScene.remove(marker);
                             ball.position.set(0, -5, 0);
                             this.triggerFlashEffects(type);
                             callback();
-                        }, 500);
+                        }, 700);
                     }
                 };
                 requestAnimationFrame(lbwAnim);
             } else {
+                // Catch Wicket: Fielder runs to catch point
+                let nearestFielder = null;
+                let minDist = 999;
+                this.threeFieldersGroup.children.forEach(f => {
+                    const d = Math.sqrt((f.position.x - targetX)**2 + (f.position.z - targetZ)**2);
+                    if (d < minDist) {
+                        minDist = d;
+                        nearestFielder = f;
+                    }
+                });
+                const fStartPos = nearestFielder ? nearestFielder.position.clone() : null;
+
                 const catchAnim = (now) => {
                     const elapsed = now - startTime;
                     if (elapsed < duration) {
@@ -3491,6 +3765,15 @@ class MatchManager {
                         const z = 9.8 + (targetZ - 9.8) * progress;
                         const y = 0.5 + Math.sin(progress * Math.PI) * 6;
                         ball.position.set(x, y, z);
+
+                        if (nearestFielder && fStartPos) {
+                            nearestFielder.position.set(
+                                fStartPos.x + (targetX - fStartPos.x) * progress,
+                                0,
+                                fStartPos.z + (targetZ - fStartPos.z) * progress
+                            );
+                        }
+
                         requestAnimationFrame(catchAnim);
                     } else {
                         setTimeout(() => {
@@ -3503,6 +3786,7 @@ class MatchManager {
                 requestAnimationFrame(catchAnim);
             }
         } else {
+            // Runs (parabolic for six, bounding rolls for others)
             const isSix = type === "SIX";
             const hitAnim = (now) => {
                 const elapsed = now - startTime;
