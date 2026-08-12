@@ -1238,3 +1238,58 @@ select:focus {
     height: 24px !important;
     line-height: 1 !important;
 }
+
+/* Custom Fielding Drag & Drop */
+.draggable-fielder {
+    cursor: grab;
+    pointer-events: all;
+    transition: filter 0.2s ease;
+}
+
+.draggable-fielder:hover {
+    filter: brightness(1.3) drop-shadow(0px 0px 4px rgba(255,255,255,0.8));
+}
+
+.draggable-fielder.dragging-active {
+    cursor: grabbing;
+    filter: brightness(1.5) scale(1.1);
+}
+
+/* Gaps Sector Lines & Text Badges */
+.sector-line {
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 1.2px;
+    stroke-dasharray: 2 2;
+    pointer-events: none;
+}
+
+.gap-label {
+    font-size: 7.5px;
+    font-weight: 600;
+    fill: #2ecc71; /* Green for wide gaps */
+    font-family: 'Space Grotesk', sans-serif;
+    text-anchor: middle;
+    pointer-events: none;
+    letter-spacing: 0.5px;
+}
+
+.gap-label.closed {
+    fill: #e74c3c; /* Red for narrow/closed gaps */
+}
+
+.gap-label.partial {
+    fill: #f1c40f; /* Yellow for moderate gaps */
+}
+
+/* Live validation badges styling */
+.badge.bg-success {
+    background-color: rgba(46, 204, 113, 0.2) !important;
+    color: #2ecc71 !important;
+    border: 1px solid rgba(46, 204, 113, 0.4);
+}
+
+.badge.bg-danger {
+    background-color: rgba(231, 76, 60, 0.2) !important;
+    color: #e74c3c !important;
+    border: 1px solid rgba(231, 76, 60, 0.4);
+}

@@ -201,8 +201,17 @@
 
                 <!-- Center: Interactive SVG Cricket Field -->
                 <div class="dashboard-panel panel-field glass-card">
-                    <div class="panel-header">
-                        <h3><i class="fa-solid fa-compass"></i> Field View</h3>
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0;"><i class="fa-solid fa-compass"></i> Field View</h3>
+                        <div id="fielding-controls" style="display: flex; gap: 8px; align-items: center;">
+                            <select id="fielding-preset-select" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; outline: none;">
+                                <option value="balanced">Balanced Field</option>
+                                <option value="attacking">Attacking Field</option>
+                                <option value="defensive">Defensive Field</option>
+                                <option value="custom">Custom Field</option>
+                            </select>
+                            <span id="fielding-validation-badge" class="badge bg-success" style="font-size: 0.75rem;">Field Valid</span>
+                        </div>
                         <span id="match-phase-badge" class="badge">Powerplay</span>
                     </div>
                     <div class="field-container">
@@ -254,6 +263,9 @@
                             <path id="ball-flight" d="" fill="none" stroke="none" />
 
                             <!-- Dynamic SVG Elements (Batsmen, Bowler, Fielders, Ball) will be injected & managed by JS -->
+                            <!-- Sector Gaps Visual Overlays -->
+                            <g id="svg-sector-lines"></g>
+                            <g id="svg-gap-labels"></g>
                             <g id="svg-fielders"></g>
                             <g id="svg-batsmen"></g>
                             <circle id="svg-ball" r="5.5" fill="#E74C3C" stroke="#fff" stroke-width="1" style="display: none; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));" />

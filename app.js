@@ -172,6 +172,20 @@ class InningsState {
         this.overEvents = [];
         this.recentBalls = [];
         this.overCommentary = {};
+        this.fielderPositions = [
+            { name: "Keeper", x: 300, y: 205, isFixed: true },
+            { name: "Bowler", x: 300, y: 380, isFixed: true },
+            { name: "Slip", x: 325, y: 225 },
+            { name: "Point", x: 420, y: 250 },
+            { name: "Cover", x: 390, y: 325 },
+            { name: "Mid Off", x: 340, y: 405 },
+            { name: "Mid On", x: 260, y: 405 },
+            { name: "Mid Wicket", x: 210, y: 325 },
+            { name: "Square Leg", x: 180, y: 250 },
+            { name: "Fine Leg", x: 245, y: 205 },
+            { name: "Third Man", x: 420, y: 160 }
+        ];
+        this.fieldingPreset = "balanced";
         
         this.isCompleted = false;
     }
@@ -240,6 +254,13 @@ class MatchManager {
         this.uiBowlerName = document.getElementById("ui-bowler-name");
         this.uiBowlerStats = document.getElementById("ui-bowler-stats");
         this.bowlerOversLeftUI = document.getElementById("active-bowler-overs-left");
+
+        // Fielding Controls
+        this.fieldingPresetSelect = document.getElementById("fielding-preset-select");
+        this.fieldingValidationBadge = document.getElementById("fielding-validation-badge");
+        this.svgSectorLines = document.getElementById("svg-sector-lines");
+        this.svgGapLabels = document.getElementById("svg-gap-labels");
+        this.cricketField = document.getElementById("cricket-field");
 
         // Action Buttons
         this.simPlayBtn = document.getElementById("sim-play-btn");
@@ -335,6 +356,16 @@ class MatchManager {
 
         // Restart
         this.restartGameBtn.addEventListener("click", () => this.resetToSetup());
+
+        // Fielding Preset Selector
+        if (this.fieldingPresetSelect) {
+            this.fieldingPresetSelect.addEventListener("change", (e) => {
+                this.applyFieldingPreset(e.target.value);
+            });
+        }
+
+        // Setup Drag and Drop Fielding
+        this.setupFieldDragHandler();
     }
 
     renderRoster(team) {
@@ -547,24 +578,9 @@ class MatchManager {
             </g>
         `;
 
-        // Render Fielders at inverted standard coordinates
-        const fielderPositions = [
-            { name: "Keeper", x: 300, y: 205 },
-            { name: "Bowler", x: 300, y: 380 },
-            { name: "First Slip", x: 325, y: 225 },
-            { name: "Point", x: 420, y: 250 },
-            { name: "Cover", x: 390, y: 325 },
-            { name: "Mid Off", x: 340, y: 405 },
-            { name: "Mid On", x: 260, y: 405 },
-            { name: "Mid Wicket", x: 210, y: 325 },
-            { name: "Square Leg", x: 180, y: 250 },
-            { name: "Fine Leg", x: 245, y: 205 },
-            { name: "Third Man", x: 420, y: 160 }
-        ];
-
+        // Render Fielders using state positions
         let fieldersHTML = "";
-        fielderPositions.forEach(pos => {
-            // If the position is bowler, show bowler name, otherwise show positions
+        state.fielderPositions.forEach((pos, index) => {
             let label = pos.name;
             if (pos.name === "Bowler" && state.currentBowler) {
                 label = this.getInitials(state.currentBowler.name);
@@ -574,13 +590,16 @@ class MatchManager {
             }
             
             fieldersHTML += `
-                <g transform="translate(${pos.x}, ${pos.y})">
-                    <circle r="6" fill="${fielderFill}" stroke="#fff" stroke-width="1" />
+                <g class="${pos.isFixed ? '' : 'draggable-fielder'}" data-idx="${index}" transform="translate(${pos.x}, ${pos.y})">
+                    <circle r="6.5" fill="${fielderFill}" stroke="#fff" stroke-width="1" />
                     <text y="14" text-anchor="middle" fill="${pos.name === 'Bowler' ? '#F59E0B' : '#9CA3AF'}" font-size="8" font-weight="bold">${label}</text>
                 </g>
             `;
         });
         this.svgFielders.innerHTML = fieldersHTML;
+
+        // Render sector lines & gap badges
+        this.renderSectorGaps(state);
     }
 
     getInitials(name) {
@@ -672,6 +691,121 @@ class MatchManager {
             probs["4"] += 15;
             probs["6"] += 20;
             probs["DOT"] = Math.max(2, probs["DOT"] - 15);
+        }
+
+        // SPATIAL FIELDING MODIFIER (Blended Composure & Sector Gaps)
+        const state = this.getCurrentState();
+        if (state && state.fielderPositions) {
+            const activeFielders = state.fielderPositions.filter(f => !f.isFixed);
+            
+            if (activeFielders.length >= 2) {
+                // Calculate polar angles relative to striker
+                const fieldersWithAngles = activeFielders.map(f => {
+                    const dx = f.x - 300;
+                    const dy = f.y - 240;
+                    let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    if (angle < 0) angle += 360;
+                    return { ...f, angle };
+                });
+
+                // Sort by angle
+                fieldersWithAngles.sort((a, b) => a.angle - b.angle);
+
+                // Find gaps (9 sectors)
+                const sectors = [];
+                for (let i = 0; i < fieldersWithAngles.length; i++) {
+                    const f1 = fieldersWithAngles[i];
+                    const f2 = fieldersWithAngles[(i + 1) % fieldersWithAngles.length];
+
+                    let gap = f2.angle - f1.angle;
+                    if (gap < 0) gap += 360;
+
+                    let midAngle = f1.angle + gap / 2;
+                    if (midAngle >= 360) midAngle -= 360;
+
+                    const f1DistCenter = Math.sqrt((f1.x - 300)**2 + (f1.y - 300)**2);
+                    const f2DistCenter = Math.sqrt((f2.x - 300)**2 + (f2.y - 300)**2);
+                    const isDeepCovered = f1DistCenter > 160 || f2DistCenter > 160;
+
+                    sectors.push({
+                        start: f1.angle,
+                        end: f2.angle,
+                        gapSize: gap,
+                        midAngle: midAngle,
+                        isDeepCovered: isDeepCovered
+                    });
+                }
+
+                // Sort gaps by size descending
+                const sortedGaps = [...sectors].sort((a, b) => b.gapSize - a.gapSize);
+                
+                // Batsman target selection based on skill and mentality
+                const skillFactor = Math.min(0.95, batsman.batting / 100);
+                const mentalityFactor = batsman.mentality === "attack" ? 0.9 : (batsman.mentality === "normal" ? 0.6 : 0.3);
+                const gapPierceProbability = skillFactor * mentalityFactor;
+
+                let chosenSector = null;
+                if (Math.random() < gapPierceProbability) {
+                    // Pierce the largest gaps
+                    const gapChoice = Math.floor(Math.random() * Math.min(3, sortedGaps.length));
+                    chosenSector = sortedGaps[gapChoice];
+                } else {
+                    // Random placement (straight to fielders)
+                    chosenSector = sectors[Math.floor(Math.random() * sectors.length)];
+                }
+
+                if (chosenSector) {
+                    const gap = chosenSector.gapSize;
+                    const isDeep = chosenSector.isDeepCovered;
+
+                    if (gap < 25) {
+                        // Narrow inner gap (Closed inside)
+                        if (!isDeep) {
+                            // Open deep: high risk of catches but high boundary reward
+                            if (batsman.mentality === "attack") {
+                                probs["W"] += 3;
+                                probs["4"] += 5;
+                                probs["DOT"] = Math.max(2, probs["DOT"] - 4);
+                            } else {
+                                probs["DOT"] += 8;
+                                probs["1"] = Math.max(2, probs["1"] - 4);
+                                probs["4"] = Math.max(0, probs["4"] - 3);
+                            }
+                        } else {
+                            // Closed deep: high risk of dot/catch, low boundaries
+                            probs["DOT"] += 12;
+                            probs["W"] += 2;
+                            probs["4"] = Math.max(0, probs["4"] - 5);
+                            probs["6"] = Math.max(0, probs["6"] - 3);
+                        }
+                    } else if (gap >= 35) {
+                        // Wide gap (Open inside)
+                        if (isDeep) {
+                            // Covered deep: easy singles/doubles, low boundary
+                            probs["1"] += 15;
+                            probs["2"] += 8;
+                            probs["DOT"] = Math.max(2, probs["DOT"] - 10);
+                            probs["4"] = Math.max(1, probs["4"] - 6);
+                            probs["W"] = Math.max(0.5, probs["W"] - 3);
+                        } else {
+                            // Open deep: boundary bonanza, low wicket
+                            probs["4"] += 12;
+                            probs["6"] += 6;
+                            probs["DOT"] = Math.max(2, probs["DOT"] - 8);
+                            probs["W"] = Math.max(0.5, probs["W"] - 4);
+                        }
+                    } else {
+                        // Moderate gap
+                        if (isDeep) {
+                            probs["1"] += 5;
+                            probs["DOT"] += 3;
+                        } else {
+                            probs["2"] += 4;
+                            probs["4"] += 3;
+                        }
+                    }
+                }
+            }
         }
 
         return probs;
@@ -1771,6 +1905,13 @@ class MatchManager {
         // Render over commentary
         this.updateCommentarySelect();
         this.renderCommentary();
+
+        // Validate fielding rules (deep limits vary based on PP overs 1-6)
+        this.validateFieldingRules();
+
+        if (this.fieldingPresetSelect) {
+            this.fieldingPresetSelect.value = state.fieldingPreset;
+        }
     }
 
     disableActions(disabled) {
@@ -1986,6 +2127,310 @@ class MatchManager {
         // If no commentary items
         if (items.length === 0) {
             feed.innerHTML = `<div class="commentary-ball-item welcome"><span class="tag">Match</span> No commentary for Over ${overIndexToShow}.</div>`;
+        }
+    }
+
+    applyFieldingPreset(presetName) {
+        const state = this.getCurrentState();
+        if (!state) return;
+
+        state.fieldingPreset = presetName;
+
+        const presets = {
+            balanced: [
+                { name: "Slip", x: 325, y: 225 },
+                { name: "Point", x: 420, y: 250 },
+                { name: "Cover", x: 390, y: 325 },
+                { name: "Mid Off", x: 340, y: 405 },
+                { name: "Mid On", x: 260, y: 405 },
+                { name: "Mid Wicket", x: 210, y: 325 },
+                { name: "Square Leg", x: 180, y: 250 },
+                { name: "Fine Leg", x: 245, y: 205 },
+                { name: "Third Man", x: 420, y: 160 }
+            ],
+            attacking: [
+                { name: "Slip", x: 320, y: 225 },
+                { name: "Point", x: 340, y: 245 },
+                { name: "Cover", x: 350, y: 290 },
+                { name: "Mid Off", x: 330, y: 345 },
+                { name: "Mid On", x: 270, y: 345 },
+                { name: "Mid Wicket", x: 250, y: 290 },
+                { name: "Square Leg", x: 260, y: 245 },
+                { name: "Fine Leg", x: 290, y: 220 },
+                { name: "Third Man", x: 335, y: 215 }
+            ],
+            defensive: [
+                { name: "Slip", x: 345, y: 175 },
+                { name: "Point", x: 480, y: 250 },
+                { name: "Cover", x: 450, y: 350 },
+                { name: "Mid Off", x: 350, y: 470 },
+                { name: "Mid On", x: 250, y: 470 },
+                { name: "Mid Wicket", x: 150, y: 350 },
+                { name: "Square Leg", x: 120, y: 250 },
+                { name: "Fine Leg", x: 180, y: 180 },
+                { name: "Third Man", x: 450, y: 160 }
+            ]
+        };
+
+        if (presets[presetName]) {
+            const keeper = state.fielderPositions.find(p => p.name === "Keeper");
+            const bowler = state.fielderPositions.find(p => p.name === "Bowler");
+            
+            state.fielderPositions = [
+                keeper,
+                bowler,
+                ...presets[presetName].map(f => ({ ...f }))
+            ];
+        }
+
+        this.validateFieldingRules();
+        this.drawField();
+    }
+
+    setupFieldDragHandler() {
+        let selectedFielder = null;
+        let fielderIndex = -1;
+        
+        const getSVGCoords = (e) => {
+            const rect = this.cricketField.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const x = (clientX - rect.left) / rect.width * 600;
+            const y = (clientY - rect.top) / rect.height * 600;
+            return { x, y };
+        };
+
+        this.cricketField.addEventListener("mousedown", (e) => {
+            const targetG = e.target.closest(".draggable-fielder");
+            if (!targetG) return;
+
+            const state = this.getCurrentState();
+            if (!state) return;
+
+            const idx = parseInt(targetG.dataset.idx);
+            const fielder = state.fielderPositions[idx];
+            
+            if (fielder && !fielder.isFixed) {
+                selectedFielder = fielder;
+                fielderIndex = idx;
+                targetG.classList.add("dragging-active");
+                e.preventDefault();
+            }
+        });
+
+        this.cricketField.addEventListener("mousemove", (e) => {
+            if (!selectedFielder) return;
+            const coords = getSVGCoords(e);
+            
+            const dx = coords.x - 300;
+            const dy = coords.y - 300;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 278) {
+                selectedFielder.x = Math.round(coords.x);
+                selectedFielder.y = Math.round(coords.y);
+            } else {
+                const angle = Math.atan2(dy, dx);
+                selectedFielder.x = Math.round(300 + Math.cos(angle) * 277);
+                selectedFielder.y = Math.round(300 + Math.sin(angle) * 277);
+            }
+
+            if (this.fieldingPresetSelect) {
+                this.fieldingPresetSelect.value = "custom";
+            }
+            const state = this.getCurrentState();
+            if (state) state.fieldingPreset = "custom";
+
+            this.validateFieldingRules();
+            this.drawField();
+        });
+
+        const stopDrag = () => {
+            if (selectedFielder) {
+                const g = this.cricketField.querySelector(`.draggable-fielder[data-idx="${fielderIndex}"]`);
+                if (g) g.classList.remove("dragging-active");
+                selectedFielder = null;
+                fielderIndex = -1;
+            }
+        };
+
+        this.cricketField.addEventListener("mouseup", stopDrag);
+        this.cricketField.addEventListener("mouseleave", stopDrag);
+
+        this.cricketField.addEventListener("touchstart", (e) => {
+            const targetG = e.target.closest(".draggable-fielder");
+            if (!targetG) return;
+
+            const state = this.getCurrentState();
+            if (!state) return;
+
+            const idx = parseInt(targetG.dataset.idx);
+            const fielder = state.fielderPositions[idx];
+            
+            if (fielder && !fielder.isFixed) {
+                selectedFielder = fielder;
+                fielderIndex = idx;
+                targetG.classList.add("dragging-active");
+                if (e.cancelable) e.preventDefault();
+            }
+        }, { passive: false });
+
+        this.cricketField.addEventListener("touchmove", (e) => {
+            if (!selectedFielder) return;
+            const coords = getSVGCoords(e);
+            
+            const dx = coords.x - 300;
+            const dy = coords.y - 300;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 278) {
+                selectedFielder.x = Math.round(coords.x);
+                selectedFielder.y = Math.round(coords.y);
+            } else {
+                const angle = Math.atan2(dy, dx);
+                selectedFielder.x = Math.round(300 + Math.cos(angle) * 277);
+                selectedFielder.y = Math.round(300 + Math.sin(angle) * 277);
+            }
+
+            if (this.fieldingPresetSelect) {
+                this.fieldingPresetSelect.value = "custom";
+            }
+            const state = this.getCurrentState();
+            if (state) state.fieldingPreset = "custom";
+
+            this.validateFieldingRules();
+            this.drawField();
+        }, { passive: false });
+
+        this.cricketField.addEventListener("touchend", stopDrag);
+    }
+
+    validateFieldingRules() {
+        const state = this.getCurrentState();
+        if (!state) return true;
+
+        const overNum = Math.floor(state.ballsBowled / 6) + 1;
+        const isPowerplay = this.format === "T20" && overNum <= 6;
+
+        let deepCount = 0;
+        let legSideCount = 0;
+        let behindSquareLegCount = 0;
+
+        state.fielderPositions.forEach(f => {
+            const dxCenter = f.x - 300;
+            const dyCenter = f.y - 300;
+            const distCenter = Math.sqrt(dxCenter * dxCenter + dyCenter * dyCenter);
+            if (distCenter > 160) {
+                deepCount++;
+            }
+
+            if (f.x > 300 && f.name !== "Bowler" && f.name !== "Keeper") {
+                legSideCount++;
+                
+                if (f.y < 240) {
+                    behindSquareLegCount++;
+                }
+            }
+        });
+
+        let isValid = true;
+        let errorMsg = "Field Valid";
+
+        const deepLimit = isPowerplay ? 2 : 5;
+        if (deepCount > deepLimit) {
+            isValid = false;
+            errorMsg = `Deep fielders limit exceeded (${deepCount}/${deepLimit})`;
+        } else if (legSideCount > 5) {
+            isValid = false;
+            errorMsg = `Too many leg side fielders (${legSideCount}/5)`;
+        } else if (behindSquareLegCount > 2) {
+            isValid = false;
+            errorMsg = `Too many behind square leg (${behindSquareLegCount}/2)`;
+        }
+
+        if (this.fieldingValidationBadge) {
+            this.fieldingValidationBadge.textContent = errorMsg;
+            if (isValid) {
+                this.fieldingValidationBadge.className = "badge bg-success";
+            } else {
+                this.fieldingValidationBadge.className = "badge bg-danger";
+            }
+        }
+
+        const disableSim = !isValid;
+        this.simBallBtn.disabled = disableSim;
+        this.simOverBtn.disabled = disableSim;
+        this.simPlayBtn.disabled = disableSim;
+        
+        this.simBallBtn.style.opacity = disableSim ? 0.5 : 1;
+        this.simOverBtn.style.opacity = disableSim ? 0.5 : 1;
+        this.simPlayBtn.style.opacity = disableSim ? 0.5 : 1;
+
+        return isValid;
+    }
+
+    renderSectorGaps(state) {
+        if (!this.svgSectorLines || !this.svgGapLabels) return;
+        this.svgSectorLines.innerHTML = "";
+        this.svgGapLabels.innerHTML = "";
+
+        const activeFielders = state.fielderPositions.filter(f => !f.isFixed);
+        if (activeFielders.length < 2) return;
+
+        const fieldersWithAngles = activeFielders.map((f, idx) => {
+            const dx = f.x - 300;
+            const dy = f.y - 240;
+            let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            if (angle < 0) angle += 360;
+            return { ...f, angle };
+        });
+
+        fieldersWithAngles.sort((a, b) => a.angle - b.angle);
+
+        for (let i = 0; i < fieldersWithAngles.length; i++) {
+            const f1 = fieldersWithAngles[i];
+            const f2 = fieldersWithAngles[(i + 1) % fieldersWithAngles.length];
+
+            const rad = f1.angle * Math.PI / 180;
+            const targetX = 300 + Math.cos(rad) * 278;
+            const targetY = 240 + Math.sin(rad) * 278;
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", "300");
+            line.setAttribute("y1", "240");
+            line.setAttribute("x2", targetX.toString());
+            line.setAttribute("y2", targetY.toString());
+            line.setAttribute("class", "sector-line");
+            this.svgSectorLines.appendChild(line);
+
+            let gap = f2.angle - f1.angle;
+            if (gap < 0) gap += 360;
+
+            let midAngle = f1.angle + gap / 2;
+            if (midAngle >= 360) midAngle -= 360;
+
+            const midRad = midAngle * Math.PI / 180;
+            const labelX = 300 + Math.cos(midRad) * 135;
+            const labelY = 240 + Math.sin(midRad) * 135;
+
+            const f1DistCenter = Math.sqrt((f1.x - 300)**2 + (f1.y - 300)**2);
+            const f2DistCenter = Math.sqrt((f2.x - 300)**2 + (f2.y - 300)**2);
+            const isDeepCovered = f1DistCenter > 160 || f2DistCenter > 160;
+
+            let statusClass = "closed";
+            if (gap >= 35) {
+                statusClass = "open";
+            } else if (gap >= 25) {
+                statusClass = "partial";
+            }
+
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", labelX.toString());
+            text.setAttribute("y", labelY.toString());
+            text.setAttribute("class", `gap-label ${statusClass}`);
+            text.textContent = `${Math.round(gap)}°${isDeepCovered ? '(D)' : ''}`;
+            this.svgGapLabels.appendChild(text);
         }
     }
 }
