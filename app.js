@@ -274,6 +274,7 @@ class MatchManager {
         // 3D View Controls
         this.btnToggleView3D = document.getElementById("btn-toggle-view-3d");
         this.threeCanvasContainer = document.getElementById("three-canvas-container");
+        this.btnFullscreen3D = document.getElementById("btn-fullscreen-3d");
         this.is3DViewActive = false;
 
         // Action Buttons
@@ -389,6 +390,10 @@ class MatchManager {
         // 3D View Toggle Listener
         if (this.btnToggleView3D) {
             this.btnToggleView3D.addEventListener("click", () => this.toggle3DView());
+        }
+
+        if (this.btnFullscreen3D) {
+            this.btnFullscreen3D.addEventListener("click", () => this.toggle3DFullscreen());
         }
     }
 
@@ -2853,8 +2858,19 @@ class MatchManager {
         this.processBallOutcome(outcome);
     }
 
+    closeDrsVisualizer() {
+        this.drsModal.classList.add("hidden");
+
+        const outcome = this.resolvedDRSOutcome;
+        this.activeAppeal = null;
+        this.resolvedDRSOutcome = null;
+
+        this.bypassAppeal = true;
+        this.processBallOutcome(outcome);
+    }
+
     // =========================================================
-    // 3D WEBGL GRAPHICS (THREE.JS)
+    // 3D WEBGL GRAPHICS (THREE.JS) - HIGH HIGH GRAPHICS
     // =========================================================
 
     toggle3DView() {
@@ -2880,13 +2896,116 @@ class MatchManager {
         }
     }
 
+    toggle3DFullscreen() {
+        const container = this.threeCanvasContainer;
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable fullscreen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
     resize3DCanvas() {
         if (!this.is3DViewActive || !this.threeRenderer || !this.threeCamera) return;
-        const width = this.threeCanvasContainer.clientWidth;
-        const height = this.threeCanvasContainer.clientHeight;
+        
+        let width = this.threeCanvasContainer.clientWidth;
+        let height = this.threeCanvasContainer.clientHeight;
+        
+        if (document.fullscreenElement) {
+            width = window.innerWidth;
+            height = window.innerHeight;
+        }
+
         this.threeCamera.aspect = width / height;
         this.threeCamera.updateProjectionMatrix();
         this.threeRenderer.setSize(width, height);
+    }
+
+    createHumanPlayer(shirtColor) {
+        const playerGroup = new THREE.Group();
+
+        // 1. Torso/Jersey
+        const torsoGeo = new THREE.CylinderGeometry(0.14, 0.11, 0.52, 8);
+        const torsoMat = new THREE.MeshLambertMaterial({ color: shirtColor });
+        const torso = new THREE.Mesh(torsoGeo, torsoMat);
+        torso.position.y = 0.55;
+        torso.castShadow = true;
+        torso.receiveShadow = true;
+        playerGroup.add(torso);
+
+        // 2. Head
+        const headGeo = new THREE.SphereGeometry(0.09, 8, 8);
+        const headMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.y = 0.87;
+        head.castShadow = true;
+        playerGroup.add(head);
+
+        // 3. Helmet
+        const helmetGeo = new THREE.SphereGeometry(0.1, 8, 8, 0, Math.PI * 2, 0, Math.PI / 1.7);
+        const helmetMat = new THREE.MeshLambertMaterial({ color: shirtColor });
+        const helmet = new THREE.Mesh(helmetGeo, helmetMat);
+        helmet.position.y = 0.89;
+        helmet.rotation.x = -0.15;
+        helmet.castShadow = true;
+        playerGroup.add(helmet);
+
+        // 4. Arms
+        const armGeo = new THREE.CylinderGeometry(0.04, 0.035, 0.35, 8);
+        const armMat = new THREE.MeshLambertMaterial({ color: shirtColor });
+        
+        const leftArm = new THREE.Mesh(armGeo, armMat);
+        leftArm.position.set(-0.16, 0.55, 0);
+        leftArm.rotation.z = Math.PI / 12;
+        leftArm.castShadow = true;
+        playerGroup.add(leftArm);
+
+        const rightArm = new THREE.Mesh(armGeo, armMat);
+        rightArm.position.set(0.16, 0.55, 0);
+        rightArm.rotation.z = -Math.PI / 12;
+        rightArm.castShadow = true;
+        playerGroup.add(rightArm);
+
+        // 5. Pants & Pads (Legs)
+        const padGeo = new THREE.CylinderGeometry(0.05, 0.045, 0.35, 8);
+        const padMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f5 }); // white pads
+
+        const leftLeg = new THREE.Mesh(padGeo, padMat);
+        leftLeg.position.set(-0.07, 0.175, 0);
+        leftLeg.castShadow = true;
+        leftLeg.receiveShadow = true;
+        playerGroup.add(leftLeg);
+
+        const rightLeg = new THREE.Mesh(padGeo, padMat);
+        rightLeg.position.set(0.07, 0.175, 0);
+        rightLeg.castShadow = true;
+        rightLeg.receiveShadow = true;
+        playerGroup.add(rightLeg);
+
+        return playerGroup;
+    }
+
+    createDetailedBat() {
+        const batGroup = new THREE.Group();
+
+        // Flat wooden blade
+        const bladeGeo = new THREE.BoxGeometry(0.08, 0.45, 0.025);
+        const bladeMat = new THREE.MeshLambertMaterial({ color: 0xd2b48c }); // wood willow
+        const blade = new THREE.Mesh(bladeGeo, bladeMat);
+        blade.position.y = 0.225;
+        blade.castShadow = true;
+        batGroup.add(blade);
+
+        // Rubber grip handle
+        const handleGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.22, 8);
+        const handleMat = new THREE.MeshLambertMaterial({ color: 0x111111 }); // black grip
+        const handle = new THREE.Mesh(handleGeo, handleMat);
+        handle.position.y = 0.56;
+        batGroup.add(handle);
+
+        return batGroup;
     }
 
     init3DScene() {
@@ -2900,52 +3019,215 @@ class MatchManager {
 
         // Scene
         this.threeScene = new THREE.Scene();
-        this.threeScene.background = new THREE.Color(0x0a1c0f);
+        this.threeScene.background = new THREE.Color(0x050c07); // Dark night sky
+        this.threeScene.fog = new THREE.FogExp2(0x050c07, 0.015);
 
         // Camera
-        this.threeCamera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
-        this.threeCamera.position.set(0, 2.5, 14.5);
-        this.threeCamera.lookAt(0, 0.4, -5);
+        this.threeCamera = new THREE.PerspectiveCamera(42, width / height, 0.1, 150);
+        this.threeCamera.position.set(0, 3.2, 15.5);
+        this.threeCamera.lookAt(0, 0.4, -4);
 
         // Renderer
         this.threeRenderer = new THREE.WebGLRenderer({ antialias: true });
         this.threeRenderer.setSize(width, height);
         this.threeRenderer.shadowMap.enabled = true;
+        this.threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.threeCanvasContainer.appendChild(this.threeRenderer.domElement);
 
-        // Lights
-        const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+        // OrbitControls
+        this.threeControls = new THREE.OrbitControls(this.threeCamera, this.threeRenderer.domElement);
+        this.threeControls.enableDamping = true;
+        this.threeControls.dampingFactor = 0.05;
+        this.threeControls.maxPolarAngle = Math.PI / 2 - 0.04; // Keep camera above grass
+        this.threeControls.minDistance = 2.5;
+        this.threeControls.maxDistance = 45;
+        
+        // Right Click to rotate, Left click disabled (preserves drag & drop selectors overlay)
+        this.threeControls.mouseButtons = {
+            LEFT: THREE.MOUSE.NONE,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.ROTATE
+        };
+
+        // Ambient Light
+        const ambient = new THREE.AmbientLight(0xffffff, 0.45);
         this.threeScene.add(ambient);
 
+        // Primary Sun/Shadow Light
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(10, 20, 10);
+        dirLight.position.set(15, 25, 15);
         dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 80;
+        dirLight.shadow.camera.left = -25;
+        dirLight.shadow.camera.right = 25;
+        dirLight.shadow.camera.top = 25;
+        dirLight.shadow.camera.bottom = -25;
         this.threeScene.add(dirLight);
 
-        // Grass Disc
+        // 1. Procedural turf texture
+        const canvas = document.createElement("canvas");
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#1e5225";
+        ctx.fillRect(0, 0, 512, 512);
+        for (let r = 512; r > 0; r -= 40) {
+            ctx.fillStyle = (r % 80 === 0) ? "#1f5628" : "#17441c";
+            ctx.beginPath();
+            ctx.arc(256, 256, r/2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        const turfTexture = new THREE.CanvasTexture(canvas);
+        turfTexture.wrapS = THREE.RepeatWrapping;
+        turfTexture.wrapT = THREE.RepeatWrapping;
+
+        // Grass circle
         const grassGeo = new THREE.CircleGeometry(38, 32);
-        const grassMat = new THREE.MeshLambertMaterial({ color: 0x1f5624 });
+        const grassMat = new THREE.MeshLambertMaterial({ map: turfTexture });
         const grass = new THREE.Mesh(grassGeo, grassMat);
         grass.rotation.x = -Math.PI / 2;
         grass.receiveShadow = true;
         this.threeScene.add(grass);
 
-        // White boundary ring
-        const boundaryGeo = new THREE.RingGeometry(37.8, 38, 64);
+        // Boundary rope white ring
+        const boundaryGeo = new THREE.RingGeometry(37.7, 38.0, 64);
         const boundaryMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
         const boundary = new THREE.Mesh(boundaryGeo, boundaryMat);
         boundary.rotation.x = -Math.PI / 2;
         this.threeScene.add(boundary);
 
-        // Pitch box
-        const pitchGeo = new THREE.BoxGeometry(2.2, 0.02, 22);
+        // Sandy Pitch
+        const pitchGeo = new THREE.BoxGeometry(2.3, 0.02, 22);
         const pitchMat = new THREE.MeshLambertMaterial({ color: 0xd6b88a });
         const pitch = new THREE.Mesh(pitchGeo, pitchMat);
         pitch.position.y = 0.01;
         pitch.receiveShadow = true;
         this.threeScene.add(pitch);
 
-        // Wickets Group (Batting End z=10)
+        // Crease Lines
+        const creaseLineGeo = new THREE.PlaneGeometry(2.1, 0.04);
+        const creaseLineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+        
+        const creaseBat = new THREE.Mesh(creaseLineGeo, creaseLineMat);
+        creaseBat.rotation.x = -Math.PI / 2;
+        creaseBat.position.set(0, 0.022, 9.0);
+        this.threeScene.add(creaseBat);
+
+        const creaseBowl = new THREE.Mesh(creaseLineGeo, creaseLineMat);
+        creaseBowl.rotation.x = -Math.PI / 2;
+        creaseBowl.position.set(0, 0.022, -9.0);
+        this.threeScene.add(creaseBowl);
+
+        // 2. Spectator Stands & Stepped seating bowl
+        this.threeStandsGroup = new THREE.Group();
+        this.threeScene.add(this.threeStandsGroup);
+
+        const standHeight = 1.0;
+        const baseRadius = 38.5;
+        const standCount = 5;
+
+        for (let tier = 0; tier < standCount; tier++) {
+            const innerR = baseRadius + tier * 1.8;
+            const outerR = innerR + 1.8;
+            const height = (tier + 1) * standHeight;
+
+            const standGeo = new THREE.RingGeometry(innerR, outerR, 64);
+            const standMat = new THREE.MeshLambertMaterial({ color: 0x22332c, side: THREE.DoubleSide });
+            const stand = new THREE.Mesh(standGeo, standMat);
+            stand.rotation.x = -Math.PI / 2;
+            stand.position.y = height - standHeight;
+            stand.receiveShadow = true;
+            this.threeStandsGroup.add(stand);
+
+            const wallGeo = new THREE.CylinderGeometry(outerR, outerR, standHeight, 64, 1, true);
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x111d16, side: THREE.DoubleSide });
+            const wall = new THREE.Mesh(wallGeo, wallMat);
+            wall.position.y = height - (standHeight / 2);
+            this.threeStandsGroup.add(wall);
+
+            // Audience crowd generation
+            const specCount = 180 + tier * 80;
+            const specGeo = new THREE.BoxGeometry(0.2, 0.35, 0.2);
+
+            for (let s = 0; s < specCount; s++) {
+                if (Math.random() < 0.25) continue;
+
+                const angle = (s / specCount) * Math.PI * 2;
+                const dist = innerR + 0.9;
+                
+                const x = Math.cos(angle) * dist;
+                const z = Math.sin(angle) * dist;
+                const y = height - standHeight + 0.175;
+
+                const specColors = [0xd32f2f, 0x1976d2, 0x388e3c, 0xfbc02d, 0x7b1fa2, 0xe64a19, 0xffffff, 0x212121];
+                const specColor = specColors[Math.floor(Math.random() * specColors.length)];
+                const specMat = new THREE.MeshBasicMaterial({ color: specColor });
+                
+                const spectator = new THREE.Mesh(specGeo, specMat);
+                spectator.position.set(x, y, z);
+                spectator.lookAt(0, y, 0);
+
+                this.threeStandsGroup.add(spectator);
+            }
+        }
+
+        // Outer canopy ceiling wall
+        const finalOuterR = baseRadius + standCount * 1.8;
+        const outerWallGeo = new THREE.CylinderGeometry(finalOuterR + 0.5, finalOuterR + 0.5, 6, 64, 1, true);
+        const outerWallMat = new THREE.MeshLambertMaterial({ color: 0x09110d, side: THREE.DoubleSide });
+        const outerWall = new THREE.Mesh(outerWallGeo, outerWallMat);
+        outerWall.position.y = 3;
+        this.threeScene.add(outerWall);
+
+        // 3. Floodlights (4 corners)
+        const towerGeo = new THREE.CylinderGeometry(0.12, 0.28, 14, 8);
+        const towerMat = new THREE.MeshLambertMaterial({ color: 0x3e4a42 });
+        const bulbGeo = new THREE.SphereGeometry(0.12, 8, 8);
+        const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+        const towerCoords = [
+            { x: -30, z: -30 },
+            { x: 30, z: -30 },
+            { x: -30, z: 30 },
+            { x: 30, z: 30 }
+        ];
+
+        towerCoords.forEach(tc => {
+            const tower = new THREE.Group();
+            tower.position.set(tc.x, 0, tc.z);
+            this.threeScene.add(tower);
+
+            const pole = new THREE.Mesh(towerGeo, towerMat);
+            pole.position.y = 7;
+            pole.castShadow = true;
+            tower.add(pole);
+
+            const board = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 0.4), towerMat);
+            board.position.set(0, 13.5, 0);
+            board.lookAt(0, 4, 0);
+            tower.add(board);
+
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 4; c++) {
+                    const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+                    bulb.position.set(-0.75 + c * 0.5, 13.1 + r * 0.4, 0.22);
+                    tower.add(bulb);
+                }
+            }
+
+            const spot = new THREE.SpotLight(0xffffff, 0.35);
+            spot.position.set(tc.x, 14, tc.z);
+            spot.target.position.set(0, 0, 0);
+            spot.angle = Math.PI / 6;
+            spot.penumbra = 0.8;
+            spot.castShadow = true;
+            this.threeScene.add(spot);
+        });
+
+        // Wickets Group (Batting End)
         this.threeWicketsGroup = new THREE.Group();
         this.threeScene.add(this.threeWicketsGroup);
 
@@ -2957,11 +3239,12 @@ class MatchManager {
             const stump = new THREE.Mesh(stumpGeo, stumpMat);
             stump.position.set(-0.14 + i * 0.14, 0.36, 10);
             stump.castShadow = true;
+            stump.receiveShadow = true;
             this.threeWicketsGroup.add(stump);
             this.threeStumpMeshes.push(stump);
         }
 
-        // Bails (Batting End)
+        // Bails
         const bailGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.13, 8);
         const bailMat = new THREE.MeshLambertMaterial({ color: 0xb38612 });
         this.threeBailMeshes = [];
@@ -2969,12 +3252,14 @@ class MatchManager {
         const bailLeft = new THREE.Mesh(bailGeo, bailMat);
         bailLeft.rotation.z = Math.PI / 2;
         bailLeft.position.set(-0.07, 0.73, 10);
+        bailLeft.castShadow = true;
         this.threeWicketsGroup.add(bailLeft);
         this.threeBailMeshes.push(bailLeft);
 
         const bailRight = new THREE.Mesh(bailGeo, bailMat);
         bailRight.rotation.z = Math.PI / 2;
         bailRight.position.set(0.07, 0.73, 10);
+        bailRight.castShadow = true;
         this.threeWicketsGroup.add(bailRight);
         this.threeBailMeshes.push(bailRight);
 
@@ -2982,6 +3267,7 @@ class MatchManager {
         for (let i = 0; i < 3; i++) {
             const stump = new THREE.Mesh(stumpGeo, stumpMat);
             stump.position.set(-0.14 + i * 0.14, 0.36, -10);
+            stump.castShadow = true;
             this.threeScene.add(stump);
         }
 
@@ -2995,42 +3281,23 @@ class MatchManager {
         this.threeBallMesh = new THREE.Mesh(ballGeo, ballMat);
         this.threeBallMesh.castShadow = true;
         this.threeScene.add(this.threeBallMesh);
-        this.threeBallMesh.position.set(0, -5, 0); // hide initially
+        this.threeBallMesh.position.set(0, -5, 0); // Hide initially
 
-        // Striker Group
+        // Striker/Batsman Group
         this.threeBatsmanGroup = new THREE.Group();
         this.threeBatsmanGroup.position.set(-0.5, 0, 9.8);
         this.threeScene.add(this.threeBatsmanGroup);
 
-        const bodyGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.85, 8);
-        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1e88e5 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 0.425;
-        body.castShadow = true;
-        this.threeBatsmanGroup.add(body);
+        // Bowler group placeholder
+        this.threeBowlerGroup = null;
 
-        const headGeo = new THREE.SphereGeometry(0.12, 8, 8);
-        const headMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
-        const head = new THREE.Mesh(headGeo, headMat);
-        head.position.y = 0.95;
-        this.threeBatsmanGroup.add(head);
+        // Resize & Fullscreen event
+        window.addEventListener("resize", () => this.resize3DCanvas());
+        document.addEventListener("fullscreenchange", () => {
+            setTimeout(() => this.resize3DCanvas(), 100);
+        });
 
-        // Bat
-        const batGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.65, 8);
-        const batMat = new THREE.MeshLambertMaterial({ color: 0x7c5427 });
-        this.threeBatMesh = new THREE.Mesh(batGeo, batMat);
-        this.threeBatMesh.position.set(0.25, 0.32, 0.15);
-        this.threeBatMesh.rotation.z = Math.PI / 8;
-        this.threeBatsmanGroup.add(this.threeBatMesh);
-
-        // Bowler
-        const bowlerGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.85, 8);
-        const bowlerMat = new THREE.MeshLambertMaterial({ color: 0xe53935 });
-        this.threeBowlerMesh = new THREE.Mesh(bowlerGeo, bowlerMat);
-        this.threeBowlerMesh.position.set(0, 0.425, -11);
-        this.threeBowlerMesh.castShadow = true;
-        this.threeScene.add(this.threeBowlerMesh);
-
+        this.resize3DCanvas();
         this.animate3DLoop();
     }
 
@@ -3038,42 +3305,44 @@ class MatchManager {
         const state = this.getCurrentState();
         if (!state || !this.threeScene) return;
 
-        while(this.threeFieldersGroup.children.length > 0){ 
-            this.threeFieldersGroup.remove(this.threeFieldersGroup.children[0]); 
+        while (this.threeFieldersGroup.children.length > 0) {
+            this.threeFieldersGroup.remove(this.threeFieldersGroup.children[0]);
         }
 
-        const batColor = state.isUserBatting ? 0x1e88e5 : 0xe53935;
-        const bowlColor = state.isUserBatting ? 0xe53935 : 0x1e88e5;
+        const batColor = state.isUserBatting ? 0x1976d2 : 0xd32f2f;
+        const bowlColor = state.isUserBatting ? 0xd32f2f : 0x1976d2;
 
-        // Update body colors
-        if (this.threeBatsmanGroup.children[0]) {
-            this.threeBatsmanGroup.children[0].material.color.setHex(batColor);
-        }
-        if (this.threeBowlerMesh) {
-            this.threeBowlerMesh.material.color.setHex(bowlColor);
+        // Redraw striker (detailed humanoid)
+        while (this.threeBatsmanGroup.children.length > 0) {
+            this.threeBatsmanGroup.remove(this.threeBatsmanGroup.children[0]);
         }
 
+        const batsmanBody = this.createHumanPlayer(batColor);
+        this.threeBatsmanGroup.add(batsmanBody);
+
+        this.threeBatMesh = this.createDetailedBat();
+        this.threeBatMesh.position.set(0.2, 0.25, 0.1);
+        this.threeBatMesh.rotation.z = Math.PI / 8;
+        this.threeBatsmanGroup.add(this.threeBatMesh);
+
+        // Redraw Bowler
+        if (this.threeBowlerGroup) {
+            this.threeScene.remove(this.threeBowlerGroup);
+        }
+        this.threeBowlerGroup = this.createHumanPlayer(bowlColor);
+        this.threeBowlerGroup.position.set(0, 0, -11);
+        this.threeBowlerGroup.lookAt(0, 0, 9.8);
+        this.threeScene.add(this.threeBowlerGroup);
+
+        // Draw 9 fielders
         const activeFielders = state.fielderPositions.filter(f => !f.isFixed);
-        const bodyGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.82, 8);
-        const bodyMat = new THREE.MeshLambertMaterial({ color: bowlColor });
-        const headGeo = new THREE.SphereGeometry(0.11, 8, 8);
-        const headMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
-
         activeFielders.forEach(f => {
             const x3d = (f.x - 300) / 10;
             const z3d = (f.y - 300) / 10;
 
-            const fGroup = new THREE.Group();
+            const fGroup = this.createHumanPlayer(bowlColor);
             fGroup.position.set(x3d, 0, z3d);
-
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 0.41;
-            body.castShadow = true;
-            fGroup.add(body);
-
-            const head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 0.92;
-            fGroup.add(head);
+            fGroup.lookAt(0, 0, 9.8); // Face batsman
 
             this.threeFieldersGroup.add(fGroup);
         });
@@ -3099,6 +3368,7 @@ class MatchManager {
     animate3DLoop() {
         if (!this.is3DViewActive) return;
 
+        if (this.threeControls) this.threeControls.update();
         this.threeRenderer.render(this.threeScene, this.threeCamera);
         requestAnimationFrame(() => this.animate3DLoop());
     }
