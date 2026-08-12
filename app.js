@@ -777,43 +777,32 @@ class MatchManager {
                     const gap = chosenSector.gapSize;
                     const isDeep = chosenSector.isDeepCovered;
 
-                    if (gap < 28) {
-                        // Narrow inner gap (Closed inside)
-                        if (!isDeep) {
-                            // Open deep: high risk of catches but high boundary reward
-                            if (batsman.mentality === "attack") {
-                                probs["W"] += 1.5;
-                                probs["4"] += 2;
-                                probs["DOT"] = Math.max(5, probs["DOT"] - 2);
-                            } else {
-                                probs["DOT"] += 5;
-                                probs["1"] = Math.max(2, probs["1"] - 2);
-                                probs["4"] = Math.max(0, probs["4"] - 2);
-                            }
-                        } else {
-                            // Closed deep: high risk of dot/catch, low boundaries
-                            probs["DOT"] += 6;
-                            probs["W"] += 1;
-                            probs["4"] = Math.max(0, probs["4"] - 3);
-                            probs["6"] = Math.max(0, probs["6"] - 2);
-                        }
-                    } else if (gap >= 45) {
-                        // Wide gap (Open inside)
-                        if (isDeep) {
-                            // Covered deep: easy singles/doubles, low boundary
-                            probs["1"] += 6;
-                            probs["2"] += 2;
-                            probs["DOT"] = Math.max(5, probs["DOT"] - 4);
-                            probs["4"] = Math.max(1, probs["4"] - 2);
-                        } else {
-                            // Open deep: boundary bonanza, low wicket
-                            probs["4"] += 4;
-                            probs["6"] += 2;
-                            probs["DOT"] = Math.max(5, probs["DOT"] - 4);
-                            probs["W"] = Math.max(0.5, probs["W"] - 1);
-                        }
+                    // 1. Boundary Protection (Deep Coverage)
+                    if (isDeep) {
+                        // Defensive sector: Saves boundaries, gives away singles
+                        probs["4"] = Math.max(1, probs["4"] - 4);
+                        probs["6"] = Math.max(0, probs["6"] - 2);
+                        probs["1"] += 6;
+                        probs["2"] += 2;
+                        probs["DOT"] = Math.max(5, probs["DOT"] - 2);
                     } else {
-                        // Moderate gap (28 to 44 degrees): no adjustments, keep natural base ratings differences
+                        // Attacking sector: Higher boundary risk, restricts singles
+                        probs["4"] += 4;
+                        probs["6"] += 2;
+                        probs["1"] = Math.max(2, probs["1"] - 4);
+                        probs["2"] = Math.max(0, probs["2"] - 2);
+                    }
+
+                    // 2. Infield Catching Pressure (Gap Size)
+                    if (gap < 28) {
+                        // Closed gap: high pressure, dots and catches
+                        probs["DOT"] += 6;
+                        probs["W"] += 1.5;
+                        probs["4"] = Math.max(1, probs["4"] - 2);
+                    } else if (gap >= 45) {
+                        // Wide gap: easy pierce, low pressure
+                        probs["DOT"] = Math.max(5, probs["DOT"] - 4);
+                        probs["W"] = Math.max(0.5, probs["W"] - 1.5);
                     }
                 }
             }
