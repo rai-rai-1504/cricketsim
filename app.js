@@ -321,8 +321,14 @@ class MatchManager {
         });
 
         // Opener changes
-        this.opener1Select.addEventListener("change", () => this.updateOpenerStats(1));
-        this.opener2Select.addEventListener("change", () => this.updateOpenerStats(2));
+        this.opener1Select.addEventListener("change", () => {
+            this.updateOpenerStats(1);
+            this.validateOpeners();
+        });
+        this.opener2Select.addEventListener("change", () => {
+            this.updateOpenerStats(2);
+            this.validateOpeners();
+        });
 
         // Restart
         this.restartGameBtn.addEventListener("click", () => this.resetToSetup());
@@ -413,6 +419,7 @@ class MatchManager {
             this.opener2Select.selectedIndex = 1;
             this.updateOpenerStats(1);
             this.updateOpenerStats(2);
+            this.validateOpeners();
         } else {
             // AI selects openers (best 2 batters)
             const sortedAI = [...battingTeam].sort((a,b) => b.batting - a.batting);
@@ -440,6 +447,18 @@ class MatchManager {
         const player = battingTeam[dropdown.value];
         if (player) {
             div.textContent = `Batting: ${player.batting} | Bowling: ${player.bowling}`;
+        }
+    }
+
+    validateOpeners() {
+        if (this.opener1Select.value === this.opener2Select.value) {
+            this.startMatchBtn.disabled = true;
+            this.startMatchBtn.textContent = "Choose different openers";
+            this.startMatchBtn.style.opacity = 0.5;
+        } else {
+            this.startMatchBtn.disabled = false;
+            this.startMatchBtn.textContent = "Start Innings";
+            this.startMatchBtn.style.opacity = 1;
         }
     }
 
@@ -1310,6 +1329,7 @@ class MatchManager {
             this.opener2Select.add(opt2);
         });
         this.opener2Select.selectedIndex = 1;
+        this.validateOpeners();
         
         this.startMatchBtn.onclick = () => {
             this.openersScreen.classList.add("hidden");
