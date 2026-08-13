@@ -400,13 +400,6 @@ class MatchManager {
         this.restartGameBtn.addEventListener("click", () => this.resetToSetup());
 
         // Fielding Preset Selector
-        this.btnAIAutoField = document.getElementById("btn-ai-auto-field");
-        if (this.btnAIAutoField) {
-            this.btnAIAutoField.addEventListener("click", () => {
-                this.evaluateAIFieldAdjustment(true);
-            });
-        }
-
         if (this.fieldingPresetSelect) {
             this.fieldingPresetSelect.addEventListener("change", (e) => {
                 this.applyFieldingPreset(e.target.value);
