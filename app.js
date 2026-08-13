@@ -2933,8 +2933,12 @@ class MatchManager {
 
         rayAngles.forEach(clockAngle => {
             const rad = clockAngle * Math.PI / 180;
-            const dx = Math.sin(rad) * 278;
-            const dy = -Math.cos(rad) * 278;
+            const cosVal = Math.cos(rad);
+            // Calculate exact ray length from (300, 240) to boundary circle (300, 300, R=280)
+            const distToBoundary = Math.sqrt(3600 * cosVal * cosVal + 74800) - 60 * cosVal;
+
+            const dx = Math.sin(rad) * distToBoundary;
+            const dy = -cosVal * distToBoundary;
             const endX = 300 + dx;
             const endY = 240 + dy;
 
