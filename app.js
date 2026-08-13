@@ -2926,15 +2926,11 @@ class MatchManager {
         this.svgSectorLines.innerHTML = "";
         this.svgGapLabels.innerHTML = "";
 
-        // 8 Sector Rays dividing the field into 4 Quadrants of (55° + 35°):
-        // Centered at Batsman / Striker position (300, 240)
-        // Vertical axis (0°, 180°), Horizontal axis (-90°, +90°), and Diagonals (+55°, +125°, -125°, -55°)
+        // 1. Keep 8 Fixed Sector Dotted Rays from Striker (300, 240) to Outer Boundary
         const rayAngles = [0, 55, 90, 125, 180, -125, -90, -55];
-
         rayAngles.forEach(clockAngle => {
             const rad = clockAngle * Math.PI / 180;
             const cosVal = Math.cos(rad);
-            // Calculate exact ray length from (300, 240) to boundary circle (300, 300, R=280)
             const distToBoundary = Math.sqrt(3600 * cosVal * cosVal + 74800) - 60 * cosVal;
 
             const dx = Math.sin(rad) * distToBoundary;
@@ -2947,46 +2943,58 @@ class MatchManager {
             line.setAttribute("y1", "240");
             line.setAttribute("x2", endX.toFixed(1));
             line.setAttribute("y2", endY.toFixed(1));
-            line.setAttribute("stroke", "rgba(255, 255, 255, 0.45)");
+            line.setAttribute("stroke", "rgba(255, 255, 255, 0.4)");
             line.setAttribute("stroke-width", "1.5");
             line.setAttribute("stroke-dasharray", "4 4");
             this.svgSectorLines.appendChild(line);
         });
 
-        // 8 Sectors matching exact order from design:
-        // Top-Right: 55° (Yellow), Mid-Right: 35° (Red), Lower-Right: 35° (Red), Bottom-Right: 55° (Yellow)
-        // Bottom-Left: 55° (Yellow), Lower-Left: 35° (Red), Mid-Left: 35° (Red), Top-Left: 55° (Yellow)
-        const sectors = [
-            { midAngle: 27.5, size: 55, color: "#fbbf24" },    // Top Right (55°)
-            { midAngle: 72.5, size: 35, color: "#f43f5e" },    // Mid Right (35°)
-            { midAngle: 107.5, size: 35, color: "#f43f5e" },   // Lower Right (35°)
-            { midAngle: 152.5, size: 55, color: "#fbbf24" },   // Bottom Right (55°)
-            { midAngle: -152.5, size: 55, color: "#fbbf24" },  // Bottom Left (55°)
-            { midAngle: -107.5, size: 35, color: "#f43f5e" },  // Lower Left (35°)
-            { midAngle: -72.5, size: 35, color: "#f43f5e" },   // Mid Left (35°)
-            { midAngle: -27.5, size: 55, color: "#fbbf24" }    // Top Left (55°)
-        ];
+        // 2. Render Dynamic Sector Gap Angles between Adjacent Fielders (Batsman POV)
+        const activeFielders = state.fielderPositions.filter(f => !f.isFixed);
+        if (activeFielders.length < 2) return;
 
-        sectors.forEach(sec => {
-            const rad = sec.midAngle * Math.PI / 180;
-            const dx = Math.sin(rad) * 140;
-            const dy = -Math.cos(rad) * 140;
-            const labelX = 300 + dx;
-            const labelY = 240 + dy;
+        const fieldersWithAngles = activeFielders.map((f, idx) => {
+            const dx = f.x - 300;
+            const dy = f.y - 240;
+            let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            if (angle < 0) angle += 360;
+            return { ...f, angle };
+        });
+
+        fieldersWithAngles.sort((a, b) => a.angle - b.angle);
+
+        for (let i = 0; i < fieldersWithAngles.length; i++) {
+            const f1 = fieldersWithAngles[i];
+            const f2 = fieldersWithAngles[(i + 1) % fieldersWithAngles.length];
+
+            let gap = f2.angle - f1.angle;
+            if (gap < 0) gap += 360;
+
+            let midAngle = f1.angle + gap / 2;
+            if (midAngle >= 360) midAngle -= 360;
+
+            const midRad = midAngle * Math.PI / 180;
+            const labelX = 300 + Math.cos(midRad) * 135;
+            const labelY = 240 + Math.sin(midRad) * 135;
+
+            const f1DistCenter = Math.sqrt((f1.x - 300)**2 + (f1.y - 300)**2);
+            const f2DistCenter = Math.sqrt((f2.x - 300)**2 + (f2.y - 300)**2);
+            const isDeepCovered = f1DistCenter > 160 || f2DistCenter > 160;
+
+            let statusClass = "closed";
+            if (gap >= 45) {
+                statusClass = "open";
+            } else if (gap >= 28) {
+                statusClass = "partial";
+            }
 
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("x", labelX.toFixed(1));
             text.setAttribute("y", labelY.toFixed(1));
-            text.setAttribute("text-anchor", "middle");
-            text.setAttribute("dominant-baseline", "central");
-            text.setAttribute("fill", sec.color);
-            text.setAttribute("font-size", "12");
-            text.setAttribute("font-weight", "800");
-            text.setAttribute("font-family", "'Rajdhani', sans-serif");
-            text.setAttribute("filter", "drop-shadow(0px 1px 2px rgba(0,0,0,0.9))");
-            text.textContent = `${sec.size}°`;
+            text.setAttribute("class", `gap-label ${statusClass}`);
+            text.textContent = `${Math.round(gap)}°${isDeepCovered ? '(D)' : ''}`;
             this.svgGapLabels.appendChild(text);
-        });
+        }
     }
 
     triggerCloseAppeal(originalResult) {
