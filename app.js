@@ -2926,63 +2926,60 @@ class MatchManager {
         this.svgSectorLines.innerHTML = "";
         this.svgGapLabels.innerHTML = "";
 
-        const activeFielders = state.fielderPositions.filter(f => !f.isFixed);
-        if (activeFielders.length < 2) return;
+        // 8 Sector Rays radiating from Striker (300, 240)
+        // Ray Clock Angles: -27.5, +27.5, +62.5, +97.5, +152.5, -152.5, -97.5, -62.5
+        const rayAngles = [-27.5, 27.5, 62.5, 97.5, 152.5, -152.5, -97.5, -62.5];
 
-        const fieldersWithAngles = activeFielders.map((f, idx) => {
-            const dx = f.x - 300;
-            const dy = f.y - 240;
-            let angle = Math.atan2(dy, dx) * 180 / Math.PI;
-            if (angle < 0) angle += 360;
-            return { ...f, angle };
-        });
-
-        fieldersWithAngles.sort((a, b) => a.angle - b.angle);
-
-        for (let i = 0; i < fieldersWithAngles.length; i++) {
-            const f1 = fieldersWithAngles[i];
-            const f2 = fieldersWithAngles[(i + 1) % fieldersWithAngles.length];
-
-            const rad = f1.angle * Math.PI / 180;
-            const targetX = 300 + Math.cos(rad) * 278;
-            const targetY = 240 + Math.sin(rad) * 278;
+        rayAngles.forEach(clockAngle => {
+            const rad = clockAngle * Math.PI / 180;
+            const dx = Math.sin(rad) * 278;
+            const dy = -Math.cos(rad) * 278;
+            const endX = 300 + dx;
+            const endY = 240 + dy;
 
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", "300");
             line.setAttribute("y1", "240");
-            line.setAttribute("x2", targetX.toString());
-            line.setAttribute("y2", targetY.toString());
-            line.setAttribute("class", "sector-line");
+            line.setAttribute("x2", endX.toFixed(1));
+            line.setAttribute("y2", endY.toFixed(1));
+            line.setAttribute("stroke", "rgba(255, 255, 255, 0.45)");
+            line.setAttribute("stroke-width", "1.5");
+            line.setAttribute("stroke-dasharray", "4 4");
             this.svgSectorLines.appendChild(line);
+        });
 
-            let gap = f2.angle - f1.angle;
-            if (gap < 0) gap += 360;
+        // 8 Sectors with 55° (Yellow) and 35° (Red) angles
+        const sectors = [
+            { midAngle: 0, size: 55, color: "#fbbf24" },       // Top Center (55°)
+            { midAngle: 45, size: 35, color: "#f43f5e" },      // Top Right (35°)
+            { midAngle: 80, size: 35, color: "#f43f5e" },      // Mid Right (35°)
+            { midAngle: 125, size: 55, color: "#fbbf24" },     // Bottom Right (55°)
+            { midAngle: 180, size: 55, color: "#fbbf24" },     // Bottom Center (55°)
+            { midAngle: -125, size: 55, color: "#fbbf24" },    // Bottom Left (55°)
+            { midAngle: -80, size: 35, color: "#f43f5e" },     // Mid Left (35°)
+            { midAngle: -45, size: 35, color: "#f43f5e" }      // Top Left (35°)
+        ];
 
-            let midAngle = f1.angle + gap / 2;
-            if (midAngle >= 360) midAngle -= 360;
-
-            const midRad = midAngle * Math.PI / 180;
-            const labelX = 300 + Math.cos(midRad) * 135;
-            const labelY = 240 + Math.sin(midRad) * 135;
-
-            const f1DistCenter = Math.sqrt((f1.x - 300)**2 + (f1.y - 300)**2);
-            const f2DistCenter = Math.sqrt((f2.x - 300)**2 + (f2.y - 300)**2);
-            const isDeepCovered = f1DistCenter > 160 || f2DistCenter > 160;
-
-            let statusClass = "closed";
-            if (gap >= 45) {
-                statusClass = "open";
-            } else if (gap >= 28) {
-                statusClass = "partial";
-            }
+        sectors.forEach(sec => {
+            const rad = sec.midAngle * Math.PI / 180;
+            const dx = Math.sin(rad) * 140;
+            const dy = -Math.cos(rad) * 140;
+            const labelX = 300 + dx;
+            const labelY = 240 + dy;
 
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.setAttribute("x", labelX.toString());
-            text.setAttribute("y", labelY.toString());
-            text.setAttribute("class", `gap-label ${statusClass}`);
-            text.textContent = `${Math.round(gap)}°${isDeepCovered ? '(D)' : ''}`;
+            text.setAttribute("x", labelX.toFixed(1));
+            text.setAttribute("y", labelY.toFixed(1));
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("dominant-baseline", "central");
+            text.setAttribute("fill", sec.color);
+            text.setAttribute("font-size", "12");
+            text.setAttribute("font-weight", "800");
+            text.setAttribute("font-family", "'Rajdhani', sans-serif");
+            text.setAttribute("filter", "drop-shadow(0px 1px 2px rgba(0,0,0,0.9))");
+            text.textContent = `${sec.size}°`;
             this.svgGapLabels.appendChild(text);
-        }
+        });
     }
 
     triggerCloseAppeal(originalResult) {
