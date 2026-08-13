@@ -189,6 +189,19 @@ class InningsState {
         this.reviewsLeft = 2;
         this.opponentReviewsLeft = 2;
         
+        this.shotHeatmap = {
+            0: { runs: 0, boundaries: 0, name: "Long On / Mid On" },
+            1: { runs: 0, boundaries: 0, name: "Mid Wicket / Cow Corner" },
+            2: { runs: 0, boundaries: 0, name: "Square Leg" },
+            3: { runs: 0, boundaries: 0, name: "Fine Leg / Leg Slip" },
+            4: { runs: 0, boundaries: 0, name: "Third Man / Slips" },
+            5: { runs: 0, boundaries: 0, name: "Point / Backward Point" },
+            6: { runs: 0, boundaries: 0, name: "Cover / Extra Cover" },
+            7: { runs: 0, boundaries: 0, name: "Mid Off / Long Off" }
+        };
+        this.boundariesThisOver = 0;
+        this.aiFieldAdjusted = false;
+
         this.isCompleted = false;
     }
 }
@@ -387,6 +400,13 @@ class MatchManager {
         this.restartGameBtn.addEventListener("click", () => this.resetToSetup());
 
         // Fielding Preset Selector
+        this.btnAIAutoField = document.getElementById("btn-ai-auto-field");
+        if (this.btnAIAutoField) {
+            this.btnAIAutoField.addEventListener("click", () => {
+                this.evaluateAIFieldAdjustment(true);
+            });
+        }
+
         if (this.fieldingPresetSelect) {
             this.fieldingPresetSelect.addEventListener("change", (e) => {
                 this.applyFieldingPreset(e.target.value);
@@ -944,6 +964,9 @@ class MatchManager {
             
             targetX = 300 + Math.cos(angle) * distance;
             targetY = 300 + Math.sin(angle) * distance;
+
+            // Record shot location into sector heatmap & check for boundary spikes
+            this.recordShotHeatmap(targetX, targetY, parseInt(result));
         }
 
         this.animateBall(targetX, targetY, animType, () => {
@@ -1240,7 +1263,11 @@ class MatchManager {
 
         state.ballsThisOver = 0;
         state.runsThisOver = 0;
+        state.boundariesThisOver = 0;
         state.overEvents = [];
+
+        // Trigger AI Field Placement evaluation between overs
+        this.evaluateAIFieldAdjustment(false);
 
         // Auto-reset commentary view to the active over
         const select = document.getElementById("commentary-over-select");
@@ -2313,6 +2340,83 @@ class MatchManager {
                 { name: "Square Leg", x: 480, y: 250 },
                 { name: "Fine Leg", x: 420, y: 180 },
                 { name: "Third Man", x: 150, y: 160 }
+            ],
+            t20_powerplay_attacking: [
+                { name: "Slip", x: 275, y: 225 },
+                { name: "Gully", x: 250, y: 240 },
+                { name: "Point", x: 190, y: 260 },
+                { name: "Cover", x: 220, y: 320 },
+                { name: "Mid Off", x: 270, y: 370 },
+                { name: "Mid On", x: 330, y: 370 },
+                { name: "Mid Wicket", x: 370, y: 320 },
+                { name: "Deep Square Leg", x: 430, y: 250 },
+                { name: "Deep Cover", x: 150, y: 340 }
+            ],
+            t20_powerplay_restrict: [
+                { name: "Slip", x: 275, y: 225 },
+                { name: "Point", x: 190, y: 260 },
+                { name: "Cover", x: 220, y: 310 },
+                { name: "Extra Cover", x: 240, y: 350 },
+                { name: "Mid Off", x: 270, y: 380 },
+                { name: "Mid On", x: 330, y: 380 },
+                { name: "Square Leg", x: 400, y: 260 },
+                { name: "Long Off", x: 230, y: 480 },
+                { name: "Deep Sq Leg", x: 460, y: 250 }
+            ],
+            t20_middle_spin: [
+                { name: "Slip", x: 280, y: 225 },
+                { name: "Point", x: 200, y: 260 },
+                { name: "Cover", x: 220, y: 320 },
+                { name: "Mid Off", x: 270, y: 370 },
+                { name: "Mid On", x: 330, y: 370 },
+                { name: "Deep Cover", x: 140, y: 340 },
+                { name: "Long Off", x: 230, y: 480 },
+                { name: "Long On", x: 370, y: 480 },
+                { name: "Deep Mid Wk", x: 440, y: 340 }
+            ],
+            t20_middle_pace: [
+                { name: "Slip", x: 275, y: 225 },
+                { name: "Point", x: 190, y: 260 },
+                { name: "Cover", x: 220, y: 310 },
+                { name: "Mid Off", x: 270, y: 370 },
+                { name: "Mid On", x: 330, y: 370 },
+                { name: "Deep Point", x: 120, y: 250 },
+                { name: "Long Off", x: 230, y: 480 },
+                { name: "Long On", x: 370, y: 480 },
+                { name: "Deep Mid Wk", x: 440, y: 340 }
+            ],
+            t20_death_yorker: [
+                { name: "Mid Off", x: 270, y: 370 },
+                { name: "Mid On", x: 330, y: 370 },
+                { name: "Fine Leg", x: 340, y: 220 },
+                { name: "Cover", x: 230, y: 310 },
+                { name: "Deep Point", x: 120, y: 250 },
+                { name: "Deep Ex Cov", x: 140, y: 360 },
+                { name: "Long Off", x: 230, y: 480 },
+                { name: "Long On", x: 370, y: 480 },
+                { name: "Deep Mid Wk", x: 450, y: 330 }
+            ],
+            test_attacking: [
+                { name: "1st Slip", x: 280, y: 220 },
+                { name: "2nd Slip", x: 265, y: 215 },
+                { name: "3rd Slip", x: 250, y: 210 },
+                { name: "Gully", x: 230, y: 240 },
+                { name: "Point", x: 180, y: 250 },
+                { name: "Cover", x: 210, y: 320 },
+                { name: "Mid Off", x: 260, y: 405 },
+                { name: "Mid On", x: 340, y: 405 },
+                { name: "Square Leg", x: 410, y: 250 }
+            ],
+            test_defensive: [
+                { name: "Slip", x: 275, y: 225 },
+                { name: "Point", x: 170, y: 250 },
+                { name: "Cover", x: 190, y: 330 },
+                { name: "Mid Off", x: 250, y: 420 },
+                { name: "Mid On", x: 350, y: 420 },
+                { name: "Mid Wicket", x: 410, y: 330 },
+                { name: "Square Leg", x: 430, y: 250 },
+                { name: "Fine Leg", x: 370, y: 190 },
+                { name: "Third Man", x: 170, y: 160 }
             ]
         };
 
@@ -2330,6 +2434,224 @@ class MatchManager {
 
         this.validateFieldingRules();
         this.drawField();
+    }
+
+    recordShotHeatmap(targetX, targetY, runs) {
+        const state = this.getCurrentState();
+        if (!state || !state.shotHeatmap) return;
+
+        const dx = targetX - 300;
+        const dy = targetY - 240;
+        let clockAngle = Math.atan2(dx, dy) * (180 / Math.PI); // -180 to 180
+
+        let sectorIdx = 0;
+        if (clockAngle >= 0 && clockAngle < 45) sectorIdx = 0;
+        else if (clockAngle >= 45 && clockAngle < 90) sectorIdx = 1;
+        else if (clockAngle >= 90 && clockAngle < 135) sectorIdx = 2;
+        else if (clockAngle >= 135 && clockAngle <= 180) sectorIdx = 3;
+        else if (clockAngle >= -180 && clockAngle < -135) sectorIdx = 4;
+        else if (clockAngle >= -135 && clockAngle < -90) sectorIdx = 5;
+        else if (clockAngle >= -90 && clockAngle < -45) sectorIdx = 6;
+        else sectorIdx = 7;
+
+        state.shotHeatmap[sectorIdx].runs += runs;
+        if (runs >= 4) {
+            state.shotHeatmap[sectorIdx].boundaries += 1;
+            state.boundariesThisOver = (state.boundariesThisOver || 0) + 1;
+        }
+
+        // Check mid-over trigger if 2+ boundaries hit in this over!
+        if (state.boundariesThisOver >= 2) {
+            this.evaluateAIFieldAdjustment(true); // mid-over alert!
+        }
+    }
+
+    evaluateAIFieldAdjustment(isMidOverAlert = false) {
+        const state = this.getCurrentState();
+        if (!state || !state.fielderPositions) return;
+
+        const overNum = Math.floor(state.ballsBowled / 6) + 1;
+        const isPowerplay = this.format === "T20" && overNum <= 6;
+        const isMiddleOvers = this.format === "T20" && overNum >= 7 && overNum <= 15;
+        const isDeathOvers = this.format === "T20" && overNum >= 16;
+
+        // 1. Determine optimal base phase preset
+        let targetPreset = "balanced";
+        if (this.format === "T20") {
+            if (isPowerplay) targetPreset = "t20_powerplay_restrict";
+            else if (isMiddleOvers) targetPreset = "t20_middle_spin";
+            else if (isDeathOvers) targetPreset = "t20_death_yorker";
+        } else {
+            targetPreset = overNum <= 15 ? "test_attacking" : "test_defensive";
+        }
+
+        if (!state.aiFieldAdjusted) {
+            this.applyFieldingPreset(targetPreset);
+            state.aiFieldAdjusted = true;
+        }
+
+        // 2. Heatmap & Sector Analysis: find hottest and coldest sectors
+        let hotSectorIdx = 0;
+        let maxScore = -1;
+        let coldSectorIdx = 0;
+        let minScore = 99999;
+
+        Object.keys(state.shotHeatmap).forEach(sIdx => {
+            const sec = state.shotHeatmap[sIdx];
+            const score = sec.boundaries * 10 + sec.runs;
+            if (score > maxScore) {
+                maxScore = score;
+                hotSectorIdx = parseInt(sIdx);
+            }
+            if (score < minScore) {
+                minScore = score;
+                coldSectorIdx = parseInt(sIdx);
+            }
+        });
+
+        if (maxScore <= 0 && !isMidOverAlert) return;
+
+        // Target angle & name for hot sector
+        const sectorAngles = [22.5, 67.5, 112.5, 157.5, -157.5, -112.5, -67.5, -22.5];
+        const hotAngleRad = (sectorAngles[hotSectorIdx] * Math.PI) / 180;
+        const hotSectorName = state.shotHeatmap[hotSectorIdx].name;
+
+        // Target coordinates in Hot Sector
+        const activeDeepCount = state.fielderPositions.filter(f => !f.isFixed && Math.sqrt((f.x-300)**2 + (f.y-300)**2) > 160).length;
+        const canPlaceDeep = !isPowerplay || activeDeepCount < 2;
+        const targetDist = canPlaceDeep ? 240 : 140;
+
+        const targetX = Math.round(300 + Math.sin(hotAngleRad) * targetDist);
+        const targetY = Math.round(240 + Math.cos(hotAngleRad) * targetDist);
+
+        // 3. Select fielder to relocate from cold zone / furthest from hot target
+        const activeFielders = state.fielderPositions.filter(f => !f.isFixed);
+        if (activeFielders.length < 3) return;
+
+        let fielderToMove = null;
+        let maxDist = -1;
+
+        activeFielders.forEach(f => {
+            const dxHot = f.x - targetX;
+            const dyHot = f.y - targetY;
+            const distToHot = Math.sqrt(dxHot * dxHot + dyHot * dyHot);
+
+            if (distToHot > 100 && distToHot > maxDist) {
+                maxDist = distToHot;
+                fielderToMove = f;
+            }
+        });
+
+        if (!fielderToMove) return;
+
+        // Save original position of moved fielder
+        const origX = fielderToMove.x;
+        const origY = fielderToMove.y;
+
+        // Relocate fielder to hot sector
+        fielderToMove.x = targetX;
+        fielderToMove.y = targetY;
+
+        // 4. VOID GAP BALANCING ALGORITHM (Shift 2 closest fielders to plug vacated void)
+        const remainingFielders = state.fielderPositions.filter(f => !f.isFixed && f !== fielderToMove);
+        remainingFielders.sort((a, b) => {
+            const distA = Math.sqrt((a.x - origX)**2 + (a.y - origY)**2);
+            const distB = Math.sqrt((b.x - origX)**2 + (b.y - origY)**2);
+            return distA - distB;
+        });
+
+        const neighbor1 = remainingFielders[0];
+        const neighbor2 = remainingFielders[1];
+
+        if (neighbor1) {
+            neighbor1.x = Math.round(neighbor1.x + 0.30 * (origX - neighbor1.x));
+            neighbor1.y = Math.round(neighbor1.y + 0.30 * (origY - neighbor1.y));
+        }
+        if (neighbor2) {
+            neighbor2.x = Math.round(neighbor2.x + 0.25 * (origX - neighbor2.x));
+            neighbor2.y = Math.round(neighbor2.y + 0.25 * (origY - neighbor2.y));
+        }
+
+        // 5. Clamp rules & bounds
+        this.clampFieldingRules(state, isPowerplay);
+
+        // 6. Update labels & UI
+        this.updateAllFielderNames(state);
+        this.validateFieldingRules();
+        this.drawField();
+
+        if (this.fieldingValidationBadge) {
+            this.fieldingValidationBadge.textContent = "AI Field Adjusted";
+            this.fieldingValidationBadge.className = "badge bg-secondary";
+        }
+        this.logCommentary("AI Captain", `🤖 AI Field Adjustment: Shifted fielder to reinforce ${hotSectorName} & balanced void gaps.`, "welcome");
+    }
+
+    clampFieldingRules(state, isPowerplay) {
+        if (!state || !state.fielderPositions) return;
+
+        const maxDeepAllowed = isPowerplay ? 2 : 5;
+        let legCount = 0;
+        let behindSquareCount = 0;
+
+        state.fielderPositions.forEach(f => {
+            if (f.isFixed) return;
+
+            // Keep inside outer boundary radius 274
+            const dxC = f.x - 300;
+            const dyC = f.y - 300;
+            const distC = Math.sqrt(dxC * dxC + dyC * dyC);
+            if (distC > 275) {
+                const angle = Math.atan2(dyC, dxC);
+                f.x = Math.round(300 + Math.cos(angle) * 274);
+                f.y = Math.round(300 + Math.sin(angle) * 274);
+            }
+
+            // Leg side count (x > 300)
+            if (f.x > 300) {
+                legCount++;
+                if (f.y < 240) {
+                    behindSquareCount++;
+                }
+            }
+        });
+
+        // Fix leg side overflow (> 5)
+        if (legCount > 5) {
+            const legFielders = state.fielderPositions.filter(f => !f.isFixed && f.x > 300);
+            legFielders.sort((a, b) => (b.x - 300) - (a.x - 300));
+            while (legCount > 5 && legFielders.length > 0) {
+                const fToMove = legFielders.pop();
+                fToMove.x = 600 - fToMove.x;
+                legCount--;
+            }
+        }
+
+        // Fix behind square leg overflow (> 2)
+        if (behindSquareCount > 2) {
+            const behindFielders = state.fielderPositions.filter(f => !f.isFixed && f.x > 300 && f.y < 240);
+            behindFielders.sort((a, b) => a.y - b.y);
+            while (behindSquareCount > 2 && behindFielders.length > 0) {
+                const fToMove = behindFielders.pop();
+                fToMove.y = 260;
+                behindSquareCount--;
+            }
+        }
+
+        // Fix deep fielders overflow (> 2 in powerplay, > 5 non-powerplay)
+        const deepFielders = state.fielderPositions.filter(f => !f.isFixed && Math.sqrt((f.x-300)**2 + (f.y-300)**2) > 160);
+        if (deepFielders.length > maxDeepAllowed) {
+            deepFielders.sort((a, b) => Math.sqrt((b.x-300)**2 + (b.y-300)**2) - Math.sqrt((a.x-300)**2 + (a.y-300)**2));
+            let overLimit = deepFielders.length - maxDeepAllowed;
+            for (let i = 0; i < overLimit; i++) {
+                const fToPull = deepFielders[i];
+                const dx = fToPull.x - 300;
+                const dy = fToPull.y - 300;
+                const angle = Math.atan2(dy, dx);
+                fToPull.x = Math.round(300 + Math.cos(angle) * 145);
+                fToPull.y = Math.round(300 + Math.sin(angle) * 145);
+            }
+        }
     }
 
     getCricketPositionName(x, y) {

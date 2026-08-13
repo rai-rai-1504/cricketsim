@@ -212,11 +212,17 @@
                         <h3 style="margin: 0;"><i class="fa-solid fa-compass"></i> Field View</h3>
                         <div id="fielding-controls" style="display: flex; gap: 8px; align-items: center;">
                             <select id="fielding-preset-select" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; outline: none;">
-                                <option value="balanced">Balanced Field</option>
-                                <option value="attacking">Attacking Field</option>
-                                <option value="defensive">Defensive Field</option>
+                                <option value="balanced">Standard Balanced</option>
+                                <option value="t20_powerplay_restrict">T20 Powerplay (Restrict)</option>
+                                <option value="t20_powerplay_attacking">T20 Powerplay (Attacking)</option>
+                                <option value="t20_middle_spin">T20 Middle Overs (Spin)</option>
+                                <option value="t20_middle_pace">T20 Middle Overs (Pace)</option>
+                                <option value="t20_death_yorker">T20 Death Overs (Yorker Field)</option>
+                                <option value="test_attacking">TEST Attacking (Slips)</option>
+                                <option value="test_defensive">TEST Defensive</option>
                                 <option value="custom">Custom Field</option>
                             </select>
+                            <button id="btn-ai-auto-field" class="btn btn-secondary btn-mini" style="padding: 4px 8px !important; height: auto !important; font-size: 0.75rem !important;" title="Auto-place AI adaptive field based on match situation & heatmaps"><i class="fa-solid fa-robot"></i> AI Field</button>
                             <span id="fielding-validation-badge" class="badge bg-success" style="font-size: 0.75rem;">Field Valid</span>
                             <button id="btn-toggle-view-3d" style="display: none; padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; background: rgba(25, 118, 210, 0.25); border: 1px solid rgba(25, 118, 210, 0.4); color: #90CAF9; cursor: pointer; outline: none; align-items: center; gap: 4px; font-weight: 600; transition: all 0.2s ease;">
                                 <i class="fa-solid fa-cube"></i> 3D View
