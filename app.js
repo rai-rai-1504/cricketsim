@@ -2442,17 +2442,17 @@ class MatchManager {
 
         const dx = targetX - 300;
         const dy = targetY - 240;
-        let clockAngle = Math.atan2(dx, dy) * (180 / Math.PI); // -180 to 180
+        let clockAngle = Math.atan2(dx, -dy) * (180 / Math.PI); // -180 to 180 (0 is Top)
 
         let sectorIdx = 0;
-        if (clockAngle >= 0 && clockAngle < 45) sectorIdx = 0;
-        else if (clockAngle >= 45 && clockAngle < 90) sectorIdx = 1;
-        else if (clockAngle >= 90 && clockAngle < 135) sectorIdx = 2;
-        else if (clockAngle >= 135 && clockAngle <= 180) sectorIdx = 3;
-        else if (clockAngle >= -180 && clockAngle < -135) sectorIdx = 4;
-        else if (clockAngle >= -135 && clockAngle < -90) sectorIdx = 5;
-        else if (clockAngle >= -90 && clockAngle < -45) sectorIdx = 6;
-        else sectorIdx = 7;
+        if (clockAngle >= 0 && clockAngle < 55) sectorIdx = 0;           // Top Right (55°)
+        else if (clockAngle >= 55 && clockAngle < 90) sectorIdx = 1;     // Mid Right (35°)
+        else if (clockAngle >= 90 && clockAngle < 125) sectorIdx = 2;    // Lower Right (35°)
+        else if (clockAngle >= 125 && clockAngle <= 180) sectorIdx = 3;  // Bottom Right (55°)
+        else if (clockAngle >= -180 && clockAngle < -125) sectorIdx = 4; // Bottom Left (55°)
+        else if (clockAngle >= -125 && clockAngle < -90) sectorIdx = 5;  // Lower Left (35°)
+        else if (clockAngle >= -90 && clockAngle < -55) sectorIdx = 6;   // Mid Left (35°)
+        else sectorIdx = 7;                                              // Top Left (55°)
 
         state.shotHeatmap[sectorIdx].runs += runs;
         if (runs >= 4) {
@@ -2511,8 +2511,8 @@ class MatchManager {
 
         if (maxScore <= 0 && !isMidOverAlert) return;
 
-        // Target angle & name for hot sector
-        const sectorAngles = [22.5, 67.5, 112.5, 157.5, -157.5, -112.5, -67.5, -22.5];
+        // Target angle & name for hot sector (Exact 8-Sector Mid-Angles)
+        const sectorAngles = [27.5, 72.5, 107.5, 152.5, -152.5, -107.5, -72.5, -27.5];
         const hotAngleRad = (sectorAngles[hotSectorIdx] * Math.PI) / 180;
         const hotSectorName = state.shotHeatmap[hotSectorIdx].name;
 
@@ -2926,9 +2926,9 @@ class MatchManager {
         this.svgSectorLines.innerHTML = "";
         this.svgGapLabels.innerHTML = "";
 
-        // 8 Sector Rays radiating from Striker (300, 240)
-        // Ray Clock Angles: -27.5, +27.5, +62.5, +97.5, +152.5, -152.5, -97.5, -62.5
-        const rayAngles = [-27.5, 27.5, 62.5, 97.5, 152.5, -152.5, -97.5, -62.5];
+        // 8 Sector Rays dividing the field into 4 Quadrants of (55° + 35°):
+        // Vertical axis (0°, 180°), Horizontal axis (-90°, +90°), and Diagonals (+55°, +125°, -125°, -55°)
+        const rayAngles = [0, 55, 90, 125, 180, -125, -90, -55];
 
         rayAngles.forEach(clockAngle => {
             const rad = clockAngle * Math.PI / 180;
@@ -2948,16 +2948,18 @@ class MatchManager {
             this.svgSectorLines.appendChild(line);
         });
 
-        // 8 Sectors with 55° (Yellow) and 35° (Red) angles
+        // 8 Sectors matching exact order from design:
+        // Top-Right: 55° (Yellow), Mid-Right: 35° (Red), Lower-Right: 35° (Red), Bottom-Right: 55° (Yellow)
+        // Bottom-Left: 55° (Yellow), Lower-Left: 35° (Red), Mid-Left: 35° (Red), Top-Left: 55° (Yellow)
         const sectors = [
-            { midAngle: 0, size: 55, color: "#fbbf24" },       // Top Center (55°)
-            { midAngle: 45, size: 35, color: "#f43f5e" },      // Top Right (35°)
-            { midAngle: 80, size: 35, color: "#f43f5e" },      // Mid Right (35°)
-            { midAngle: 125, size: 55, color: "#fbbf24" },     // Bottom Right (55°)
-            { midAngle: 180, size: 55, color: "#fbbf24" },     // Bottom Center (55°)
-            { midAngle: -125, size: 55, color: "#fbbf24" },    // Bottom Left (55°)
-            { midAngle: -80, size: 35, color: "#f43f5e" },     // Mid Left (35°)
-            { midAngle: -45, size: 35, color: "#f43f5e" }      // Top Left (35°)
+            { midAngle: 27.5, size: 55, color: "#fbbf24" },    // Top Right (55°)
+            { midAngle: 72.5, size: 35, color: "#f43f5e" },    // Mid Right (35°)
+            { midAngle: 107.5, size: 35, color: "#f43f5e" },   // Lower Right (35°)
+            { midAngle: 152.5, size: 55, color: "#fbbf24" },   // Bottom Right (55°)
+            { midAngle: -152.5, size: 55, color: "#fbbf24" },  // Bottom Left (55°)
+            { midAngle: -107.5, size: 35, color: "#f43f5e" },  // Lower Left (35°)
+            { midAngle: -72.5, size: 35, color: "#f43f5e" },   // Mid Left (35°)
+            { midAngle: -27.5, size: 55, color: "#fbbf24" }    // Top Left (55°)
         ];
 
         sectors.forEach(sec => {
