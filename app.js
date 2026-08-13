@@ -2927,6 +2927,7 @@ class MatchManager {
         this.svgGapLabels.innerHTML = "";
 
         // 8 Sector Rays dividing the field into 4 Quadrants of (55° + 35°):
+        // Centered at field center (300, 300)
         // Vertical axis (0°, 180°), Horizontal axis (-90°, +90°), and Diagonals (+55°, +125°, -125°, -55°)
         const rayAngles = [0, 55, 90, 125, 180, -125, -90, -55];
 
@@ -2935,11 +2936,11 @@ class MatchManager {
             const dx = Math.sin(rad) * 278;
             const dy = -Math.cos(rad) * 278;
             const endX = 300 + dx;
-            const endY = 240 + dy;
+            const endY = 300 + dy;
 
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", "300");
-            line.setAttribute("y1", "240");
+            line.setAttribute("y1", "300");
             line.setAttribute("x2", endX.toFixed(1));
             line.setAttribute("y2", endY.toFixed(1));
             line.setAttribute("stroke", "rgba(255, 255, 255, 0.45)");
@@ -2964,10 +2965,10 @@ class MatchManager {
 
         sectors.forEach(sec => {
             const rad = sec.midAngle * Math.PI / 180;
-            const dx = Math.sin(rad) * 140;
-            const dy = -Math.cos(rad) * 140;
+            const dx = Math.sin(rad) * 165;
+            const dy = -Math.cos(rad) * 165;
             const labelX = 300 + dx;
-            const labelY = 240 + dy;
+            const labelY = 300 + dy;
 
             const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
             text.setAttribute("x", labelX.toFixed(1));
