@@ -189,6 +189,7 @@ class InningsState {
         this.reviewsLeft = 2;
         this.opponentReviewsLeft = 2;
         
+        this.ballHistory = []; // Tracks last 9 deliveries with sector and runs
         this.isCompleted = false;
     }
 }
@@ -946,6 +947,17 @@ class MatchManager {
             targetY = 300 + Math.sin(angle) * distance;
         }
 
+        // Record ball into state.ballHistory (keeping last 9 deliveries)
+        let ballRuns = 0;
+        if (!isNaN(parseInt(result))) {
+            ballRuns = parseInt(result);
+        }
+        const sector = this.getSectorFromCoords(targetX, targetY);
+        state.ballHistory.push({ sector: sector, runs: ballRuns, isBoundary: ballRuns >= 4 });
+        if (state.ballHistory.length > 9) {
+            state.ballHistory.shift();
+        }
+
         this.animateBall(targetX, targetY, animType, () => {
             this.processBallOutcome(result);
         });
@@ -1194,6 +1206,9 @@ class MatchManager {
             this.triggerBatsmanSelection();
             return;
         }
+
+        // Trigger Opponent AI Tactical Fielding Engine
+        this.evaluateTacticalAIFielding();
 
         // Resume simulator controls
         this.isAnimating = false;
@@ -2405,6 +2420,494 @@ class MatchManager {
             this.updateAllFielderNames(state);
         }
 
+        this.validateFieldingRules();
+        this.drawField();
+    }
+
+    getSectorFromCoords(x, y) {
+        const dx = x - 300;
+        const dy = y - 240;
+        let clockAngle = Math.atan2(dx, -dy) * (180 / Math.PI); // -180 to 180 (0 is Top)
+
+        if (clockAngle >= 0 && clockAngle < 55) return 0;           // Top Right (55°)
+        else if (clockAngle >= 55 && clockAngle < 90) return 1;     // Mid Right (35°)
+        else if (clockAngle >= 90 && clockAngle < 125) return 2;    // Lower Right (35°)
+        else if (clockAngle >= 125 && clockAngle <= 180) return 3;  // Bottom Right (55°)
+        else if (clockAngle >= -180 && clockAngle < -125) return 4; // Bottom Left (55°)
+        else if (clockAngle >= -125 && clockAngle < -90) return 5;  // Lower Left (35°)
+        else if (clockAngle >= -90 && clockAngle < -55) return 6;   // Mid Left (35°)
+        else return 7;                                              // Top Left (55°)
+    }
+
+    isGapInSector(state, sectorIdx) {
+        const fielders = state.fielderPositions.filter(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === sectorIdx);
+        const sectorSizes = [55, 35, 35, 55, 55, 35, 35, 55];
+        const size = sectorSizes[sectorIdx];
+
+        if (fielders.length === 0) return true;
+
+        if (size === 35) {
+            // Gap in 35° sector: no fielder at all inside ring or deep
+            return fielders.length === 0;
+        } else {
+            // Gap in 55° sector: >35° gap on any side or >35° gap between 2 fielders
+            const sectorStartAngles = [0, 55, 90, 125, -180, -125, -90, -55];
+            const startA = sectorStartAngles[sectorIdx];
+            const endA = startA + size;
+
+            const fielderAngles = fielders.map(f => {
+                let a = Math.atan2(f.x - 300, -(f.y - 240)) * (180 / Math.PI);
+                if (sectorIdx === 4 && a < 0) a += 360;
+                return a;
+            }).sort((a, b) => a - b);
+
+            if (Math.abs(fielderAngles[0] - startA) > 35) return true;
+            if (Math.abs(endA - fielderAngles[fielderAngles.length - 1]) > 35) return true;
+            for (let i = 0; i < fielderAngles.length - 1; i++) {
+                if (Math.abs(fielderAngles[i + 1] - fielderAngles[i]) > 35) return true;
+            }
+            return false;
+        }
+    }
+
+    getSectorRunsLast9(state, sectorIdx) {
+        if (!state || !state.ballHistory) return 0;
+        return state.ballHistory
+            .filter(b => b.sector === sectorIdx)
+            .reduce((sum, b) => sum + (b.runs || 0), 0);
+    }
+
+    getLeastPerformingSector(state, candidateSectors) {
+        if (!candidateSectors || candidateSectors.length === 0) return null;
+        let minRuns = Infinity;
+        let candidates = [];
+        candidateSectors.forEach(sIdx => {
+            const runs = this.getSectorRunsLast9(state, sIdx);
+            if (runs < minRuns) {
+                minRuns = runs;
+                candidates = [sIdx];
+            } else if (runs === minRuns) {
+                candidates.push(sIdx);
+            }
+        });
+        return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    getLeastPerformingDeep(state, candidateSectors) {
+        if (!candidateSectors || candidateSectors.length === 0) return null;
+        
+        // Bypasses sectors with ZERO deep fielders entirely!
+        const sectorsWithDeep = candidateSectors.filter(sIdx => {
+            return state.fielderPositions.some(f => {
+                if (f.isFixed) return false;
+                if (this.getSectorFromCoords(f.x, f.y) !== sIdx) return false;
+                const distCenter = Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2);
+                return distCenter > 160;
+            });
+        });
+
+        if (sectorsWithDeep.length === 0) return null;
+        return this.getLeastPerformingSector(state, sectorsWithDeep);
+    }
+
+    getRandomDeepPosition(sectorIdx) {
+        const sectorMidAngles = [27.5, 72.5, 107.5, 152.5, -152.5, -107.5, -72.5, -27.5];
+        const sectorSizes = [55, 35, 35, 55, 55, 35, 35, 55];
+        const midA = sectorMidAngles[sectorIdx];
+        const size = sectorSizes[sectorIdx];
+
+        const angularOffset = (Math.random() - 0.5) * (size - 12);
+        const clockAngle = midA + angularOffset;
+        const rad = clockAngle * (Math.PI / 180);
+
+        // Place closer to boundary ropes (radius 245 to 265, NOT near inner ring 160)
+        const dist = 245 + Math.random() * 20;
+
+        const x = Math.round(300 + Math.sin(rad) * dist);
+        const y = Math.round(240 - Math.cos(rad) * dist);
+        return { x, y };
+    }
+
+    getRandomRingPosition(sectorIdx) {
+        const sectorMidAngles = [27.5, 72.5, 107.5, 152.5, -152.5, -107.5, -72.5, -27.5];
+        const sectorSizes = [55, 35, 35, 55, 55, 35, 35, 55];
+        const midA = sectorMidAngles[sectorIdx];
+        const size = sectorSizes[sectorIdx];
+
+        const angularOffset = (Math.random() - 0.5) * (size - 10);
+        const clockAngle = midA + angularOffset;
+        const rad = clockAngle * (Math.PI / 180);
+
+        // Place inside ring (radius 95 to 140)
+        const dist = 95 + Math.random() * 45;
+
+        const x = Math.round(300 + Math.sin(rad) * dist);
+        const y = Math.round(240 - Math.cos(rad) * dist);
+        return { x, y };
+    }
+
+    repairVacatedDeepGap(state, donorSectorIdx, vacatedFielder) {
+        if (!state || !state.fielderPositions) return;
+
+        const sectorMidAngles = [27.5, 72.5, 107.5, 152.5, -152.5, -107.5, -72.5, -27.5];
+        const sectorSizes = [55, 35, 35, 55, 55, 35, 35, 55];
+        const midA = sectorMidAngles[donorSectorIdx];
+        const halfSize = sectorSizes[donorSectorIdx] / 2;
+
+        const minA = midA - halfSize + 2;
+        const maxA = midA + halfSize - 2;
+
+        const fieldersInSector = state.fielderPositions.filter(f => !f.isFixed && f !== vacatedFielder && this.getSectorFromCoords(f.x, f.y) === donorSectorIdx);
+
+        fieldersInSector.forEach(f => {
+            const dx = f.x - 300;
+            const dy = -(f.y - 240);
+            let currentAngle = Math.atan2(dx, dy) * (180 / Math.PI);
+            
+            if (currentAngle < midA) {
+                currentAngle = Math.min(maxA, currentAngle + 5);
+            } else {
+                currentAngle = Math.max(minA, currentAngle - 5);
+            }
+
+            const distCenter = Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2);
+            const rad = currentAngle * (Math.PI / 180);
+            f.x = Math.round(300 + Math.sin(rad) * distCenter);
+            f.y = Math.round(240 - Math.cos(rad) * distCenter);
+        });
+    }
+
+    evaluateTacticalAIFielding() {
+        const state = this.getCurrentState();
+        if (!state || !state.fielderPositions) return;
+
+        // ONLY used by opponent team (when user is batting, or in AI vs AI match)
+        if (!state.isUserBatting && this.isSimulatingMatch === false) return;
+
+        if (!state.ballHistory || state.ballHistory.length < 3) return;
+
+        // Observe last 9 balls. Check final 3 deliveries:
+        const last3 = state.ballHistory.slice(-3);
+        
+        const sectorBoundaries = {};
+        last3.forEach(b => {
+            if (b.isBoundary) {
+                sectorBoundaries[b.sector] = (sectorBoundaries[b.sector] || 0) + 1;
+            }
+        });
+
+        let targetSector = null;
+        Object.keys(sectorBoundaries).forEach(sIdx => {
+            if (sectorBoundaries[sIdx] >= 1) {
+                targetSector = parseInt(sIdx);
+            }
+        });
+
+        if (targetSector === null) return;
+
+        // Check if there is a GAP in targetSector
+        if (!this.isGapInSector(state, targetSector)) {
+            return;
+        }
+
+        const overNum = Math.floor(state.ballsBowled / 6) + 1;
+        const isPowerplay = this.format === "T20" && overNum <= 6;
+        const maxDeepAllowed = isPowerplay ? 2 : 5;
+
+        const currentDeepFielders = state.fielderPositions.filter(f => !f.isFixed && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+        const deepCapReached = currentDeepFielders.length >= maxDeepAllowed;
+
+        const isTargetLeg = [0, 1, 2, 3].includes(targetSector);
+        const isTargetBehindSquareLeg = [0, 1].includes(targetSector);
+        const partnerSector = targetSector === 0 ? 1 : (targetSector === 1 ? 0 : null);
+
+        const legFielders = state.fielderPositions.filter(f => !f.isFixed && f.x > 300);
+        const maxLegFielders = legFielders.length >= 5;
+
+        const hasDeepFielderInTarget = state.fielderPositions.some(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === targetSector && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+
+        // We only put a fielder in deep if there is no deep fielder in this sector
+        let placeDeep = !hasDeepFielderInTarget && (Math.random() < 0.6 || deepCapReached);
+
+        if (placeDeep) {
+            // DEEP FIELDER PLACEMENT
+            if (deepCapReached) {
+                // CASE 1 — Deep cap reached
+                if (isTargetLeg && !isTargetBehindSquareLeg) {
+                    const deepLegExist = [0, 1, 2, 3].some(s => {
+                        return state.fielderPositions.some(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === s && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                    });
+
+                    if (maxLegFielders && !deepLegExist) {
+                        const offDonor = this.getLeastPerformingDeep(state, [4, 5, 6, 7]);
+                        if (offDonor !== null) {
+                            const offFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                            if (offFielder) {
+                                const ringPos = this.getRandomRingPosition(offDonor);
+                                offFielder.x = ringPos.x; offFielder.y = ringPos.y;
+                            }
+                        }
+                        const legDonor = this.getLeastPerformingSector(state, [0, 1, 2, 3]);
+                        const ringFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === legDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) <= 160);
+                        if (ringFielder) {
+                            const deepPos = this.getRandomDeepPosition(targetSector);
+                            ringFielder.x = deepPos.x; ringFielder.y = deepPos.y;
+                        }
+                    } else if (maxLegFielders && deepLegExist) {
+                        const legDeepDonor = this.getLeastPerformingDeep(state, [0, 1, 2, 3]);
+                        if (legDeepDonor !== null) {
+                            const legDeepFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === legDeepDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                            if (legDeepFielder) {
+                                const deepPos = this.getRandomDeepPosition(targetSector);
+                                legDeepFielder.x = deepPos.x; legDeepFielder.y = deepPos.y;
+                                this.repairVacatedDeepGap(state, legDeepDonor, legDeepFielder);
+                            }
+                        }
+                    } else {
+                        const deepDonor = this.getLeastPerformingDeep(state, [0, 1, 2, 3, 4, 5, 6, 7]);
+                        if (deepDonor !== null) {
+                            const deepFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === deepDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                            if (deepFielder) {
+                                const deepPos = this.getRandomDeepPosition(targetSector);
+                                deepFielder.x = deepPos.x; deepFielder.y = deepPos.y;
+                                this.repairVacatedDeepGap(state, deepDonor, deepFielder);
+                            }
+                        }
+                    }
+                } else if (isTargetBehindSquareLeg) {
+                    const pairFielders = state.fielderPositions.filter(f => !f.isFixed && [0, 1].includes(this.getSectorFromCoords(f.x, f.y)));
+                    const pairCount = pairFielders.length;
+                    const partnerDeep = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+
+                    if (pairCount >= 2 && partnerDeep) {
+                        const deepPos = this.getRandomDeepPosition(targetSector);
+                        partnerDeep.x = deepPos.x; partnerDeep.y = deepPos.y;
+                    } else if (pairCount >= 2 && !partnerDeep && maxLegFielders) {
+                        const otherLegDeepDonor = this.getLeastPerformingDeep(state, [2, 3]);
+                        if (otherLegDeepDonor !== null) {
+                            const deepFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === otherLegDeepDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                            if (deepFielder) {
+                                const deepPos = this.getRandomDeepPosition(targetSector);
+                                deepFielder.x = deepPos.x; deepFielder.y = deepPos.y;
+                                const partnerRing = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
+                                if (partnerRing) {
+                                    const ringPos = this.getRandomRingPosition(otherLegDeepDonor);
+                                    partnerRing.x = ringPos.x; partnerRing.y = ringPos.y;
+                                }
+                            }
+                        } else {
+                            const offDonor = this.getLeastPerformingDeep(state, [4, 5, 6, 7]);
+                            if (offDonor !== null) {
+                                const offFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                                if (offFielder) {
+                                    const rPos = this.getRandomRingPosition(offDonor);
+                                    offFielder.x = rPos.x; offFielder.y = rPos.y;
+                                }
+                            }
+                            const legDonor = this.getLeastPerformingSector(state, [2, 3]);
+                            const legRing = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === legDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) <= 160);
+                            if (legRing) {
+                                const deepPos = this.getRandomDeepPosition(targetSector);
+                                legRing.x = deepPos.x; legRing.y = deepPos.y;
+                            }
+                            const partnerRing = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
+                            if (partnerRing && legDonor !== null) {
+                                const rPos = this.getRandomRingPosition(legDonor);
+                                partnerRing.x = rPos.x; partnerRing.y = rPos.y;
+                            }
+                        }
+                    } else if (pairCount >= 2 && !partnerDeep && !maxLegFielders) {
+                        const deepDonor = this.getLeastPerformingDeep(state, [2, 3, 4, 5, 6, 7]);
+                        if (deepDonor !== null) {
+                            const deepFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === deepDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                            if (deepFielder) {
+                                const deepPos = this.getRandomDeepPosition(targetSector);
+                                deepFielder.x = deepPos.x; deepFielder.y = deepPos.y;
+                                const partnerRing = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
+                                if (partnerRing) {
+                                    const rPos = this.getRandomRingPosition(deepDonor);
+                                    partnerRing.x = rPos.x; partnerRing.y = rPos.y;
+                                }
+                            }
+                        }
+                    } else if (pairCount <= 1 && maxLegFielders) {
+                        if (partnerDeep) {
+                            const deepPos = this.getRandomDeepPosition(targetSector);
+                            partnerDeep.x = deepPos.x; partnerDeep.y = deepPos.y;
+                        } else {
+                            const otherLegDeepDonor = this.getLeastPerformingDeep(state, [2, 3]);
+                            if (otherLegDeepDonor !== null) {
+                                const deepFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === otherLegDeepDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                                if (deepFielder) {
+                                    const deepPos = this.getRandomDeepPosition(targetSector);
+                                    deepFielder.x = deepPos.x; deepFielder.y = deepPos.y;
+                                    this.repairVacatedDeepGap(state, otherLegDeepDonor, deepFielder);
+                                }
+                            } else {
+                                const offDonor = this.getLeastPerformingDeep(state, [4, 5, 6, 7]);
+                                if (offDonor !== null) {
+                                    const offFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                                    if (offFielder) {
+                                        const rPos = this.getRandomRingPosition(offDonor);
+                                        offFielder.x = rPos.x; offFielder.y = rPos.y;
+                                    }
+                                }
+                                const legDonor = this.getLeastPerformingSector(state, [2, 3]);
+                                const legRing = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === legDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) <= 160);
+                                if (legRing) {
+                                    const deepPos = this.getRandomDeepPosition(targetSector);
+                                    legRing.x = deepPos.x; legRing.y = deepPos.y;
+                                }
+                            }
+                        }
+                    } else if (pairCount <= 1 && !maxLegFielders) {
+                        const offDonor = this.getLeastPerformingDeep(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
+                        if (offDonor !== null) {
+                            const dFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                            if (dFielder) {
+                                const rPos = this.getRandomRingPosition(offDonor);
+                                dFielder.x = rPos.x; dFielder.y = rPos.y;
+                            }
+                        }
+                        const secDonor = this.getLeastPerformingSector(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
+                        const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === secDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) <= 160);
+                        if (rFielder) {
+                            const deepPos = this.getRandomDeepPosition(targetSector);
+                            rFielder.x = deepPos.x; rFielder.y = deepPos.y;
+                        }
+                    }
+                } else {
+                    // 1.2 — Target is Offside
+                    const deepDonor = this.getLeastPerformingDeep(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
+                    if (deepDonor !== null) {
+                        const deepFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === deepDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
+                        if (deepFielder) {
+                            const deepPos = this.getRandomDeepPosition(targetSector);
+                            deepFielder.x = deepPos.x; deepFielder.y = deepPos.y;
+                            this.repairVacatedDeepGap(state, deepDonor, deepFielder);
+                        }
+                    }
+                }
+            } else {
+                // CASE 2 — Deep cap not reached
+                if (isTargetLeg) {
+                    if (maxLegFielders) {
+                        if (!isTargetBehindSquareLeg) {
+                            const legDonor = this.getLeastPerformingSector(state, [0, 1, 2, 3].filter(s => s !== targetSector));
+                            const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === legDonor);
+                            if (rFielder) {
+                                const deepPos = this.getRandomDeepPosition(targetSector);
+                                rFielder.x = deepPos.x; rFielder.y = deepPos.y;
+                            }
+                        } else {
+                            const pairFielders = state.fielderPositions.filter(f => !f.isFixed && [0, 1].includes(this.getSectorFromCoords(f.x, f.y)));
+                            if (pairFielders.length >= 2) {
+                                const partnerFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
+                                if (partnerFielder) {
+                                    const deepPos = this.getRandomDeepPosition(targetSector);
+                                    partnerFielder.x = deepPos.x; partnerFielder.y = deepPos.y;
+                                }
+                            } else {
+                                const legDonor = this.getLeastPerformingSector(state, [2, 3]);
+                                const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === legDonor);
+                                if (rFielder) {
+                                    const deepPos = this.getRandomDeepPosition(targetSector);
+                                    rFielder.x = deepPos.x; rFielder.y = deepPos.y;
+                                }
+                            }
+                        }
+                    } else {
+                        if (!isTargetBehindSquareLeg) {
+                            const donor = this.getLeastPerformingSector(state, [4, 5, 6, 7]) || this.getLeastPerformingSector(state, [0, 1, 2, 3].filter(s => s !== targetSector));
+                            const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
+                            if (rFielder) {
+                                const deepPos = this.getRandomDeepPosition(targetSector);
+                                rFielder.x = deepPos.x; rFielder.y = deepPos.y;
+                            }
+                        } else {
+                            const pairFielders = state.fielderPositions.filter(f => !f.isFixed && [0, 1].includes(this.getSectorFromCoords(f.x, f.y)));
+                            if (pairFielders.length >= 2) {
+                                const partnerFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
+                                if (partnerFielder) {
+                                    const deepPos = this.getRandomDeepPosition(targetSector);
+                                    partnerFielder.x = deepPos.x; partnerFielder.y = deepPos.y;
+                                }
+                            } else {
+                                const donor = this.getLeastPerformingSector(state, [4, 5, 6, 7]) || this.getLeastPerformingSector(state, [2, 3]);
+                                const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
+                                if (rFielder) {
+                                    const deepPos = this.getRandomDeepPosition(targetSector);
+                                    rFielder.x = deepPos.x; rFielder.y = deepPos.y;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    const offFielders = state.fielderPositions.filter(f => !f.isFixed && f.x <= 300);
+                    const maxOffFielders = offFielders.length >= 5;
+
+                    if (maxOffFielders) {
+                        const offDonor = this.getLeastPerformingSector(state, [4, 5, 6, 7].filter(s => s !== targetSector));
+                        const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor);
+                        if (rFielder) {
+                            const deepPos = this.getRandomDeepPosition(targetSector);
+                            rFielder.x = deepPos.x; rFielder.y = deepPos.y;
+                        }
+                    } else {
+                        const donor = this.getLeastPerformingSector(state, [0, 1, 2, 3]) || this.getLeastPerformingSector(state, [4, 5, 6, 7].filter(s => s !== targetSector));
+                        const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
+                        if (rFielder) {
+                            const deepPos = this.getRandomDeepPosition(targetSector);
+                            rFielder.x = deepPos.x; rFielder.y = deepPos.y;
+                        }
+                    }
+                }
+            }
+        } else {
+            // RING FIELDER PLACEMENT
+            if (isTargetLeg) {
+                if (maxLegFielders) {
+                    const legDonor = this.getLeastPerformingSector(state, [0, 1, 2, 3].filter(s => s !== targetSector));
+                    const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === legDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) <= 160);
+                    if (rFielder) {
+                        const ringPos = this.getRandomRingPosition(targetSector);
+                        rFielder.x = ringPos.x; rFielder.y = ringPos.y;
+                    }
+                } else {
+                    const donor = this.getLeastPerformingSector(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
+                    const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
+                    if (rFielder) {
+                        const ringPos = this.getRandomRingPosition(targetSector);
+                        rFielder.x = ringPos.x; rFielder.y = ringPos.y;
+                    }
+                }
+            } else if (isTargetBehindSquareLeg) {
+                const pairFielders = state.fielderPositions.filter(f => !f.isFixed && [0, 1].includes(this.getSectorFromCoords(f.x, f.y)));
+                if (pairFielders.length >= 2) {
+                    const partnerFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
+                    if (partnerFielder) {
+                        const ringPos = this.getRandomRingPosition(targetSector);
+                        partnerFielder.x = ringPos.x; partnerFielder.y = ringPos.y;
+                    }
+                } else {
+                    const donor = this.getLeastPerformingSector(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
+                    const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
+                    if (rFielder) {
+                        const ringPos = this.getRandomRingPosition(targetSector);
+                        rFielder.x = ringPos.x; rFielder.y = ringPos.y;
+                    }
+                }
+            } else {
+                const donor = this.getLeastPerformingSector(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
+                const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
+                if (rFielder) {
+                    const ringPos = this.getRandomRingPosition(targetSector);
+                    rFielder.x = ringPos.x; rFielder.y = ringPos.y;
+                }
+            }
+        }
+
+        this.updateAllFielderNames(state);
         this.validateFieldingRules();
         this.drawField();
     }
