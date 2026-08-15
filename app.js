@@ -2441,33 +2441,8 @@ class MatchManager {
 
     isGapInSector(state, sectorIdx) {
         const fielders = state.fielderPositions.filter(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === sectorIdx);
-        const sectorSizes = [55, 35, 35, 55, 55, 35, 35, 55];
-        const size = sectorSizes[sectorIdx];
-
-        if (fielders.length === 0) return true;
-
-        if (size === 35) {
-            // Gap in 35° sector: no fielder at all inside ring or deep
-            return fielders.length === 0;
-        } else {
-            // Gap in 55° sector: >35° gap on any side or >35° gap between 2 fielders
-            const sectorStartAngles = [0, 55, 90, 125, -180, -125, -90, -55];
-            const startA = sectorStartAngles[sectorIdx];
-            const endA = startA + size;
-
-            const fielderAngles = fielders.map(f => {
-                let a = Math.atan2(f.x - 300, -(f.y - 240)) * (180 / Math.PI);
-                if (sectorIdx === 4 && a < 0) a += 360;
-                return a;
-            }).sort((a, b) => a - b);
-
-            if (Math.abs(fielderAngles[0] - startA) > 35) return true;
-            if (Math.abs(endA - fielderAngles[fielderAngles.length - 1]) > 35) return true;
-            for (let i = 0; i < fielderAngles.length - 1; i++) {
-                if (Math.abs(fielderAngles[i + 1] - fielderAngles[i]) > 35) return true;
-            }
-            return false;
-        }
+        // A sector (both 35° and 55°) is said to have a gap if there is no fielder in it at all
+        return fielders.length === 0;
     }
 
     getSectorRunsLast9(state, sectorIdx) {
@@ -2528,15 +2503,49 @@ class MatchManager {
         return { x, y };
     }
 
-    getRandomRingPosition(sectorIdx) {
+    getRandomRingPosition(sectorIdx, state = null) {
         const sectorMidAngles = [27.5, 72.5, 107.5, 152.5, -152.5, -107.5, -72.5, -27.5];
         const sectorSizes = [55, 35, 35, 55, 55, 35, 35, 55];
         const midA = sectorMidAngles[sectorIdx];
         const size = sectorSizes[sectorIdx];
 
-        const angularOffset = (Math.random() - 0.5) * (size - 10);
-        const clockAngle = midA + angularOffset;
-        const rad = clockAngle * (Math.PI / 180);
+        let existingAngles = [];
+        if (state && state.fielderPositions) {
+            existingAngles = state.fielderPositions
+                .filter(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === sectorIdx)
+                .map(f => Math.atan2(f.x - 300, -(f.y - 240)) * (180 / Math.PI));
+        }
+
+        let bestAngle = midA;
+        let maxMinDiff = -1;
+
+        for (let trial = 0; trial < 25; trial++) {
+            const angularOffset = (Math.random() - 0.5) * (size - 8);
+            const candidateAngle = midA + angularOffset;
+
+            if (existingAngles.length === 0) {
+                bestAngle = candidateAngle;
+                break;
+            }
+
+            let minDiff = Infinity;
+            existingAngles.forEach(eA => {
+                const diff = Math.abs(candidateAngle - eA);
+                if (diff < minDiff) minDiff = diff;
+            });
+
+            if (minDiff >= 10) {
+                bestAngle = candidateAngle;
+                break;
+            }
+
+            if (minDiff > maxMinDiff) {
+                maxMinDiff = minDiff;
+                bestAngle = candidateAngle;
+            }
+        }
+
+        const rad = bestAngle * (Math.PI / 180);
 
         // Place inside ring (radius 95 to 140)
         const dist = 95 + Math.random() * 45;
@@ -2584,24 +2593,17 @@ class MatchManager {
         // ONLY used by opponent team (when user is batting, or in AI vs AI match)
         if (!state.isUserBatting && this.isSimulatingMatch === false) return;
 
-        if (!state.ballHistory || state.ballHistory.length < 3) return;
+        if (!state.ballHistory || state.ballHistory.length < 2) return;
 
-        // Observe last 9 balls. Check final 3 deliveries:
-        const last3 = state.ballHistory.slice(-3);
-        
-        const sectorBoundaries = {};
-        last3.forEach(b => {
-            if (b.isBoundary) {
-                sectorBoundaries[b.sector] = (sectorBoundaries[b.sector] || 0) + 1;
-            }
-        });
-
+        // Fielding ONLY changes when there are 2 CONSECUTIVE boundaries in ONE sector in last 9 balls
         let targetSector = null;
-        Object.keys(sectorBoundaries).forEach(sIdx => {
-            if (sectorBoundaries[sIdx] >= 1) {
-                targetSector = parseInt(sIdx);
+        for (let i = 0; i < state.ballHistory.length - 1; i++) {
+            const b1 = state.ballHistory[i];
+            const b2 = state.ballHistory[i + 1];
+            if (b1.isBoundary && b2.isBoundary && b1.sector === b2.sector) {
+                targetSector = b1.sector;
             }
-        });
+        }
 
         if (targetSector === null) return;
 
@@ -2643,7 +2645,7 @@ class MatchManager {
                         if (offDonor !== null) {
                             const offFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
                             if (offFielder) {
-                                const ringPos = this.getRandomRingPosition(offDonor);
+                                const ringPos = this.getRandomRingPosition(offDonor, state);
                                 offFielder.x = ringPos.x; offFielder.y = ringPos.y;
                             }
                         }
@@ -2691,7 +2693,7 @@ class MatchManager {
                                 deepFielder.x = deepPos.x; deepFielder.y = deepPos.y;
                                 const partnerRing = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
                                 if (partnerRing) {
-                                    const ringPos = this.getRandomRingPosition(otherLegDeepDonor);
+                                    const ringPos = this.getRandomRingPosition(otherLegDeepDonor, state);
                                     partnerRing.x = ringPos.x; partnerRing.y = ringPos.y;
                                 }
                             }
@@ -2700,7 +2702,7 @@ class MatchManager {
                             if (offDonor !== null) {
                                 const offFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
                                 if (offFielder) {
-                                    const rPos = this.getRandomRingPosition(offDonor);
+                                    const rPos = this.getRandomRingPosition(offDonor, state);
                                     offFielder.x = rPos.x; offFielder.y = rPos.y;
                                 }
                             }
@@ -2712,7 +2714,7 @@ class MatchManager {
                             }
                             const partnerRing = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
                             if (partnerRing && legDonor !== null) {
-                                const rPos = this.getRandomRingPosition(legDonor);
+                                const rPos = this.getRandomRingPosition(legDonor, state);
                                 partnerRing.x = rPos.x; partnerRing.y = rPos.y;
                             }
                         }
@@ -2725,7 +2727,7 @@ class MatchManager {
                                 deepFielder.x = deepPos.x; deepFielder.y = deepPos.y;
                                 const partnerRing = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
                                 if (partnerRing) {
-                                    const rPos = this.getRandomRingPosition(deepDonor);
+                                    const rPos = this.getRandomRingPosition(deepDonor, state);
                                     partnerRing.x = rPos.x; partnerRing.y = rPos.y;
                                 }
                             }
@@ -2748,7 +2750,7 @@ class MatchManager {
                                 if (offDonor !== null) {
                                     const offFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
                                     if (offFielder) {
-                                        const rPos = this.getRandomRingPosition(offDonor);
+                                        const rPos = this.getRandomRingPosition(offDonor, state);
                                         offFielder.x = rPos.x; offFielder.y = rPos.y;
                                     }
                                 }
@@ -2765,7 +2767,7 @@ class MatchManager {
                         if (offDonor !== null) {
                             const dFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === offDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) > 160);
                             if (dFielder) {
-                                const rPos = this.getRandomRingPosition(offDonor);
+                                const rPos = this.getRandomRingPosition(offDonor, state);
                                 dFielder.x = rPos.x; dFielder.y = rPos.y;
                             }
                         }
@@ -2870,14 +2872,14 @@ class MatchManager {
                     const legDonor = this.getLeastPerformingSector(state, [0, 1, 2, 3].filter(s => s !== targetSector));
                     const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === legDonor && Math.sqrt((f.x - 300) ** 2 + (f.y - 300) ** 2) <= 160);
                     if (rFielder) {
-                        const ringPos = this.getRandomRingPosition(targetSector);
+                        const ringPos = this.getRandomRingPosition(targetSector, state);
                         rFielder.x = ringPos.x; rFielder.y = ringPos.y;
                     }
                 } else {
                     const donor = this.getLeastPerformingSector(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
                     const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
                     if (rFielder) {
-                        const ringPos = this.getRandomRingPosition(targetSector);
+                        const ringPos = this.getRandomRingPosition(targetSector, state);
                         rFielder.x = ringPos.x; rFielder.y = ringPos.y;
                     }
                 }
@@ -2886,14 +2888,14 @@ class MatchManager {
                 if (pairFielders.length >= 2) {
                     const partnerFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === partnerSector);
                     if (partnerFielder) {
-                        const ringPos = this.getRandomRingPosition(targetSector);
+                        const ringPos = this.getRandomRingPosition(targetSector, state);
                         partnerFielder.x = ringPos.x; partnerFielder.y = ringPos.y;
                     }
                 } else {
                     const donor = this.getLeastPerformingSector(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
                     const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
                     if (rFielder) {
-                        const ringPos = this.getRandomRingPosition(targetSector);
+                        const ringPos = this.getRandomRingPosition(targetSector, state);
                         rFielder.x = ringPos.x; rFielder.y = ringPos.y;
                     }
                 }
@@ -2901,7 +2903,7 @@ class MatchManager {
                 const donor = this.getLeastPerformingSector(state, [0, 1, 2, 3, 4, 5, 6, 7].filter(s => s !== targetSector));
                 const rFielder = state.fielderPositions.find(f => !f.isFixed && this.getSectorFromCoords(f.x, f.y) === donor);
                 if (rFielder) {
-                    const ringPos = this.getRandomRingPosition(targetSector);
+                    const ringPos = this.getRandomRingPosition(targetSector, state);
                     rFielder.x = ringPos.x; rFielder.y = ringPos.y;
                 }
             }
