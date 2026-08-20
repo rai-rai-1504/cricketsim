@@ -2425,8 +2425,8 @@ class MatchManager {
         if (!state.isUserBatting) {
             // Opponent is batting: Hide opponent stats and control options
             this.coachBattingControls.innerHTML = `
-                <div style="text-align: center; padding: 20px; color: var(--text-secondary); font-size: 0.85rem; border: 1px dashed var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.15); width: 100%;">
-                    <i class="fa-solid fa-shield-halved" style="font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--border-color); opacity: 0.7;"></i>
+                <div style="text-align: center; padding: 22px; color: var(--text-secondary); font-size: 0.88rem; border: 1px dashed #E2DED0; border-radius: 10px; background: #FAF7F0; width: 100%; box-sizing: border-box;">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 1.6rem; margin-bottom: 8px; display: block; color: var(--pitch-green);"></i>
                     Opponent team is batting.<br>Manage your bowling rotations.
                 </div>
             `;
@@ -2437,23 +2437,23 @@ class MatchManager {
             // 1. Striker
             if (state.striker) {
                 const card = document.createElement("div");
-                card.className = "coach-batsman-card";
-                card.style.cssText = "padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.15); border-left: 4px solid var(--color-primary); width: 100%; box-sizing: border-box;";
+                card.className = "coach-batsman-card active-striker-card";
+                card.style.cssText = "padding: 14px 16px; border: 1px solid #E2DED0; border-radius: 10px; background: #FFFDF7; border-left: 5px solid var(--trophy-gold); width: 100%; box-sizing: border-box; box-shadow: 0 4px 14px rgba(201,151,43,0.08); margin-bottom: 6px;";
                 
                 const isLocked = state.striker.ballsFaced < 50;
                 const lockText = isLocked ? `(Locked: ${state.striker.ballsFaced}/50 balls)` : `(Unlocked!)`;
                 
                 card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong>${state.striker.name}* <span style="font-size: 0.72rem; font-weight: normal; color: var(--color-primary);">(Striker)</span></strong>
-                        <span style="font-weight: bold; color: var(--color-primary); font-size: 0.9rem;">${state.striker.runsScored}*(${state.striker.ballsFaced})</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="font-family: var(--font-title); font-size: 1.05rem; color: #1C2B22;">${state.striker.name}* <span style="font-size: 0.75rem; font-weight: normal; color: var(--trophy-gold); font-family: var(--font-body);">(Striker)</span></strong>
+                        <span style="font-family: var(--font-score); font-weight: 800; color: #1C2B22; font-size: 1.2rem;">${state.striker.runsScored}*(${state.striker.ballsFaced})</span>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 5px; flex-wrap: wrap;">
-                        <span class="lock-label" style="font-size: 0.7rem; color: ${isLocked ? "var(--color-gold)" : "var(--color-success)"}; margin: 0; opacity: 0.85;">${lockText}</span>
-                        <div class="mentality-toggle-mini" style="display: flex; gap: 3px;">
-                            <button class="mentality-btn btn-mini ${state.striker.mentality === "defensive" ? "active" : ""}" data-mentality="defensive" ${isLocked ? "disabled" : ""}>Def</button>
-                            <button class="mentality-btn btn-mini ${state.striker.mentality === "normal" ? "active" : ""}" data-mentality="normal" ${isLocked ? "disabled" : ""}>Bal</button>
-                            <button class="mentality-btn btn-mini ${state.striker.mentality === "attack" ? "active" : ""}" data-mentality="attack" ${isLocked ? "disabled" : ""}>Att</button>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                        <span class="lock-label" style="font-size: 0.72rem; color: ${isLocked ? "#8A8677" : "var(--pitch-green)"}; margin: 0; opacity: 0.9;">${lockText}</span>
+                        <div class="mentality-toggle-mini" style="display: flex; gap: 4px;">
+                            <button class="mentality-btn btn-mini ${state.striker.mentality === "defensive" ? "active" : ""}" data-mentality="defensive" ${isLocked ? "disabled" : ""}>DEF</button>
+                            <button class="mentality-btn btn-mini ${state.striker.mentality === "normal" ? "active" : ""}" data-mentality="normal" ${isLocked ? "disabled" : ""}>BAL</button>
+                            <button class="mentality-btn btn-mini ${state.striker.mentality === "attack" ? "active" : ""}" data-mentality="attack" ${isLocked ? "disabled" : ""}>ATT</button>
                         </div>
                     </div>
                 `;
@@ -2472,22 +2472,22 @@ class MatchManager {
             if (state.nonStriker) {
                 const card = document.createElement("div");
                 card.className = "coach-batsman-card";
-                card.style.cssText = "padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.15); width: 100%; box-sizing: border-box;";
+                card.style.cssText = "padding: 14px 16px; border: 1px solid #E2DED0; border-radius: 10px; background: #FFFFFF; border-left: 4px solid #E2DED0; width: 100%; box-sizing: border-box;";
                 
                 const isLocked = state.nonStriker.ballsFaced < 50;
                 const lockText = isLocked ? `(Locked: ${state.nonStriker.ballsFaced}/50 balls)` : `(Unlocked!)`;
                 
                 card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong>${state.nonStriker.name}</strong>
-                        <span style="font-weight: bold; font-size: 0.9rem;">${state.nonStriker.runsScored}(${state.nonStriker.ballsFaced})</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="font-family: var(--font-title); font-size: 1.05rem; color: #1C2B22;">${state.nonStriker.name}</strong>
+                        <span style="font-family: var(--font-score); font-weight: 800; color: #1C2B22; font-size: 1.2rem;">${state.nonStriker.runsScored}(${state.nonStriker.ballsFaced})</span>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 5px; flex-wrap: wrap;">
-                        <span class="lock-label" style="font-size: 0.7rem; color: ${isLocked ? "var(--color-gold)" : "var(--color-success)"}; margin: 0; opacity: 0.85;">${lockText}</span>
-                        <div class="mentality-toggle-mini" style="display: flex; gap: 3px;">
-                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "defensive" ? "active" : ""}" data-mentality="defensive" ${isLocked ? "disabled" : ""}>Def</button>
-                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "normal" ? "active" : ""}" data-mentality="normal" ${isLocked ? "disabled" : ""}>Bal</button>
-                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "attack" ? "active" : ""}" data-mentality="attack" ${isLocked ? "disabled" : ""}>Att</button>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                        <span class="lock-label" style="font-size: 0.72rem; color: ${isLocked ? "#8A8677" : "var(--pitch-green)"}; margin: 0; opacity: 0.9;">${lockText}</span>
+                        <div class="mentality-toggle-mini" style="display: flex; gap: 4px;">
+                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "defensive" ? "active" : ""}" data-mentality="defensive" ${isLocked ? "disabled" : ""}>DEF</button>
+                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "normal" ? "active" : ""}" data-mentality="normal" ${isLocked ? "disabled" : ""}>BAL</button>
+                            <button class="mentality-btn btn-mini ${state.nonStriker.mentality === "attack" ? "active" : ""}" data-mentality="attack" ${isLocked ? "disabled" : ""}>ATT</button>
                         </div>
                     </div>
                 `;

@@ -551,41 +551,154 @@ select:focus, input:focus {
 
 /* Tactical Controls Cards */
 .batsmen-live-card, .bowler-live-card {
-    background: #FAF7F0;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 14px;
+    background: #FFFDF9 !important;
+    border: 1px solid #E2DED0 !important;
+    border-radius: 10px !important;
+    padding: 14px 16px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
 }
 
-.batsman-stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 8px 12px; border-radius: var(--radius-sm); }
-.batsman-stat-row.active-striker { background: #FFFFFF; border-left: 4px solid var(--trophy-gold); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.bowler-live-card {
+    border-left: 5px solid var(--format-primary, #0F6E56) !important;
+}
+
+.bowler-live-card .label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.bowler-live-card .bowler-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bowler-live-card .bowler-info .name {
+    font-family: 'Cinzel', serif;
+    font-weight: 800;
+    color: #1C2B22;
+    font-size: 1.05rem;
+}
+
+.bowler-live-card .bowler-info .stats {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    color: #1C2B22;
+    font-size: 1.15rem;
+}
+
+.batsman-stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 10px 14px; border-radius: var(--radius-sm); }
+.batsman-stat-row.active-striker { background: #FFFFFF; border-left: 4px solid var(--trophy-gold); box-shadow: 0 3px 10px rgba(201,151,43,0.1); }
 
 /* Commentary Feed Items */
+.commentary-feed {
+    max-height: 220px;
+    min-height: 140px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 2px;
+}
+
 .commentary-ball-item {
-    background: #FFFFFF;
-    border: 1px solid var(--border-dim);
-    border-radius: var(--radius-sm);
-    padding: 10px 14px;
+    background: #FFFDF9;
+    border: 1px solid #E2DED0;
+    border-radius: 8px;
+    padding: 12px 16px;
     font-family: 'Inter', sans-serif;
     font-size: 0.88rem;
-    color: var(--text-primary);
+    color: #1C2B22;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
 }
 
 .commentary-ball-item .ball-num-badge {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 800;
-    font-size: 0.82rem;
-    background: var(--bg-main);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    background: #FAF7F0;
+    color: #1C2B22;
+    border: 1px solid #E2DED0;
+    padding: 2px 8px;
+    border-radius: 6px;
 }
 
-/* Tactic mentality buttons */
-.mentality-toggle { display: flex; gap: 4px; background: var(--bg-main); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
-.mentality-btn { flex: 1; background: none; border: none; color: var(--text-secondary); padding: 8px 4px; font-family: 'Cinzel', serif; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px; border-radius: 4px; cursor: pointer; transition: var(--ease); text-transform: uppercase; }
-.mentality-btn.active[data-mentality="defensive"] { background: var(--sky); color: #FFFFFF; }
-.mentality-btn.active[data-mentality="normal"]    { background: var(--pitch-green); color: #FFFFFF; }
-.mentality-btn.active[data-mentality="attack"]    { background: var(--trophy-gold); color: #FFFFFF; }
+/* Action Buttons in Tactical Box */
+#sim-ball-btn {
+    background: var(--format-primary) !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    padding: 12px 18px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(15,110,86,0.2) !important;
+}
+
+#sim-over-btn {
+    background: #FFFFFF !important;
+    border: 1px solid #E2DED0 !important;
+    color: #1C2B22 !important;
+    font-weight: 800 !important;
+    padding: 12px 18px !important;
+    border-radius: 8px !important;
+}
+
+#sim-over-btn:hover {
+    background: #FAF7F0 !important;
+    border-color: var(--format-primary) !important;
+    color: var(--format-primary) !important;
+}
+
+/* Tactic Mentality Buttons */
+.mentality-toggle { display: flex; gap: 4px; background: #FAF7F0; padding: 4px; border-radius: var(--radius-sm); border: 1px solid #E2DED0; }
+.mentality-btn {
+    padding: 5px 12px !important;
+    border-radius: 14px !important;
+    font-family: 'Cinzel', serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    border: 1px solid #E2DED0 !important;
+    background: #F7F3E8 !important;
+    color: #686455 !important;
+    cursor: pointer;
+    transition: var(--ease);
+}
+
+.mentality-btn:hover {
+    border-color: #0F6E56 !important;
+    color: #0F6E56 !important;
+}
+
+.mentality-btn.active[data-mentality="defensive"] {
+    background: #1D4E89 !important;
+    color: #FFFFFF !important;
+    border-color: #1D4E89 !important;
+    box-shadow: 0 2px 8px rgba(29,78,137,0.3) !important;
+}
+
+.mentality-btn.active[data-mentality="normal"] {
+    background: #0F6E56 !important;
+    color: #FFFFFF !important;
+    border-color: #0F6E56 !important;
+    box-shadow: 0 2px 8px rgba(15,110,86,0.3) !important;
+}
+
+.mentality-btn.active[data-mentality="attack"] {
+    background: #E85D04 !important;
+    color: #FFFFFF !important;
+    border-color: #E85D04 !important;
+    box-shadow: 0 2px 8px rgba(232,93,4,0.3) !important;
+}
+
+.mentality-btn:disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+}
 
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
