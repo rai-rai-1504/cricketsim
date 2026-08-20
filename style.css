@@ -700,6 +700,49 @@ select:focus, input:focus {
     cursor: not-allowed !important;
 }
 
+/* Dressing Room Opener Mentality Card Buttons */
+.opener-mentality-btn {
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.opener-mentality-btn:hover {
+    transform: translateY(-2px) !important;
+    border-color: #0F6E56 !important;
+}
+
+.opener-mentality-btn.active[data-mentality="defensive"] {
+    background: #1D4E89 !important;
+    color: #FFFFFF !important;
+    border-color: #1D4E89 !important;
+    box-shadow: 0 4px 12px rgba(29,78,137,0.3) !important;
+}
+
+.opener-mentality-btn.active[data-mentality="defensive"] i {
+    color: #FFFFFF !important;
+}
+
+.opener-mentality-btn.active[data-mentality="normal"] {
+    background: #0F6E56 !important;
+    color: #FFFFFF !important;
+    border-color: #0F6E56 !important;
+    box-shadow: 0 4px 12px rgba(15,110,86,0.3) !important;
+}
+
+.opener-mentality-btn.active[data-mentality="normal"] i {
+    color: #FFFFFF !important;
+}
+
+.opener-mentality-btn.active[data-mentality="attack"] {
+    background: #E85D04 !important;
+    color: #FFFFFF !important;
+    border-color: #E85D04 !important;
+    box-shadow: 0 4px 12px rgba(232,93,4,0.3) !important;
+}
+
+.opener-mentality-btn.active[data-mentality="attack"] i {
+    color: #FFFFFF !important;
+}
+
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeIn 0.35s ease-out forwards; }

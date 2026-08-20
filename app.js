@@ -388,6 +388,21 @@ class MatchManager {
             this.validateOpeners();
         });
 
+        // Opener Mentality Cards
+        document.querySelectorAll(".opener-mentality-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const targetBtn = e.currentTarget;
+                const openerNum = targetBtn.dataset.opener;
+                const mentality = targetBtn.dataset.mentality;
+                
+                document.querySelectorAll(`.opener-mentality-btn[data-opener="${openerNum}"]`).forEach(b => b.classList.remove("active"));
+                targetBtn.classList.add("active");
+
+                const inputEl = document.getElementById(`opener-${openerNum}-mentality-val`);
+                if (inputEl) inputEl.value = mentality;
+            });
+        });
+
         // Restart
         this.restartGameBtn.addEventListener("click", () => this.resetToSetup());
 
@@ -1019,29 +1034,37 @@ class MatchManager {
     updateOpenerStats(num) {
         const dropdown = num === 1 ? this.opener1Select : this.opener2Select;
         const div = document.getElementById(`opener-${num}-stats`);
+        if (!div) return;
         const battingTeam = this.userBatsFirst ? this.getOurTeamRoster() : this.getOpponentTeamRoster();
         const player = battingTeam[dropdown.value];
         if (player) {
-            div.textContent = `Batting: ${player.battingRating} | Bowling: ${player.bowlingRating} | Role: ${player.role}`;
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fa-solid fa-gavel" style="color:var(--sky); margin-right:4px;"></i> Batting Rating: <strong style="font-size:1.05rem; color:var(--sky);">${player.battingRating}</strong></span>
+                    <span><i class="fa-solid fa-baseball" style="color:#fb7185; margin-right:4px;"></i> Bowl Rating: <strong>${player.bowlingRating}</strong></span>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:6px; display:flex; gap:10px; align-items:center;">
+                    <span>Role: <strong style="color:#1C2B22;">${player.role}</strong></span>
+                    <span>Style: <strong>${player.battingStyle || 'Right Hand'}</strong></span>
+                    ${player.isWicketkeeper ? '<span class="badge" style="background:#FAF3E0; color:var(--trophy-gold); font-weight:800; padding: 2px 6px;"><i class="fa-solid fa-hand-holding"></i> WK</span>' : ''}
+                </div>
+            `;
         }
     }
 
     validateOpeners() {
         if (this.opener1Select.value === this.opener2Select.value) {
             this.startMatchBtn.disabled = true;
-            this.startMatchBtn.textContent = "Choose different openers";
+            this.startMatchBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i> CHOOSE DIFFERENT OPENERS';
             this.startMatchBtn.style.opacity = 0.5;
         } else {
             this.startMatchBtn.disabled = false;
-            this.startMatchBtn.textContent = "Start Innings";
+            this.startMatchBtn.innerHTML = '<i class="fa-solid fa-person-walking-arrow-right" style="margin-right: 12px; font-size: 1.4rem;"></i> PAD UP & WALK OUT TO BAT';
             this.startMatchBtn.style.opacity = 1;
         }
     }
 
     startInnings() {
-        this.openersScreen.classList.add("hidden");
-        this.matchScreen.classList.remove("hidden");
-
         const ourRoster = this.getOurTeamRoster();
         const oppRoster = this.getOpponentTeamRoster();
 
@@ -1076,8 +1099,11 @@ class MatchManager {
             state.nonStriker = state.battingTeam[op2Idx];
             state.striker.hasBatted = true;
             state.nonStriker.hasBatted = true;
-            state.striker.mentality = document.getElementById("opener-1-mentality").value;
-            state.nonStriker.mentality = document.getElementById("opener-2-mentality").value;
+
+            const m1El = document.getElementById("opener-1-mentality-val") || document.getElementById("opener-1-mentality");
+            const m2El = document.getElementById("opener-2-mentality-val") || document.getElementById("opener-2-mentality");
+            state.striker.mentality = m1El ? m1El.value : "normal";
+            state.nonStriker.mentality = m2El ? m2El.value : "normal";
         } else {
             // Opponent batting first: select top 2 by batting rating
             const sortedAI = [...state.battingTeam].sort((a,b) => b.battingRating - a.battingRating);
@@ -1096,8 +1122,40 @@ class MatchManager {
         this.pitchReportUI.textContent = `Pitch: ${this.pitch.toUpperCase()}`;
         this.matchTitleUI.textContent = `${this.userBatsFirst ? `${ourShort} vs ${oppShort}` : `${oppShort} vs ${ourShort}`} - ${this.format}`;
 
-        this.drawField();
-        this.triggerBowlerSelection();
+        // Trigger Dressing Room Pavilion Tunnel Transition
+        const tunnelOverlay = document.getElementById("tunnel-transition-overlay");
+        const progressBar = document.getElementById("tunnel-progress-bar");
+        const subtext = document.getElementById("tunnel-subtext");
+        
+        if (subtext && state.striker && state.nonStriker) {
+            subtext.textContent = `${state.striker.name} & ${state.nonStriker.name} are taking the field!`;
+        }
+
+        if (tunnelOverlay && progressBar) {
+            tunnelOverlay.classList.remove("hidden");
+            progressBar.style.width = "0%";
+            setTimeout(() => {
+                progressBar.style.width = "100%";
+            }, 30);
+
+            setTimeout(() => {
+                tunnelOverlay.classList.add("hidden");
+                this.openersScreen.classList.add("hidden");
+                this.matchScreen.classList.remove("hidden");
+                
+                this.setupField();
+                this.updateUI();
+                this.drawField();
+                this.triggerBowlerSelection();
+            }, 1200);
+        } else {
+            this.openersScreen.classList.add("hidden");
+            this.matchScreen.classList.remove("hidden");
+            this.setupField();
+            this.updateUI();
+            this.drawField();
+            this.triggerBowlerSelection();
+        }
     }
 
     getCurrentState() {
