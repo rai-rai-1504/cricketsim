@@ -295,11 +295,21 @@ class MatchManager {
             });
         }
 
-        if (this.scoutTeamSelect) {
-            this.scoutTeamSelect.addEventListener("change", (e) => {
-                this.renderScoutRoster(e.target.value);
+        const closeTeamRosterModal = document.getElementById("close-team-roster-modal");
+        if (closeTeamRosterModal) {
+            closeTeamRosterModal.addEventListener("click", () => {
+                const modal = document.getElementById("team-roster-modal");
+                if (modal) modal.classList.add("hidden");
             });
         }
+
+        // Delegate clicks on any .team-clickable element to open squad modal
+        document.addEventListener("click", (e) => {
+            const clickable = e.target.closest(".team-clickable");
+            if (clickable && clickable.dataset.teamid) {
+                this.openTeamSquadModal(clickable.dataset.teamid);
+            }
+        });
 
         this.tossHeadsBtn.addEventListener("click", () => this.handleToss("heads"));
         this.tossTailsBtn.addEventListener("click", () => this.handleToss("tails"));
@@ -398,6 +408,9 @@ class MatchManager {
             }
             if (this.nextMatchOppName && oppTeam) {
                 this.nextMatchOppName.textContent = oppTeam.name.toUpperCase();
+                this.nextMatchOppName.dataset.teamid = oppId;
+                this.nextMatchOppName.classList.add("team-clickable");
+                this.nextMatchOppName.style.cursor = "pointer";
             }
 
             this.format = nextMatch.format;
@@ -417,7 +430,6 @@ class MatchManager {
         // Render Tabs
         this.renderDashStandings("T20");
         this.renderDashFixtures();
-        this.renderScoutRoster(this.scoutTeamSelect ? this.scoutTeamSelect.value : "Maharashtra");
         this.renderBanswaraRoster();
     }
 
@@ -427,6 +439,44 @@ class MatchManager {
         if (j === 2 && k !== 12) return "nd";
         if (j === 3 && k !== 13) return "rd";
         return "th";
+    }
+
+    openTeamSquadModal(teamId) {
+        const modal = document.getElementById("team-roster-modal");
+        const title = document.getElementById("modal-team-title");
+        const container = document.getElementById("modal-team-roster-container");
+        const team = DOMESTIC_TEAMS[teamId];
+        if (!modal || !container || !team) return;
+
+        if (title) title.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:${team.color || 'var(--sky)'}; margin-right:8px;"></i> ${team.name} Squad Roster (Home Ground: ${team.homeGround})`;
+
+        let html = `
+            <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr style="background: rgba(255,255,255,0.06); text-align: left;">
+                        <th style="padding: 10px;">Player Name</th>
+                        <th style="padding: 10px;">Role</th>
+                        <th style="padding: 10px;">Style</th>
+                        <th style="padding: 10px; text-align:center;">Bat Rating</th>
+                        <th style="padding: 10px; text-align:center;">Bowl Rating</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        team.roster.forEach(p => {
+            html += `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 10px; font-weight: 600; ${teamId === 'Banswara' ? 'color:#fbbf24;' : ''}">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
+                    <td style="padding: 10px;"><span class="badge bg-secondary" style="font-size:0.7rem;">${p.role}</span></td>
+                    <td style="padding: 10px; font-size: 0.78rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
+                    <td style="padding: 10px; text-align:center; font-weight:800; font-size: 1rem; color: var(--sky);">${p.battingRating}</td>
+                    <td style="padding: 10px; text-align:center; font-weight:800; font-size: 1rem; color: #fb7185;">${p.bowlingRating}</td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+        modal.classList.remove("hidden");
     }
 
     renderDashStandings(format = "T20") {
@@ -439,7 +489,7 @@ class MatchManager {
                 <thead>
                     <tr style="background: rgba(255,255,255,0.06); text-align: left;">
                         <th style="padding: 10px;">Pos</th>
-                        <th style="padding: 10px;">State Team</th>
+                        <th style="padding: 10px;">State Team (Click for Squad)</th>
                         <th style="padding: 10px; text-align:center;">Played</th>
                         <th style="padding: 10px; text-align:center;">Won</th>
                         <th style="padding: 10px; text-align:center;">Lost</th>
@@ -453,7 +503,7 @@ class MatchManager {
             html += `
                 <tr style="border-bottom: 1px solid var(--border-color); ${isUser ? 'background: rgba(251,191,36,0.15); color: #fbbf24; font-weight: 700;' : ''}">
                     <td style="padding: 10px;">${idx + 1}</td>
-                    <td style="padding: 10px;">${st.name} ${isUser ? '<span style="font-size:0.75rem; background:#fbbf24; color:#000; padding:1px 6px; border-radius:3px; margin-left:6px;">YOUR TEAM</span>' : ''}</td>
+                    <td style="padding: 10px;"><span class="team-clickable" data-teamid="${st.teamId}" style="cursor:pointer; text-decoration:underline; font-weight:700;"><i class="fa-solid fa-shield" style="font-size:0.8rem; margin-right:4px;"></i>${st.name}</span> ${isUser ? '<span style="font-size:0.75rem; background:#fbbf24; color:#000; padding:1px 6px; border-radius:3px; margin-left:6px;">YOUR TEAM</span>' : ''}</td>
                     <td style="padding: 10px; text-align:center;">${st.played}</td>
                     <td style="padding: 10px; text-align:center; color: var(--emerald);">${st.won}</td>
                     <td style="padding: 10px; text-align:center; color: var(--rose);">${st.lost}</td>
@@ -507,7 +557,7 @@ class MatchManager {
                             <span style="font-size:0.7rem; opacity:0.7;">${m.isCompleted ? 'Finished' : 'Scheduled'}</span>
                         </div>
                         <div style="font-weight:${isUserMatch ? '700' : '500'}; color: ${isUserMatch ? '#fbbf24' : '#fff'};">
-                            ${homeName} vs ${awayName}
+                            <span class="team-clickable" data-teamid="${m.homeTeam}" style="cursor:pointer; text-decoration:underline;">${homeName}</span> vs <span class="team-clickable" data-teamid="${m.awayTeam}" style="cursor:pointer; text-decoration:underline;">${awayName}</span>
                         </div>
                         ${m.summary ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">${m.summary}</div>` : ''}
                     </div>

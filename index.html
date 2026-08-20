@@ -49,7 +49,6 @@
                 <button id="tab-dash-home" class="tab-btn active"><i class="fa-solid fa-house"></i> Overview & Next Match</button>
                 <button id="tab-dash-standings" class="tab-btn"><i class="fa-solid fa-trophy"></i> League Standings</button>
                 <button id="tab-dash-fixtures" class="tab-btn"><i class="fa-solid fa-calendar-days"></i> Season Fixtures</button>
-                <button id="tab-dash-scout" class="tab-btn"><i class="fa-solid fa-binoculars"></i> Opposition Scout</button>
                 <button id="tab-dash-roster" class="tab-btn"><i class="fa-solid fa-users"></i> Banswara Squad</button>
             </div>
 
@@ -156,23 +155,6 @@
                     <h3 style="margin: 0; font-family: var(--font-title);"><i class="fa-solid fa-calendar-days"></i> Full Season Calendar & Results</h3>
                 </div>
                 <div id="dash-fixtures-container"></div>
-            </div>
-
-            <!-- TAB 4: OPPOSITION SCOUT -->
-            <div id="dash-pane-scout" class="dash-pane hidden">
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                    <label for="scout-team-select" style="font-weight: 700; white-space: nowrap;"><i class="fa-solid fa-magnifying-glass-chart"></i> Select Opponent State Team:</label>
-                    <select id="scout-team-select" style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff; padding: 8px 15px; font-size: 0.9rem; border-radius: 4px;">
-                        <option value="Punjab">Punjab</option>
-                        <option value="TamilNadu">Tamil Nadu</option>
-                        <option value="Maharashtra" selected>Maharashtra</option>
-                        <option value="Karnataka">Karnataka</option>
-                        <option value="Delhi">Delhi</option>
-                        <option value="Bengal">Bengal</option>
-                        <option value="UttarPradesh">Uttar Pradesh</option>
-                    </select>
-                </div>
-                <div id="scout-roster-container"></div>
             </div>
 
             <!-- TAB 5: BANSWARA SQUAD -->
@@ -686,6 +668,15 @@
                 <div id="league-fixtures-wrapper">
                     <!-- Fixtures injected via JS -->
                 </div>
+            </div>
+        <!-- TEAM SQUAD INSPECTION MODAL -->
+        <div id="team-roster-modal" class="modal-overlay hidden">
+            <div class="glass-card modal-content" style="max-width: 850px; width: 92%; max-height: 85vh; overflow-y: auto; padding: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px;">
+                    <h2 id="modal-team-title" style="margin: 0; font-family: var(--font-title); color: var(--sky);"><i class="fa-solid fa-users"></i> Team Squad Roster</h2>
+                    <button id="close-team-roster-modal" class="btn btn-secondary btn-mini" style="padding: 4px 10px;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="modal-team-roster-container"></div>
             </div>
         </div>
     </div>
