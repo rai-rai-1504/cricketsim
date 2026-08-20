@@ -477,6 +477,12 @@
                             
                             <!-- Big Display Texts on boundaries/wickets -->
                             <text id="field-overlay-text" x="300" y="300" text-anchor="middle" fill="#fff" font-family="'Space Grotesk', sans-serif" font-weight="bold" font-size="70" style="display: none; filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.8));"></text>
+
+                            <!-- Match Start 3, 2, 1 Pitch Countdown Overlay -->
+                            <g id="pitch-countdown-group" style="display: none;">
+                                <circle cx="300" cy="300" r="48" fill="rgba(15, 23, 42, 0.92)" stroke="#C9972B" stroke-width="3.5" style="filter: drop-shadow(0 0 20px rgba(201, 151, 43, 0.7));" />
+                                <text id="pitch-countdown-text" x="300" y="315" text-anchor="middle" fill="#C9972B" font-family="'Barlow Condensed', sans-serif" font-weight="900" font-size="46">3</text>
+                            </g>
                         </svg>
                     </div>
                 </div>
@@ -486,34 +492,12 @@
                     <!-- Coach Tactical Box -->
                     <div class="glass-card panel-controls" style="margin-bottom: 20px;">
                         <div class="panel-header">
-                            <h3><i class="fa-solid fa-gamepad"></i> Coach Tactical Box</h3>
-                            <span id="active-bowler-overs-left" class="badge bg-secondary">Bowler: Ready</span>
+                            <h3><i class="fa-solid fa-sliders"></i> Coach Tactical Box</h3>
                         </div>
 
                         <!-- Coach Batting Controls container -->
-                        <div id="coach-batting-controls" style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                        <div id="coach-batting-controls" style="margin-top: 15px; display: flex; flex-direction: column; gap: 12px;">
                             <!-- Injected dynamically based on active batting team -->
-                        </div>
-
-                        <!-- Bowler current status card -->
-                        <div class="bowler-live-card" id="ui-bowler-card-container">
-                            <div class="label"><i class="fa-solid fa-baseball"></i> Active Bowler</div>
-                            <div class="bowler-info">
-                                <span class="name" id="ui-bowler-name">Bowler Name</span>
-                                <span class="stats" id="ui-bowler-stats">0.0 - 0 - 0 - 0</span>
-                            </div>
-                        </div>
-
-                        <!-- Action buttons -->
-                        <div class="action-buttons-group">
-                            <div class="sub-actions" style="grid-template-columns: 1fr 1fr; width: 100%;">
-                                <button id="sim-ball-btn" class="btn btn-secondary">
-                                    <i class="fa-solid fa-baseball-bat-ball"></i> Bowl Ball
-                                </button>
-                                <button id="sim-over-btn" class="btn btn-secondary">
-                                    <i class="fa-solid fa-forward-step"></i> Bowl Over
-                                </button>
-                            </div>
                         </div>
                     </div>
 
@@ -565,24 +549,16 @@
         </div>
 
         <!-- MODAL: SELECT NEXT BATSMAN -->
-        <div id="batsman-modal" class="modal-overlay hidden">
-            <div class="modal-content glass-card fade-in">
-                <h2>Wicket Down! Select Next Batsman</h2>
-                <p>A batsman has departed. Pick the next batsman from your remaining players to walk into the crease.</p>
-                <div class="modal-table-container">
-                    <table class="modal-table">
-                        <thead>
-                            <tr>
-                                <th>Batsman</th>
-                                <th>Batting Rating</th>
-                                <th>Initial Mentality</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="batsman-selection-tbody">
-                            <!-- Injected dynamically -->
-                        </tbody>
-                    </table>
+        <div id="batsman-modal" class="modal-overlay hidden" style="z-index: 600;">
+            <div class="modal-content glass-card fade-in" style="max-width: 650px; width: 92%; padding: 25px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 16px; box-shadow: var(--shadow-modal);">
+                <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                    <span class="badge" style="background: #8C1C13; color: #FFFFFF; font-weight: 800; padding: 4px 14px; font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; display: inline-block;">WICKET DOWN!</span>
+                    <h2 style="font-family: var(--font-title); font-size: 1.8rem; margin: 6px 0 4px 0; color: #1C2B22;"><i class="fa-solid fa-person-walking" style="color: var(--trophy-gold); margin-right: 8px;"></i> SELECT NEXT BATTER TO WALK IN</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">Coach, pick the next batter from your Playing XI and set their initial mentality.</p>
+                </div>
+                
+                <div id="batsman-selection-container" style="display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; padding-right: 4px;">
+                    <!-- Injected dynamically by JS as classy player cards -->
                 </div>
             </div>
         </div>

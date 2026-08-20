@@ -70,8 +70,8 @@ const commentaryLines = {
 
 class InningsState {
     constructor(battingTeam, bowlingTeam, teamName, isUserBatting, target = null) {
-        this.battingTeam = battingTeam;
-        this.bowlingTeam = bowlingTeam;
+        this.battingTeam = battingTeam.slice(0, 11);
+        this.bowlingTeam = bowlingTeam.slice(0, 11);
         this.teamName = teamName;
         this.isUserBatting = isUserBatting;
         this.target = target;
@@ -1007,25 +1007,20 @@ class MatchManager {
         const battingTeam = this.userBatsFirst ? ourRoster : oppRoster;
         
         if (this.userBatsFirst) {
-            battingTeam.forEach((p, idx) => {
-                const opt1 = new Option(`${p.name} (${p.role}) - Rating: ${p.battingRating}`, idx);
-                const opt2 = new Option(`${p.name} (${p.role}) - Rating: ${p.battingRating}`, idx);
-                if (this.opener1Select) this.opener1Select.add(opt1);
-                if (this.opener2Select) this.opener2Select.add(opt2);
-            });
-
-            this.selectedOpener1Index = 0;
-            this.selectedOpener2Index = 1;
-            if (this.opener1Select) this.opener1Select.value = 0;
-            if (this.opener2Select) this.opener2Select.value = 1;
+            // Initial state: Slots start EMPTY (-1)!
+            this.selectedOpener1Index = -1;
+            this.selectedOpener2Index = -1;
+            if (this.opener1Select) this.opener1Select.value = -1;
+            if (this.opener2Select) this.opener2Select.value = -1;
 
             this.renderOpenersSquadList();
             this.validateOpeners();
         } else {
             // AI selects openers (best 2 batters)
-            const sortedAI = [...battingTeam].sort((a,b) => b.battingRating - a.battingRating);
-            const idx1 = battingTeam.indexOf(sortedAI[0]);
-            const idx2 = battingTeam.indexOf(sortedAI[1]);
+            const playing11 = battingTeam.slice(0, 11);
+            const sortedAI = [...playing11].sort((a,b) => b.battingRating - a.battingRating);
+            const idx1 = playing11.indexOf(sortedAI[0]);
+            const idx2 = playing11.indexOf(sortedAI[1]);
             
             this.selectedOpener1Index = idx1;
             this.selectedOpener2Index = idx2;
@@ -1039,16 +1034,24 @@ class MatchManager {
 
     renderOpenersSquadList() {
         if (!this.openersSquadList) return;
-        const battingTeam = this.userBatsFirst ? this.getOurTeamRoster() : this.getOpponentTeamRoster();
+        const fullRoster = this.userBatsFirst ? this.getOurTeamRoster() : this.getOpponentTeamRoster();
+        const playing11 = fullRoster.slice(0, 11); // Only 11 Playing XI players!
         this.openersSquadList.innerHTML = "";
 
-        battingTeam.forEach((player, idx) => {
+        playing11.forEach((player, idx) => {
             const isSlot1 = this.selectedOpener1Index === idx;
             const isSlot2 = this.selectedOpener2Index === idx;
 
             const card = document.createElement("div");
             card.className = "squad-player-pick-item";
-            card.style.cssText = `padding: 12px 14px; border: 1px solid ${isSlot1 || isSlot2 ? 'var(--trophy-gold)' : 'var(--border-color)'}; border-radius: 10px; background: ${isSlot1 || isSlot2 ? '#FFFDF7' : '#FFFFFF'}; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);`;
+            card.setAttribute("draggable", "true");
+            card.dataset.playerIdx = idx;
+
+            card.style.cssText = `padding: 12px 14px; border: 1px solid ${isSlot1 || isSlot2 ? 'var(--trophy-gold)' : 'var(--border-color)'}; border-radius: 10px; background: ${isSlot1 || isSlot2 ? '#FFFDF7' : '#FFFFFF'}; display: flex; justify-content: space-between; align-items: center; cursor: grab; box-shadow: 0 2px 8px rgba(0,0,0,0.03);`;
+
+            card.ondragstart = (e) => {
+                e.dataTransfer.setData("playerIdx", idx.toString());
+            };
 
             let badgeHTML = "";
             if (isSlot1) badgeHTML = `<span class="badge" style="background:var(--trophy-gold); color:#FFF; font-size:0.72rem; font-weight:800;">OPENER #1</span>`;
@@ -1058,6 +1061,7 @@ class MatchManager {
             card.innerHTML = `
                 <div>
                     <div style="display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-grip-vertical" style="color:var(--text-muted); cursor:grab;" title="Drag to slot"></i>
                         <strong style="font-family:var(--font-title); font-size:1.02rem; color:#1C2B22;">${player.name}</strong>
                         ${badgeHTML}
                     </div>
@@ -1082,7 +1086,36 @@ class MatchManager {
             this.openersSquadList.appendChild(card);
         });
 
+        this.setupDropZones();
         this.renderOpenerSlotDisplays();
+    }
+
+    setupDropZones() {
+        const slotCard1 = document.getElementById("slot-card-1");
+        const slotCard2 = document.getElementById("slot-card-2");
+
+        [ { el: slotCard1, num: 1 }, { el: slotCard2, num: 2 } ].forEach(({ el, num }) => {
+            if (!el) return;
+            el.ondragover = (e) => {
+                e.preventDefault();
+                el.style.borderColor = num === 1 ? "var(--trophy-gold)" : "var(--pitch-green)";
+                el.style.boxShadow = "0 0 15px rgba(201,151,43,0.3)";
+            };
+            el.ondragleave = () => {
+                el.style.borderColor = "";
+                el.style.boxShadow = "";
+            };
+            el.ondrop = (e) => {
+                e.preventDefault();
+                el.style.borderColor = "";
+                el.style.boxShadow = "";
+                const idxStr = e.dataTransfer.getData("playerIdx");
+                if (idxStr !== undefined && idxStr !== "") {
+                    const idx = parseInt(idxStr);
+                    this.assignOpenerSlot(num, idx);
+                }
+            };
+        });
     }
 
     assignOpenerSlot(slotNum, playerIdx) {
@@ -1105,37 +1138,76 @@ class MatchManager {
     }
 
     renderOpenerSlotDisplays() {
-        const battingTeam = this.userBatsFirst ? this.getOurTeamRoster() : this.getOpponentTeamRoster();
-        const p1 = battingTeam[this.selectedOpener1Index];
-        const p2 = battingTeam[this.selectedOpener2Index];
+        const fullRoster = this.userBatsFirst ? this.getOurTeamRoster() : this.getOpponentTeamRoster();
+        const playing11 = fullRoster.slice(0, 11);
+        const p1 = playing11[this.selectedOpener1Index];
+        const p2 = playing11[this.selectedOpener2Index];
 
-        if (this.slot1PlayerDisplay && p1) {
-            this.slot1PlayerDisplay.innerHTML = `
-                <div class="assigned-chip-content" style="display:flex; justify-content:space-between; align-items:center; background:#FFFFFF; border:1.5px solid var(--trophy-gold); border-radius:10px; padding:12px 16px; box-shadow:0 3px 10px rgba(201,151,43,0.12); animation: popInSlot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
-                    <div>
-                        <strong style="font-family:var(--font-title); font-size:1.1rem; color:#1C2B22; display:block;">${p1.name}</strong>
-                        <span style="font-size:0.78rem; color:var(--text-secondary); font-weight:600;">${p1.role} | Batting Rating: ${p1.battingRating}</span>
+        if (this.slot1PlayerDisplay) {
+            if (p1) {
+                this.slot1PlayerDisplay.innerHTML = `
+                    <div class="assigned-chip-content" style="display:flex; justify-content:space-between; align-items:center; background:#FFFFFF; border:1.5px solid var(--trophy-gold); border-radius:10px; padding:12px 16px; box-shadow:0 3px 10px rgba(201,151,43,0.12); animation: popInSlot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                        <div>
+                            <strong style="font-family:var(--font-title); font-size:1.1rem; color:#1C2B22; display:block;">${p1.name}</strong>
+                            <span style="font-size:0.78rem; color:var(--text-secondary); font-weight:600;">${p1.role} | Batting Rating: ${p1.battingRating}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge" style="background:#FAF3E0; color:var(--trophy-gold); border:1px solid var(--trophy-gold); font-weight:800; padding:4px 10px; font-size:0.75rem;">STRIKER</span>
+                            <button type="button" class="btn btn-mini remove-slot-1-btn" style="background:#FDE8E8; color:#8C1C13; border:1px solid #8C1C13; font-weight:800; padding:4px 8px; border-radius:6px; cursor:pointer;" title="Remove Opener 1">✕</button>
+                        </div>
                     </div>
-                    <span class="badge" style="background:#FAF3E0; color:var(--trophy-gold); border:1px solid var(--trophy-gold); font-weight:800; padding:4px 10px; font-size:0.75rem;">STRIKER</span>
-                </div>
-            `;
+                `;
+                this.slot1PlayerDisplay.querySelector(".remove-slot-1-btn").onclick = () => {
+                    this.selectedOpener1Index = -1;
+                    this.renderOpenersSquadList();
+                    this.validateOpeners();
+                };
+            } else {
+                this.slot1PlayerDisplay.innerHTML = `
+                    <div style="border:2px dashed #E2DED0; border-radius:10px; padding:18px; text-align:center; background:#FAF7F0; color:#686455;">
+                        <i class="fa-solid fa-hand-pointer" style="font-size:1.4rem; margin-bottom:6px; display:block; color:var(--trophy-gold);"></i>
+                        Drag or click a player from Playing XI to assign Opener #1
+                    </div>
+                `;
+            }
         }
 
-        if (this.slot2PlayerDisplay && p2) {
-            this.slot2PlayerDisplay.innerHTML = `
-                <div class="assigned-chip-content" style="display:flex; justify-content:space-between; align-items:center; background:#FFFFFF; border:1.5px solid var(--pitch-green); border-radius:10px; padding:12px 16px; box-shadow:0 3px 10px rgba(15,110,86,0.12); animation: popInSlot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
-                    <div>
-                        <strong style="font-family:var(--font-title); font-size:1.1rem; color:#1C2B22; display:block;">${p2.name}</strong>
-                        <span style="font-size:0.78rem; color:var(--text-secondary); font-weight:600;">${p2.role} | Batting Rating: ${p2.battingRating}</span>
+        if (this.slot2PlayerDisplay) {
+            if (p2) {
+                this.slot2PlayerDisplay.innerHTML = `
+                    <div class="assigned-chip-content" style="display:flex; justify-content:space-between; align-items:center; background:#FFFFFF; border:1.5px solid var(--pitch-green); border-radius:10px; padding:12px 16px; box-shadow:0 3px 10px rgba(15,110,86,0.12); animation: popInSlot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                        <div>
+                            <strong style="font-family:var(--font-title); font-size:1.1rem; color:#1C2B22; display:block;">${p2.name}</strong>
+                            <span style="font-size:0.78rem; color:var(--text-secondary); font-weight:600;">${p2.role} | Batting Rating: ${p2.battingRating}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge" style="background:#E6F4F1; color:var(--pitch-green); border:1px solid var(--pitch-green); font-weight:800; padding:4px 10px; font-size:0.75rem;">NON-STRIKER</span>
+                            <button type="button" class="btn btn-mini remove-slot-2-btn" style="background:#FDE8E8; color:#8C1C13; border:1px solid #8C1C13; font-weight:800; padding:4px 8px; border-radius:6px; cursor:pointer;" title="Remove Opener 2">✕</button>
+                        </div>
                     </div>
-                    <span class="badge" style="background:#E6F4F1; color:var(--pitch-green); border:1px solid var(--pitch-green); font-weight:800; padding:4px 10px; font-size:0.75rem;">NON-STRIKER</span>
-                </div>
-            `;
+                `;
+                this.slot2PlayerDisplay.querySelector(".remove-slot-2-btn").onclick = () => {
+                    this.selectedOpener2Index = -1;
+                    this.renderOpenersSquadList();
+                    this.validateOpeners();
+                };
+            } else {
+                this.slot2PlayerDisplay.innerHTML = `
+                    <div style="border:2px dashed #E2DED0; border-radius:10px; padding:18px; text-align:center; background:#FAF7F0; color:#686455;">
+                        <i class="fa-solid fa-hand-pointer" style="font-size:1.4rem; margin-bottom:6px; display:block; color:var(--pitch-green);"></i>
+                        Drag or click a player from Playing XI to assign Opener #2
+                    </div>
+                `;
+            }
         }
     }
 
     validateOpeners() {
-        if (this.selectedOpener1Index === this.selectedOpener2Index) {
+        if (this.selectedOpener1Index === -1 || this.selectedOpener2Index === -1) {
+            this.startMatchBtn.disabled = true;
+            this.startMatchBtn.innerHTML = '<i class="fa-solid fa-hand-pointer" style="margin-right: 8px;"></i> SELECT 2 OPENERS FROM PLAYING XI TO PAD UP';
+            this.startMatchBtn.style.opacity = 0.5;
+        } else if (this.selectedOpener1Index === this.selectedOpener2Index) {
             this.startMatchBtn.disabled = true;
             this.startMatchBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i> CHOOSE DIFFERENT OPENERS';
             this.startMatchBtn.style.opacity = 0.5;
@@ -1174,15 +1246,15 @@ class MatchManager {
         const state = this.getCurrentState();
         
         // Ensure default active bowler is initialized
-        if (!state.currentBowler && bowlingTeam.length > 0) {
-            const bestBowler = [...bowlingTeam].sort((a,b) => b.bowlingRating - a.bowlingRating)[0];
-            state.currentBowler = bestBowler || bowlingTeam[0];
+        if (!state.currentBowler && state.bowlingTeam.length > 0) {
+            const bestBowler = [...state.bowlingTeam].sort((a,b) => b.bowlingRating - a.bowlingRating)[0];
+            state.currentBowler = bestBowler || state.bowlingTeam[0];
         }
 
         // Assign openers
         if (state.isUserBatting) {
-            const op1Idx = this.selectedOpener1Index;
-            const op2Idx = this.selectedOpener2Index;
+            const op1Idx = this.selectedOpener1Index !== -1 ? this.selectedOpener1Index : 0;
+            const op2Idx = this.selectedOpener2Index !== -1 ? this.selectedOpener2Index : 1;
             state.striker = state.battingTeam[op1Idx] || state.battingTeam[0];
             state.nonStriker = state.battingTeam[op2Idx] || state.battingTeam[1];
             state.striker.hasBatted = true;
@@ -1233,7 +1305,7 @@ class MatchManager {
                 
                 this.setupField();
                 this.updateUI();
-                this.drawField(true); // Run animated walkout spread!
+                this.runPitchCountdownAndWalkout();
                 if (!this.userBatsFirst) {
                     this.triggerBowlerSelection();
                 }
@@ -1243,11 +1315,36 @@ class MatchManager {
             this.matchScreen.classList.remove("hidden");
             this.setupField();
             this.updateUI();
-            this.drawField(true);
+            this.runPitchCountdownAndWalkout();
             if (!this.userBatsFirst) {
                 this.triggerBowlerSelection();
             }
         }
+    }
+
+    runPitchCountdownAndWalkout() {
+        const countdownGroup = document.getElementById("pitch-countdown-group");
+        const countdownText = document.getElementById("pitch-countdown-text");
+
+        if (countdownGroup && countdownText) {
+            countdownGroup.style.display = "block";
+            countdownText.textContent = "3";
+            countdownText.setAttribute("font-size", "46");
+            
+            setTimeout(() => { countdownText.textContent = "2"; }, 500);
+            setTimeout(() => { countdownText.textContent = "1"; }, 1000);
+            setTimeout(() => {
+                countdownText.textContent = "PLAY!";
+                countdownText.setAttribute("font-size", "34");
+            }, 1500);
+
+            setTimeout(() => {
+                countdownGroup.style.display = "none";
+                countdownText.setAttribute("font-size", "46");
+            }, 2100);
+        }
+
+        this.drawField(true);
     }
 
     getCurrentState() {
@@ -2190,49 +2287,90 @@ class MatchManager {
         if (state.isUserBatting) {
             this.pauseMatchSimulation("Wicket Down");
 
-            this.batsmanSelectionTbody.innerHTML = "";
-            const unbatted = state.battingTeam.filter(p => !p.hasBatted && !p.isOut);
+            const container = document.getElementById("batsman-selection-container");
+            if (container) {
+                container.innerHTML = "";
+                // Filter only Playing XI (slice(0, 11)) players who haven't batted yet!
+                const playing11 = state.battingTeam.slice(0, 11);
+                const unbatted = playing11.filter(p => !p.hasBatted && !p.isOut);
 
-            unbatted.forEach(p => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><strong>${p.name}</strong></td>
-                    <td>${p.batting}</td>
-                    <td>
-                        <select class="player-dropdown modal-mentality-select" style="width: auto; padding: 6px;">
-                            <option value="defensive">Defensive</option>
-                            <option value="normal" selected>Balanced</option>
-                            <option value="attack">Aggressive</option>
-                        </select>
-                    </td>
-                    <td><button class="btn btn-primary select-bat-btn" data-idx="${state.battingTeam.indexOf(p)}">Walk In</button></td>
-                `;
-                this.batsmanSelectionTbody.appendChild(tr);
-            });
+                if (unbatted.length === 0) {
+                    this.batsmanModal.classList.add("hidden");
+                    return;
+                }
+
+                unbatted.forEach(p => {
+                    const card = document.createElement("div");
+                    card.style.cssText = "padding: 14px 16px; border: 1px solid #E2DED0; border-radius: 10px; background: #FFFDF9; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);";
+
+                    card.innerHTML = `
+                        <div>
+                            <strong style="font-family: var(--font-title); font-size: 1.08rem; color: #1C2B22; display: block;">${p.name}</strong>
+                            <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;">${p.role} | Batting Rating: <strong style="color:var(--sky);">${p.battingRating}</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="modal-mentality-pill-group" style="display: flex; gap: 4px; background: #FAF7F0; padding: 4px; border-radius: 8px; border: 1px solid #E2DED0;">
+                                <button type="button" class="mentality-pill btn-mini" data-mentality="defensive" style="padding: 5px 10px; border-radius: 6px; border: 1px solid #E2DED0; background: #F7F3E8; color:#686455; font-size: 0.72rem; font-weight: 800; cursor: pointer;">DEF</button>
+                                <button type="button" class="mentality-pill btn-mini active" data-mentality="normal" style="padding: 5px 10px; border-radius: 6px; border: 1px solid #0F6E56; background: #0F6E56; color: #FFF; font-size: 0.72rem; font-weight: 800; cursor: pointer;">BAL</button>
+                                <button type="button" class="mentality-pill btn-mini" data-mentality="attack" style="padding: 5px 10px; border-radius: 6px; border: 1px solid #E2DED0; background: #F7F3E8; color:#686455; font-size: 0.72rem; font-weight: 800; cursor: pointer;">ATT</button>
+                            </div>
+                            <input type="hidden" class="selected-mentality-val" value="normal">
+                            <button type="button" class="btn btn-primary select-bat-btn" data-idx="${state.battingTeam.indexOf(p)}" style="padding: 8px 16px; font-weight: 800; font-size: 0.85rem; border-radius: 8px;">
+                                WALK IN <i class="fa-solid fa-arrow-right" style="margin-left: 6px;"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    // Bind mentality pill toggles inside modal card
+                    card.querySelectorAll(".mentality-pill").forEach(pill => {
+                        pill.onclick = (e) => {
+                            card.querySelectorAll(".mentality-pill").forEach(b => {
+                                b.classList.remove("active");
+                                b.style.background = "#F7F3E8";
+                                b.style.color = "#686455";
+                                b.style.borderColor = "#E2DED0";
+                            });
+                            e.currentTarget.classList.add("active");
+                            const mentality = e.currentTarget.dataset.mentality;
+                            if (mentality === "defensive") {
+                                e.currentTarget.style.background = "#1D4E89";
+                                e.currentTarget.style.borderColor = "#1D4E89";
+                                e.currentTarget.style.color = "#FFFFFF";
+                            } else if (mentality === "normal") {
+                                e.currentTarget.style.background = "#0F6E56";
+                                e.currentTarget.style.borderColor = "#0F6E56";
+                                e.currentTarget.style.color = "#FFFFFF";
+                            } else if (mentality === "attack") {
+                                e.currentTarget.style.background = "#E85D04";
+                                e.currentTarget.style.borderColor = "#E85D04";
+                                e.currentTarget.style.color = "#FFFFFF";
+                            }
+                            card.querySelector(".selected-mentality-val").value = mentality;
+                        };
+                    });
+
+                    card.querySelector(".select-bat-btn").onclick = (e) => {
+                        const idx = parseInt(e.currentTarget.dataset.idx);
+                        const selected = state.battingTeam[idx];
+                        selected.mentality = card.querySelector(".selected-mentality-val").value;
+
+                        selected.hasBatted = true;
+                        state.striker = selected;
+                        
+                        this.batsmanModal.classList.add("hidden");
+                        this.logCommentary("Select Batter", `${state.striker.name} walks out to the crease with ${selected.mentality.toUpperCase()} mentality.`, "welcome");
+                        this.updateUI();
+                        this.drawField();
+
+                        this.isAnimating = false;
+                        this.disableActions(false);
+                    };
+
+                    container.appendChild(card);
+                });
+            }
 
             this.batsmanModal.classList.remove("hidden");
-
-            const buttons = this.batsmanSelectionTbody.querySelectorAll(".select-bat-btn");
-            buttons.forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    const idx = parseInt(e.currentTarget.dataset.idx);
-                    const selected = state.battingTeam[idx];
-                    
-                    const selectEl = e.currentTarget.closest("tr").querySelector(".modal-mentality-select");
-                    selected.mentality = selectEl.value;
-
-                    selected.hasBatted = true;
-                    state.striker = selected;
-                    
-                    this.batsmanModal.classList.add("hidden");
-                    this.logCommentary("Select Batter", `${state.striker.name} walks out to the crease under pressure with ${selected.mentality.toUpperCase()} mentality.`, "welcome");
-                    this.updateUI();
-                    this.drawField();
-
-                    this.isAnimating = false;
-                    this.disableActions(false);
-                });
-            });
         } else {
             // AI Select batsman (select highest rated unbatted batsman)
             const unbatted = state.battingTeam.filter(p => !p.hasBatted && !p.isOut);
@@ -2578,9 +2716,11 @@ class MatchManager {
         this.matchStatusLabel.textContent = `${state.teamName.includes("1st") ? "1st Innings" : "2nd Innings"}`;
 
         // Update DRS reviews counter
+        const ourShort = DOMESTIC_TEAMS["Banswara"] ? DOMESTIC_TEAMS["Banswara"].shortName : "BAN";
+        const oppShort = DOMESTIC_TEAMS[this.opponentTeamId] ? DOMESTIC_TEAMS[this.opponentTeamId].shortName : "OPP";
         const reviewsUI = document.getElementById("header-reviews-ui");
         if (reviewsUI) {
-            reviewsUI.innerHTML = `<span>DRS: IND ${state.reviewsLeft}</span><span>|</span><span>AUS ${state.opponentReviewsLeft}</span>`;
+            reviewsUI.innerHTML = `<span>DRS: ${ourShort} ${state.reviewsLeft}</span><span>|</span><span>${oppShort} ${state.opponentReviewsLeft}</span>`;
         }
 
         if (state.target) {
