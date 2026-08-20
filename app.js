@@ -1338,33 +1338,75 @@ class MatchManager {
         this.isAnimating = true;
         this.disableActions(true);
 
+        // First draw everyone at the tunnel entrance (off-screen bottom)
+        this.drawField(true);
+
         const countdownGroup = document.getElementById("pitch-countdown-group");
-        const countdownText = document.getElementById("pitch-countdown-text");
+        const countdownText  = document.getElementById("pitch-countdown-text");
 
-        if (countdownGroup && countdownText) {
-            countdownGroup.style.display = "block";
-            countdownText.textContent = "3";
-            countdownText.setAttribute("font-size", "46");
-            
-            setTimeout(() => { countdownText.textContent = "2"; }, 500);
-            setTimeout(() => { countdownText.textContent = "1"; }, 1000);
-            setTimeout(() => {
-                countdownText.textContent = "PLAY!";
-                countdownText.setAttribute("font-size", "34");
-            }, 1500);
+        const steps = ["3", "2", "1", "PLAY!"];
+        const delays = [0, 800, 1600, 2400];
 
+        steps.forEach((label, i) => {
             setTimeout(() => {
-                countdownGroup.style.display = "none";
-                countdownText.setAttribute("font-size", "46");
-                this.isAnimating = false;
-                this.disableActions(false);
-            }, 2100);
-        } else {
+                if (countdownGroup) countdownGroup.style.display = "block";
+                if (countdownText) {
+                    countdownText.textContent = label;
+                    countdownText.setAttribute("font-size", label === "PLAY!" ? "32" : "52");
+                    countdownText.setAttribute("fill", label === "PLAY!" ? "#C9972B" : "#FFFFFF");
+                }
+            }, delays[i]);
+        });
+
+        // After PLAY! hide countdown, start walk-in spread
+        setTimeout(() => {
+            if (countdownGroup) countdownGroup.style.display = "none";
+            this._triggerWalkoutSpread();
+        }, 3300);
+
+        // Unlock UI after animation completes
+        setTimeout(() => {
             this.isAnimating = false;
             this.disableActions(false);
-        }
+        }, 5000);
+    }
 
-        this.drawField(true);
+    _triggerWalkoutSpread() {
+        const state = this.getCurrentState();
+        if (!state) return;
+
+        // Animate fielders spreading from tunnel to positions
+        state.fielderPositions.forEach((pos, index) => {
+            const node = document.getElementById(`fielder-node-${index}`);
+            if (node) {
+                // Stagger each fielder slightly
+                setTimeout(() => {
+                    node.style.transition = "transform 1.2s cubic-bezier(0.25, 1, 0.5, 1)";
+                    node.style.transform  = `translate(${pos.x}px, ${pos.y}px)`;
+                }, index * 80);
+            }
+        });
+
+        // Animate batsmen walking in from tunnel
+        const batterStart = { x: 300, y: 560 };
+        const striker    = document.getElementById("walkout-striker");
+        const nonStriker = document.getElementById("walkout-nonstriker");
+        const ump1       = document.getElementById("walkout-ump1");
+        const ump2       = document.getElementById("walkout-ump2");
+
+        [
+            { el: striker,    tx: 300, ty: 240, delay: 400 },
+            { el: nonStriker, tx: 300, ty: 360, delay: 600 },
+            { el: ump1,       tx: 300, ty: 215, delay: 200 },
+            { el: ump2,       tx: 450, ty: 360, delay: 300 },
+        ].forEach(({ el, tx, ty, delay }) => {
+            if (el) {
+                setTimeout(() => {
+                    el.style.transition = "transform 1.4s cubic-bezier(0.25, 1, 0.5, 1)";
+                    el.style.transform  = `translate(${tx}px, ${ty}px)`;
+                }, delay);
+            }
+        });
     }
 
     getCurrentState() {
@@ -1382,105 +1424,82 @@ class MatchManager {
             this.draw3DField();
         }
 
-        // Colors
-        const batColor = "#60A5FA"; // Blue for IND
-        const bowlColor = "#EF4444"; // Red for AUS
-        
-        const batterFill = state.isUserBatting ? batColor : bowlColor;
+        const batColor    = "#60A5FA";
+        const bowlColor   = "#EF4444";
+        const batterFill  = state.isUserBatting ? batColor : bowlColor;
         const fielderFill = state.isUserBatting ? bowlColor : batColor;
 
-        // 1. Render Batsmen
-        // Striker at top (300, 240), Non-striker at bottom (300, 360)
+        // Tunnel start Y (off the bottom of the SVG)
+        const tunnelX = 300, tunnelY = 600;
+
+        // ── 1. Batsmen ──────────────────────────────────────────────
         if (this.svgBatsmen) {
+            const strikerTX  = isWalkout ? tunnelX : 300;
+            const strikerTY  = isWalkout ? tunnelY : 240;
+            const nonStrTX   = isWalkout ? tunnelX : 300;
+            const nonStrTY   = isWalkout ? tunnelY : 360;
             this.svgBatsmen.innerHTML = `
-                <!-- Striker -->
-                <g transform="translate(300, 240)">
-                    <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5" class="pulsate-node" />
-                    <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">${state.striker ? this.getInitials(state.striker.name) : 'STR'}*</text>
+                <g id="walkout-striker"
+                   style="transform: translate(${strikerTX}px, ${strikerTY}px);">
+                    <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5"/>
+                    <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">
+                        ${state.striker ? this.getInitials(state.striker.name) : 'STR'}*
+                    </text>
                 </g>
-                <!-- Non Striker -->
-                <g transform="translate(300, 360)">
-                    <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5" />
-                    <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">${state.nonStriker ? this.getInitials(state.nonStriker.name) : 'NON'}</text>
-                </g>
-            `;
+                <g id="walkout-nonstriker"
+                   style="transform: translate(${nonStrTX}px, ${nonStrTY}px);">
+                    <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5"/>
+                    <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">
+                        ${state.nonStriker ? this.getInitials(state.nonStriker.name) : 'NON'}
+                    </text>
+                </g>`;
         }
 
-        // 2. Render Umpires (Main Umpire behind bowler's stumps & Square Leg Umpire)
+        // ── 2. Umpires ─────────────────────────────────────────────
         if (this.svgUmpires) {
+            const u1TX = isWalkout ? tunnelX : 300;
+            const u1TY = isWalkout ? tunnelY : 215;
+            const u2TX = isWalkout ? tunnelX : 450;
+            const u2TY = isWalkout ? tunnelY : 360;
             this.svgUmpires.innerHTML = `
-                <!-- Main Umpire behind bowler's wickets -->
-                <g transform="translate(300, 215)">
-                    <circle r="6.5" fill="#1E293B" stroke="#FFFFFF" stroke-width="1.5" />
+                <g id="walkout-ump1"
+                   style="transform: translate(${u1TX}px, ${u1TY}px);">
+                    <circle r="6.5" fill="#1E293B" stroke="#fff" stroke-width="1.5"/>
                     <text y="-10" text-anchor="middle" fill="#F8FAFC" font-size="8" font-weight="bold">UMP</text>
                 </g>
-                <!-- Square Leg Umpire -->
-                <g transform="translate(450, 360)">
-                    <circle r="6.5" fill="#1E293B" stroke="#FFFFFF" stroke-width="1.5" />
+                <g id="walkout-ump2"
+                   style="transform: translate(${u2TX}px, ${u2TY}px);">
+                    <circle r="6.5" fill="#1E293B" stroke="#fff" stroke-width="1.5"/>
                     <text y="-10" text-anchor="middle" fill="#F8FAFC" font-size="8" font-weight="bold">UMP</text>
-                </g>
-            `;
+                </g>`;
         }
 
-        // 3. Render Fielders using state positions (with animated walkout option)
+        // ── 3. Fielders ─────────────────────────────────────────────
         if (this.svgFielders) {
-            if (isWalkout) {
-                // Starting position: Pitch Center / Tunnel (300, 540)
-                const startX = 300;
-                const startY = 540;
-
-                let fieldersHTML = "";
-                state.fielderPositions.forEach((pos, index) => {
-                    let label = pos.name;
-                    if (pos.name === "Bowler" && state.currentBowler) {
-                        label = this.getInitials(state.currentBowler.name);
-                    } else if (pos.name === "Keeper") {
-                        const keeper = state.bowlingTeam.find(p => p.isWicketkeeper);
-                        label = keeper ? this.getInitials(keeper.name) : "WK";
-                    }
-                    
-                    fieldersHTML += `
-                        <g id="fielder-node-${index}" class="${pos.isFixed ? '' : 'draggable-fielder'}" data-idx="${index}" transform="translate(${startX}, ${startY})" style="transition: transform 1.3s cubic-bezier(0.25, 1, 0.5, 1);">
-                            <circle r="6.5" fill="${fielderFill}" stroke="#fff" stroke-width="1.5" />
-                            <text y="14" text-anchor="middle" fill="${pos.name === 'Bowler' ? '#F59E0B' : '#FFFFFF'}" font-size="8" font-weight="bold">${label}</text>
-                        </g>
-                    `;
-                });
-
-                this.svgFielders.innerHTML = fieldersHTML;
-
-                // Trigger smooth walkout spread animation to designated coordinates!
-                setTimeout(() => {
-                    state.fielderPositions.forEach((pos, index) => {
-                        const node = document.getElementById(`fielder-node-${index}`);
-                        if (node) {
-                            node.setAttribute("transform", `translate(${pos.x}, ${pos.y})`);
-                        }
-                    });
-                }, 60);
-            } else {
-                let fieldersHTML = "";
-                state.fielderPositions.forEach((pos, index) => {
-                    let label = pos.name;
-                    if (pos.name === "Bowler" && state.currentBowler) {
-                        label = this.getInitials(state.currentBowler.name);
-                    } else if (pos.name === "Keeper") {
-                        const keeper = state.bowlingTeam.find(p => p.isWicketkeeper);
-                        label = keeper ? this.getInitials(keeper.name) : "WK";
-                    }
-                    
-                    fieldersHTML += `
-                        <g class="${pos.isFixed ? '' : 'draggable-fielder'}" data-idx="${index}" transform="translate(${pos.x}, ${pos.y})">
-                            <circle r="6.5" fill="${fielderFill}" stroke="#fff" stroke-width="1.5" />
-                            <text y="14" text-anchor="middle" fill="${pos.name === 'Bowler' ? '#F59E0B' : '#FFFFFF'}" font-size="8" font-weight="bold">${label}</text>
-                        </g>
-                    `;
-                });
-                this.svgFielders.innerHTML = fieldersHTML;
-            }
+            let fieldersHTML = "";
+            state.fielderPositions.forEach((pos, index) => {
+                let label = pos.name;
+                if (pos.name === "Bowler" && state.currentBowler) {
+                    label = this.getInitials(state.currentBowler.name);
+                } else if (pos.name === "Keeper") {
+                    const keeper = state.bowlingTeam.find(p => p.isWicketkeeper);
+                    label = keeper ? this.getInitials(keeper.name) : "WK";
+                }
+                // All fielders start at tunnel when isWalkout; else go straight to position
+                const tx = isWalkout ? tunnelX : pos.x;
+                const ty = isWalkout ? tunnelY : pos.y;
+                fieldersHTML += `
+                    <g id="fielder-node-${index}"
+                       class="${pos.isFixed ? '' : 'draggable-fielder'}"
+                       data-idx="${index}"
+                       style="transform: translate(${tx}px, ${ty}px);">
+                        <circle r="6.5" fill="${fielderFill}" stroke="#fff" stroke-width="1.5"/>
+                        <text y="14" text-anchor="middle" fill="${pos.name === 'Bowler' ? '#F59E0B' : '#fff'}" font-size="8" font-weight="bold">${label}</text>
+                    </g>`;
+            });
+            this.svgFielders.innerHTML = fieldersHTML;
         }
 
-        // Render sector lines & gap badges
         this.renderSectorGaps(state);
     }
 
