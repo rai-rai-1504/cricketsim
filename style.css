@@ -1,11 +1,12 @@
 /* =========================================================
    CRICKET SIM PRO - ELEGANT PREMIUM PALETTE & THEME SYSTEM
    Base: Warm Cream (#F7F3E8) x Pitch Green (#0F6E56) x Trophy Gold (#C9972B)
+   Test Heritage: Maroon (#6B1E2B) x Cricket Ball Red (#8C1C13) x Bat Willow Gold (#B08D57)
    Ink Text: #1C2B22 | Muted Stone: #8A8677
-   Fonts: Rajdhani (Display) + Barlow Condensed (Scores) + Inter (Body)
+   Fonts: Cinzel (Luxury Display) + Barlow Condensed (Scores) + Inter (Body)
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
     /* 1. Core / Dashboard Palette ("Home Base") */
@@ -27,6 +28,7 @@
 
     --sky:              #1D4E89;
     --crimson:          #D62828;
+    --dark-red:         #8C1C13; /* Dark Cricket Ball Red */
     
     /* Default Format Accent Variables (Dashboard Base) */
     --format-primary:   #0F6E56;
@@ -34,8 +36,9 @@
     --format-light-fill:#FFF3E0;
     --format-dark-text: #1C2B22;
     
-    --font-display:     'Rajdhani', sans-serif;
-    --font-title:       'Rajdhani', sans-serif;
+    --font-luxury:      'Cinzel', serif;
+    --font-display:     'Cinzel', serif;
+    --font-title:       'Cinzel', serif;
     --font-score:       'Barlow Condensed', sans-serif;
     --font-body:        'Inter', sans-serif;
     
@@ -219,7 +222,7 @@ body {
     color: var(--trophy-gold) !important;
 }
 
-/* Badges */
+/* Badges & Live Badge */
 .badge {
     padding: 4px 10px;
     border-radius: 4px;
@@ -233,33 +236,145 @@ body {
     border: 1px solid var(--border-color);
 }
 
-/* Tables */
+/* Dark Red LIVE Badge Pill */
+.match-badge {
+    background: linear-gradient(135deg, #8C1C13, #6B1E2B) !important;
+    color: #FFFFFF !important;
+    font-family: 'Barlow Condensed', sans-serif !important;
+    font-size: 0.85rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 1.5px !important;
+    padding: 4px 14px !important;
+    border-radius: 14px !important;
+    text-transform: uppercase !important;
+    box-shadow: 0 0 14px rgba(140, 28, 19, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    animation: livePulse 1.8s infinite alternate;
+}
+
+@keyframes livePulse {
+    0% { box-shadow: 0 0 6px rgba(140, 28, 19, 0.4); transform: scale(1); }
+    100% { box-shadow: 0 0 18px rgba(140, 28, 19, 0.8); transform: scale(1.04); }
+}
+
+/* =========================================================
+   SCORECARD HEADER & TABLES
+   ========================================================= */
+.crickbuzz-header {
+    background: #FFFFFF !important;
+    border: 1px solid var(--border-color) !important;
+    border-left: 6px solid var(--format-primary) !important;
+    box-shadow: 0 8px 30px rgba(28, 43, 34, 0.06) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 20px 24px !important;
+    margin-bottom: 20px !important;
+}
+
+.match-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+}
+
+#match-title-ui {
+    font-family: 'Cinzel', serif;
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    letter-spacing: 1.2px;
+}
+
+.main-score-block h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.7rem;
+    font-weight: 900;
+    color: var(--format-primary);
+    letter-spacing: 1.5px;
+}
+
+.main-score-block .runs {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 3.4rem;
+    font-weight: 900;
+    color: #1C2B22;
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+.main-score-block .overs {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.header-batters {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-batters .striker-name {
+    color: var(--trophy-gold);
+    font-weight: 700;
+}
+
 .scorecard-table, .card-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
 }
 
 .scorecard-table th, .card-table th {
-    background: var(--bg-main);
+    background: #FAF7F0;
     color: var(--text-secondary);
-    font-family: var(--font-display);
+    font-family: 'Cinzel', serif;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 10px;
+    letter-spacing: 1px;
+    padding: 11px 12px;
     border-bottom: 1px solid var(--border-color);
 }
 
 .scorecard-table td, .card-table td {
-    padding: 10px;
+    padding: 11px 12px;
     border-bottom: 1px solid var(--border-dim);
     color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
 }
 
 .scorecard-table tr:hover, .card-table tr:hover {
     background: rgba(15, 110, 86, 0.03);
+}
+
+.card-table tr.active-batter-row {
+    background: #FAF3E0 !important;
+    border-left: 4px solid var(--trophy-gold);
+    font-weight: 700;
+}
+
+.card-table tr.active-bowler-row {
+    background: #FDF2F2 !important;
+    border-left: 4px solid var(--format-primary);
+    font-weight: 700;
+}
+
+.panel-header h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: var(--text-primary);
 }
 
 /* Modals */
@@ -303,13 +418,13 @@ select:focus, input:focus {
 }
 
 /* Ball bubbles in Live Match */
-.recent-balls-container { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 0.88rem; }
-.recent-label { font-family: var(--font-display); color: var(--text-secondary); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.8px; }
+.recent-balls-container { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 0.88rem; }
+.recent-label { font-family: 'Cinzel', serif; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 1px; }
 .recent-balls { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
 
 .ball-bubble {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background: var(--bg-main);
     border: 1px solid var(--border-color);
@@ -317,8 +432,8 @@ select:focus, input:focus {
     align-items: center;
     justify-content: center;
     font-family: var(--font-score);
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: 0.85rem;
+    font-weight: 800;
     color: var(--text-primary);
     flex-shrink: 0;
 }
@@ -333,33 +448,25 @@ select:focus, input:focus {
     background: var(--trophy-gold-light);
     border-color: var(--trophy-gold);
     color: var(--trophy-gold);
-    font-weight: 800;
+    font-weight: 900;
 }
 
 .ball-bubble.wicket {
     background: #FDE8E8;
-    border-color: var(--crimson);
-    color: var(--crimson);
-}
-
-/* Live match header */
-.crickbuzz-header {
-    margin-bottom: 18px;
-    border-left: 5px solid var(--format-primary) !important;
-    background: #FFFFFF !important;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-card);
+    border-color: var(--dark-red);
+    color: var(--dark-red);
+    font-weight: 900;
 }
 
 /* Pitch & Field Container */
 .field-container {
-    background: radial-gradient(ellipse at 50% 50%, #0F6E56, #094e3d);
+    background: radial-gradient(ellipse at 50% 50%, #2F3E2E, #1F2A1E);
     border-radius: var(--radius-md);
     aspect-ratio: 1/1;
     overflow: hidden;
     position: relative;
-    border: 1px solid rgba(15, 110, 86, 0.3);
-    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(47, 62, 46, 0.4);
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4);
 }
 
 /* 3D Gold Metallic Coin Toss Stage */
@@ -432,7 +539,7 @@ select:focus, input:focus {
 .spin-heads-3d { animation: spinCoin3DHeads 3.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
 .spin-tails-3d { animation: spinCoin3DTails 3.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
 
-.toss-result { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--trophy-gold); margin-bottom: 18px; min-height: 24px; letter-spacing: 0.5px; }
+.toss-result { font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; color: var(--trophy-gold); margin-bottom: 18px; min-height: 24px; letter-spacing: 0.5px; }
 
 /* Dashboard layout grid */
 .main-dashboard-grid { display: grid; grid-template-columns: 1.1fr 1.4fr 1fr; gap: 18px; margin-bottom: 18px; }
@@ -440,11 +547,42 @@ select:focus, input:focus {
 .dashboard-panel { display: flex; flex-direction: column; }
 .panel-right { display: flex; flex-direction: column; gap: 16px; }
 .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 14px; }
-.panel-header h3 { font-family: var(--font-display); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+.panel-header h3 { font-family: 'Cinzel', serif; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-weight: 800; letter-spacing: 1px; }
+
+/* Tactical Controls Cards */
+.batsmen-live-card, .bowler-live-card {
+    background: #FAF7F0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 14px;
+}
+
+.batsman-stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; padding: 8px 12px; border-radius: var(--radius-sm); }
+.batsman-stat-row.active-striker { background: #FFFFFF; border-left: 4px solid var(--trophy-gold); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+
+/* Commentary Feed Items */
+.commentary-ball-item {
+    background: #FFFFFF;
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+}
+
+.commentary-ball-item .ball-num-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 0.82rem;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
 
 /* Tactic mentality buttons */
 .mentality-toggle { display: flex; gap: 4px; background: var(--bg-main); padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
-.mentality-btn { flex: 1; background: none; border: none; color: var(--text-secondary); padding: 8px 4px; font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; border-radius: 4px; cursor: pointer; transition: var(--ease); text-transform: uppercase; }
+.mentality-btn { flex: 1; background: none; border: none; color: var(--text-secondary); padding: 8px 4px; font-family: 'Cinzel', serif; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px; border-radius: 4px; cursor: pointer; transition: var(--ease); text-transform: uppercase; }
 .mentality-btn.active[data-mentality="defensive"] { background: var(--sky); color: #FFFFFF; }
 .mentality-btn.active[data-mentality="normal"]    { background: var(--pitch-green); color: #FFFFFF; }
 .mentality-btn.active[data-mentality="attack"]    { background: var(--trophy-gold); color: #FFFFFF; }
