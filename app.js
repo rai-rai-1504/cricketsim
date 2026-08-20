@@ -408,9 +408,11 @@ class MatchManager {
             }
             if (this.nextMatchOppName && oppTeam) {
                 this.nextMatchOppName.textContent = oppTeam.name.toUpperCase();
-                this.nextMatchOppName.dataset.teamid = oppId;
-                this.nextMatchOppName.classList.add("team-clickable");
-                this.nextMatchOppName.style.cursor = "pointer";
+            }
+
+            const oppBox = document.getElementById("next-match-opp-box");
+            if (oppBox) {
+                oppBox.dataset.teamid = oppId;
             }
 
             this.format = nextMatch.format;
@@ -441,14 +443,17 @@ class MatchManager {
         return "th";
     }
 
-    openTeamSquadModal(teamId) {
+    openTeamSquadModal(rawTeamId) {
+        if (!rawTeamId) return;
+        const key = rawTeamId.replace(/\s+/g, '');
+        const team = DOMESTIC_TEAMS[key] || DOMESTIC_TEAMS[rawTeamId];
+
         const modal = document.getElementById("team-roster-modal");
         const title = document.getElementById("modal-team-title");
         const container = document.getElementById("modal-team-roster-container");
-        const team = DOMESTIC_TEAMS[teamId];
         if (!modal || !container || !team) return;
 
-        if (title) title.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:${team.color || 'var(--sky)'}; margin-right:8px;"></i> ${team.name} Squad Roster (Home Ground: ${team.homeGround})`;
+        if (title) title.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:${team.color || 'var(--sky)'}; margin-right:8px;"></i> ${team.name} Squad Roster (Home: ${team.homeGround})`;
 
         let html = `
             <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
@@ -466,7 +471,7 @@ class MatchManager {
         team.roster.forEach(p => {
             html += `
                 <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 10px; font-weight: 600; ${teamId === 'Banswara' ? 'color:#fbbf24;' : ''}">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
+                    <td style="padding: 10px; font-weight: 600; ${team.id === 'Banswara' ? 'color:#fbbf24;' : ''}">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
                     <td style="padding: 10px;"><span class="badge bg-secondary" style="font-size:0.7rem;">${p.role}</span></td>
                     <td style="padding: 10px; font-size: 0.78rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
                     <td style="padding: 10px; text-align:center; font-weight:800; font-size: 1rem; color: var(--sky);">${p.battingRating}</td>
