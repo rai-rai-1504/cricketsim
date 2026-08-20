@@ -1282,6 +1282,10 @@ class MatchManager {
         if (this.pitchReportUI) this.pitchReportUI.textContent = `Pitch: ${this.pitch.toUpperCase()}`;
         if (this.matchTitleUI) this.matchTitleUI.textContent = `${this.userBatsFirst ? `${ourShort} vs ${oppShort}` : `${oppShort} vs ${ourShort}`} - ${this.format}`;
 
+        // Reset animation state
+        this.isAnimating = false;
+        this.disableActions(false);
+
         // Trigger Dressing Room Pavilion Tunnel Transition
         const tunnelOverlay = document.getElementById("tunnel-transition-overlay");
         const progressBar = document.getElementById("tunnel-progress-bar");
@@ -1303,26 +1307,25 @@ class MatchManager {
                 this.openersScreen.classList.add("hidden");
                 this.matchScreen.classList.remove("hidden");
                 
-                this.setupField();
+                this.setupFieldDragHandler();
                 this.updateUI();
                 this.runPitchCountdownAndWalkout();
-                if (!this.userBatsFirst) {
-                    this.triggerBowlerSelection();
-                }
+                this.triggerBowlerSelection();
             }, 1200);
         } else {
             this.openersScreen.classList.add("hidden");
             this.matchScreen.classList.remove("hidden");
-            this.setupField();
+            this.setupFieldDragHandler();
             this.updateUI();
             this.runPitchCountdownAndWalkout();
-            if (!this.userBatsFirst) {
-                this.triggerBowlerSelection();
-            }
+            this.triggerBowlerSelection();
         }
     }
 
     runPitchCountdownAndWalkout() {
+        this.isAnimating = true;
+        this.disableActions(true);
+
         const countdownGroup = document.getElementById("pitch-countdown-group");
         const countdownText = document.getElementById("pitch-countdown-text");
 
@@ -1341,7 +1344,12 @@ class MatchManager {
             setTimeout(() => {
                 countdownGroup.style.display = "none";
                 countdownText.setAttribute("font-size", "46");
+                this.isAnimating = false;
+                this.disableActions(false);
             }, 2100);
+        } else {
+            this.isAnimating = false;
+            this.disableActions(false);
         }
 
         this.drawField(true);
