@@ -537,10 +537,10 @@ class MatchManager {
                         <th style="padding: 8px;">Role</th>
                         <th style="padding: 8px;">Style</th>
                         <th style="padding: 8px; text-align:center;">Bat Rating</th>
-                        <th style="padding: 8px; text-align:center;">Spin Skill</th>
-                        <th style="padding: 8px; text-align:center;">Pace Skill</th>
+                        <th style="padding: 8px; text-align:center;">Aggression</th>
                         <th style="padding: 8px; text-align:center;">Bowl Rating</th>
-                        <th style="padding: 8px; text-align:center;">Control</th>
+                        <th style="padding: 8px; text-align:center;">Speed</th>
+                        <th style="padding: 8px; text-align:center;">Variation</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -552,10 +552,10 @@ class MatchManager {
                     <td style="padding: 8px;"><span class="badge bg-secondary" style="font-size:0.68rem;">${p.role}</span></td>
                     <td style="padding: 8px; font-size: 0.75rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
                     <td style="padding: 8px; text-align:center; font-weight:700; color: var(--sky);">${p.battingRating}</td>
-                    <td style="padding: 8px; text-align:center;">${p.spinSkill}</td>
-                    <td style="padding: 8px; text-align:center;">${p.paceSkill}</td>
+                    <td style="padding: 8px; text-align:center;">${p.aggression}</td>
                     <td style="padding: 8px; text-align:center; font-weight:700; color: #fb7185;">${p.bowlingRating}</td>
-                    <td style="padding: 8px; text-align:center;">${p.control}</td>
+                    <td style="padding: 8px; text-align:center;">${p.speed}</td>
+                    <td style="padding: 8px; text-align:center;">${p.variation}</td>
                 </tr>
             `;
         });
@@ -577,10 +577,10 @@ class MatchManager {
                         <th style="padding: 8px;">Role</th>
                         <th style="padding: 8px;">Style</th>
                         <th style="padding: 8px; text-align:center;">Bat Rating</th>
-                        <th style="padding: 8px; text-align:center;">Spin Skill</th>
-                        <th style="padding: 8px; text-align:center;">Pace Skill</th>
+                        <th style="padding: 8px; text-align:center;">Aggression</th>
                         <th style="padding: 8px; text-align:center;">Bowl Rating</th>
-                        <th style="padding: 8px; text-align:center;">Control</th>
+                        <th style="padding: 8px; text-align:center;">Speed</th>
+                        <th style="padding: 8px; text-align:center;">Variation</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -592,10 +592,10 @@ class MatchManager {
                     <td style="padding: 8px;"><span class="badge bg-secondary" style="font-size:0.68rem;">${p.role}</span></td>
                     <td style="padding: 8px; font-size: 0.75rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
                     <td style="padding: 8px; text-align:center; font-weight:700; color: var(--sky);">${p.battingRating}</td>
-                    <td style="padding: 8px; text-align:center;">${p.spinSkill}</td>
-                    <td style="padding: 8px; text-align:center;">${p.paceSkill}</td>
+                    <td style="padding: 8px; text-align:center;">${p.aggression}</td>
                     <td style="padding: 8px; text-align:center; font-weight:700; color: #fb7185;">${p.bowlingRating}</td>
-                    <td style="padding: 8px; text-align:center;">${p.control}</td>
+                    <td style="padding: 8px; text-align:center;">${p.speed}</td>
+                    <td style="padding: 8px; text-align:center;">${p.variation}</td>
                 </tr>
             `;
         });

@@ -12,15 +12,12 @@ class Player {
 
         // Batting Attributes (1-100)
         this.battingRating = config.battingRating || 70;
-        this.spinSkill = config.spinSkill || 70;
-        this.paceSkill = config.paceSkill || 70;
         this.aggression = config.aggression || 65; // Attacking intent
         this.preferredSectors = config.preferredSectors || [0, 6]; // Preferred shot sectors
         this.weakSectors = config.weakSectors || [3, 7]; // Weak shot sectors
 
         // Bowling Attributes (1-100)
         this.bowlingRating = config.bowlingRating || 50;
-        this.control = config.control || 70; // Line & length control
         this.speed = config.speed || 70;     // Pace or turn rate
         this.variation = config.variation || 60; // Cutters, yorkers, doosras
 
