@@ -132,7 +132,8 @@ class MatchManager {
     }
 
     getOurTeamRoster() {
-        return DOMESTIC_TEAMS["Banswara"].roster;
+        const teamKey = this.userTeamId || "Banswara";
+        return DOMESTIC_TEAMS[teamKey] ? DOMESTIC_TEAMS[teamKey].roster : DOMESTIC_TEAMS["Banswara"].roster;
     }
 
     getOpponentTeamRoster() {
@@ -352,30 +353,32 @@ class MatchManager {
         if (this.tossHeadsBtn) this.tossHeadsBtn.addEventListener("click", () => this.handleToss("heads"));
         if (this.tossTailsBtn) this.tossTailsBtn.addEventListener("click", () => this.handleToss("tails"));
 
-        this.chooseBatBtn.addEventListener("click", () => this.handleTossDecision("bat"));
-        this.chooseBowlBtn.addEventListener("click", () => this.handleTossDecision("bowl"));
+        if (this.chooseBatBtn) this.chooseBatBtn.addEventListener("click", () => this.handleTossDecision("bat"));
+        if (this.chooseBowlBtn) this.chooseBowlBtn.addEventListener("click", () => this.handleTossDecision("bowl"));
 
-        this.startMatchBtn.addEventListener("click", () => this.handleStartMatchBtnClick());
+        if (this.startMatchBtn) this.startMatchBtn.addEventListener("click", () => this.handleStartMatchBtnClick());
 
-        this.simPlayBtn.addEventListener("click", () => this.toggleMatchSimulation());
-        this.simBallBtn.addEventListener("click", () => this.simulateBallCall());
-        this.simOverBtn.addEventListener("click", () => this.simulateOverCall());
+        if (this.simPlayBtn) this.simPlayBtn.addEventListener("click", () => this.toggleMatchSimulation());
+        if (this.simBallBtn) this.simBallBtn.addEventListener("click", () => this.simulateBallCall());
+        if (this.simOverBtn) this.simOverBtn.addEventListener("click", () => this.simulateOverCall());
 
-        this.clearCommentaryBtn.addEventListener("click", () => {
-            const state = this.getCurrentState();
-            if (state) {
-                const select = document.getElementById("commentary-over-select");
-                const currentSelected = select ? select.value : "current";
-                let overToClear = 1;
-                if (currentSelected === "current") {
-                    overToClear = Math.floor(state.ballsBowled / 6) + 1;
-                } else {
-                    overToClear = parseInt(currentSelected);
+        if (this.clearCommentaryBtn) {
+            this.clearCommentaryBtn.addEventListener("click", () => {
+                const state = this.getCurrentState();
+                if (state) {
+                    const select = document.getElementById("commentary-over-select");
+                    const currentSelected = select ? select.value : "current";
+                    let overToClear = 1;
+                    if (currentSelected === "current") {
+                        overToClear = Math.floor(state.ballsBowled / 6) + 1;
+                    } else {
+                        overToClear = parseInt(currentSelected);
+                    }
+                    state.overCommentary[overToClear] = [];
+                    this.renderCommentary();
                 }
-                state.overCommentary[overToClear] = [];
-                this.renderCommentary();
-            }
-        });
+            });
+        }
 
         const overSelectEl = document.getElementById("commentary-over-select");
         if (overSelectEl) {
@@ -384,17 +387,19 @@ class MatchManager {
             });
         }
 
-
-
         // Opener changes
-        this.opener1Select.addEventListener("change", () => {
-            this.updateOpenerStats(1);
-            this.validateOpeners();
-        });
-        this.opener2Select.addEventListener("change", () => {
-            this.updateOpenerStats(2);
-            this.validateOpeners();
-        });
+        if (this.opener1Select) {
+            this.opener1Select.addEventListener("change", () => {
+                this.updateOpenerStats(1);
+                this.validateOpeners();
+            });
+        }
+        if (this.opener2Select) {
+            this.opener2Select.addEventListener("change", () => {
+                this.updateOpenerStats(2);
+                this.validateOpeners();
+            });
+        }
 
         // Opener Mentality Cards
         document.querySelectorAll(".opener-mentality-btn").forEach(btn => {
@@ -412,7 +417,7 @@ class MatchManager {
         });
 
         // Restart
-        this.restartGameBtn.addEventListener("click", () => this.resetToSetup());
+        if (this.restartGameBtn) this.restartGameBtn.addEventListener("click", () => this.resetToSetup());
 
         // Fielding Preset Selector
         if (this.fieldingPresetSelect) {
