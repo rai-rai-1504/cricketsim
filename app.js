@@ -147,10 +147,29 @@ class MatchManager {
         this.matchScreen = document.getElementById("match-screen");
         this.summaryScreen = document.getElementById("summary-screen");
 
-        // Toss and Configuration inputs
-        this.matchFormatSelect = document.getElementById("match-format");
-        this.pitchTypeSelect = document.getElementById("pitch-type");
-        this.opponentTeamSelect = document.getElementById("opponent-team-select");
+        // Manager Dashboard DOM Elements
+        this.seasonDateLabel = document.getElementById("season-date-label");
+        this.btnAdvance1Day = document.getElementById("btn-advance-1day");
+        this.btnAdvanceMatch = document.getElementById("btn-advance-match");
+
+        this.tabDashHome = document.getElementById("tab-dash-home");
+        this.tabDashStandings = document.getElementById("tab-dash-standings");
+        this.tabDashFixtures = document.getElementById("tab-dash-fixtures");
+        this.tabDashScout = document.getElementById("tab-dash-scout");
+        this.tabDashRoster = document.getElementById("tab-dash-roster");
+
+        this.paneDashHome = document.getElementById("dash-pane-home");
+        this.paneDashStandings = document.getElementById("dash-pane-standings");
+        this.paneDashFixtures = document.getElementById("dash-pane-fixtures");
+        this.paneDashScout = document.getElementById("dash-pane-scout");
+        this.paneDashRoster = document.getElementById("dash-pane-roster");
+
+        this.nextMatchFormatBadge = document.getElementById("next-match-format-badge");
+        this.nextMatchDayBadge = document.getElementById("next-match-day-badge");
+        this.nextMatchOppName = document.getElementById("next-match-opp-name");
+        this.nextMatchVenue = document.getElementById("next-match-venue");
+        this.scoutTeamSelect = document.getElementById("scout-team-select");
+
         this.tossHeadsBtn = document.getElementById("toss-heads");
         this.tossTailsBtn = document.getElementById("toss-tails");
         this.coin = document.getElementById("coin");
@@ -158,13 +177,7 @@ class MatchManager {
         this.tossDecisionContainer = document.getElementById("toss-decision-container");
         this.chooseBatBtn = document.getElementById("choose-bat");
         this.chooseBowlBtn = document.getElementById("choose-bowl");
-        this.tabOurTeam = document.getElementById("tab-our-team");
-        this.tabOppTeam = document.getElementById("tab-opp-team");
-        this.rosterList = document.getElementById("roster-list");
-
-        this.btnViewLeague = document.getElementById("btn-view-league");
-        this.leagueModal = document.getElementById("league-modal");
-        this.closeLeagueModal = document.getElementById("close-league-modal");
+        this.pitchTypeSelect = document.getElementById("pitch-type");
 
         // Openers Selection
         this.opener1Select = document.getElementById("opener-1");
@@ -212,20 +225,6 @@ class MatchManager {
         this.btnFullscreen3D = document.getElementById("btn-fullscreen-3d");
         this.is3DViewActive = false;
 
-        // 3D HUD & Selection overlays
-        this.threeHUDScoreboard = document.getElementById("three-hud-scoreboard");
-        this.threeHUDScoreVal = document.getElementById("three-hud-score-val");
-        this.threeHUDOversVal = document.getElementById("three-hud-overs-val");
-        this.threeHUDBatTeam = document.getElementById("three-hud-bat-team");
-        this.threeHUDBatsmen = document.getElementById("three-hud-batsmen");
-        this.threeHUDBowler = document.getElementById("three-hud-bowler");
-        this.threeSelectionOverlay = document.getElementById("three-selection-overlay");
-        this.threeSelectTitle = document.getElementById("three-select-title");
-        this.threeSelectDropdown = document.getElementById("three-select-dropdown");
-        this.threeSelectMentality = document.getElementById("three-select-mentality");
-        this.threeSelectExtraOptions = document.getElementById("three-select-extra-options");
-        this.btnThreeSelectSubmit = document.getElementById("btn-three-select-submit");
-
         // Action Buttons
         this.simPlayBtn = document.getElementById("sim-play-btn");
         this.simBallBtn = document.getElementById("sim-ball-btn");
@@ -255,41 +254,50 @@ class MatchManager {
         
         // Setup initial event handlers
         this.setupEvents();
-        this.renderRoster("OUR");
+        this.updateDashboardUI();
     }
 
     setupEvents() {
-        this.tabOurTeam.addEventListener("click", () => {
-            this.tabOurTeam.classList.add("active");
-            this.tabOppTeam.classList.remove("active");
-            this.renderRoster("OUR");
+        // Tab switching in Manager Dashboard
+        const dashTabs = [
+            { btn: this.tabDashHome, pane: this.paneDashHome },
+            { btn: this.tabDashStandings, pane: this.paneDashStandings },
+            { btn: this.tabDashFixtures, pane: this.paneDashFixtures },
+            { btn: this.tabDashScout, pane: this.paneDashScout },
+            { btn: this.tabDashRoster, pane: this.paneDashRoster }
+        ];
+
+        dashTabs.forEach(t => {
+            if (t.btn) {
+                t.btn.addEventListener("click", () => {
+                    dashTabs.forEach(x => {
+                        if (x.btn) x.btn.classList.remove("active");
+                        if (x.pane) x.pane.classList.add("hidden");
+                    });
+                    t.btn.classList.add("active");
+                    if (t.pane) t.pane.classList.remove("hidden");
+                });
+            }
         });
 
-        this.tabOppTeam.addEventListener("click", () => {
-            this.tabOppTeam.classList.add("active");
-            this.tabOurTeam.classList.remove("active");
-            this.renderRoster("OPP");
-        });
-
-        if (this.opponentTeamSelect) {
-            this.opponentTeamSelect.addEventListener("change", (e) => {
-                this.opponentTeamId = e.target.value;
-                if (this.tabOppTeam && this.tabOppTeam.classList.contains("active")) {
-                    this.renderRoster("OPP");
-                }
+        // Date advance handlers
+        if (this.btnAdvance1Day) {
+            this.btnAdvance1Day.addEventListener("click", () => {
+                GLOBAL_LEAGUE.advanceOneDay();
+                this.updateDashboardUI();
             });
         }
 
-        if (this.btnViewLeague) {
-            this.btnViewLeague.addEventListener("click", () => {
-                this.renderLeagueModal();
-                if (this.leagueModal) this.leagueModal.classList.remove("hidden");
+        if (this.btnAdvanceMatch) {
+            this.btnAdvanceMatch.addEventListener("click", () => {
+                GLOBAL_LEAGUE.advanceToNextUserMatch();
+                this.updateDashboardUI();
             });
         }
 
-        if (this.closeLeagueModal) {
-            this.closeLeagueModal.addEventListener("click", () => {
-                if (this.leagueModal) this.leagueModal.classList.add("hidden");
+        if (this.scoutTeamSelect) {
+            this.scoutTeamSelect.addEventListener("change", (e) => {
+                this.renderScoutRoster(e.target.value);
             });
         }
 
@@ -366,6 +374,233 @@ class MatchManager {
         if (this.btnFullscreen3D) {
             this.btnFullscreen3D.addEventListener("click", () => this.toggle3DFullscreen());
         }
+    }
+
+    updateDashboardUI() {
+        // Date HUD
+        if (this.seasonDateLabel) {
+            this.seasonDateLabel.textContent = `Day ${GLOBAL_LEAGUE.currentDay} | Oct ${10 + GLOBAL_LEAGUE.currentDay}`;
+        }
+
+        // Next Match for Banswara
+        const nextMatch = GLOBAL_LEAGUE.getNextUserMatch();
+        if (nextMatch) {
+            const oppId = nextMatch.homeTeam === "Banswara" ? nextMatch.awayTeam : nextMatch.homeTeam;
+            this.opponentTeamId = oppId;
+            const oppTeam = DOMESTIC_TEAMS[oppId];
+
+            if (this.nextMatchFormatBadge) {
+                this.nextMatchFormatBadge.textContent = nextMatch.format === "T20" ? "DOMESTIC T20 LEAGUE" : "RANJI TROPHY TEST";
+                this.nextMatchFormatBadge.style.background = nextMatch.format === "T20" ? "var(--sky)" : "#fbbf24";
+            }
+            if (this.nextMatchDayBadge) {
+                this.nextMatchDayBadge.innerHTML = `<i class="fa-solid fa-calendar"></i> Day ${nextMatch.day} (Oct ${10 + nextMatch.day})`;
+            }
+            if (this.nextMatchOppName && oppTeam) {
+                this.nextMatchOppName.textContent = oppTeam.name.toUpperCase();
+            }
+
+            this.format = nextMatch.format;
+        }
+
+        // Ranks Preview
+        const t20St = GLOBAL_LEAGUE.getSortedStandings("T20");
+        const testSt = GLOBAL_LEAGUE.getSortedStandings("TEST");
+        const t20UserRank = t20St.findIndex(s => s.teamId === "Banswara") + 1;
+        const testUserRank = testSt.findIndex(s => s.teamId === "Banswara") + 1;
+
+        const rankT20Badge = document.getElementById("rank-t20-badge");
+        const rankTestBadge = document.getElementById("rank-test-badge");
+        if (rankT20Badge) rankT20Badge.textContent = `${t20UserRank}${this.getOrdinalSuffix(t20UserRank)} (${GLOBAL_LEAGUE.t20Standings["Banswara"].points} PTS)`;
+        if (rankTestBadge) rankTestBadge.textContent = `${testUserRank}${this.getOrdinalSuffix(testUserRank)} (${GLOBAL_LEAGUE.testStandings["Banswara"].points} PTS)`;
+
+        // Render Tabs
+        this.renderDashStandings("T20");
+        this.renderDashFixtures();
+        this.renderScoutRoster(this.scoutTeamSelect ? this.scoutTeamSelect.value : "Maharashtra");
+        this.renderBanswaraRoster();
+    }
+
+    getOrdinalSuffix(i) {
+        const j = i % 10, k = i % 100;
+        if (j === 1 && k !== 11) return "st";
+        if (j === 2 && k !== 12) return "nd";
+        if (j === 3 && k !== 13) return "rd";
+        return "th";
+    }
+
+    renderDashStandings(format = "T20") {
+        const container = document.getElementById("dash-standings-table-container");
+        if (!container) return;
+
+        const standings = GLOBAL_LEAGUE.getSortedStandings(format);
+        let html = `
+            <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="background: rgba(255,255,255,0.06); text-align: left;">
+                        <th style="padding: 10px;">Pos</th>
+                        <th style="padding: 10px;">State Team</th>
+                        <th style="padding: 10px; text-align:center;">Played</th>
+                        <th style="padding: 10px; text-align:center;">Won</th>
+                        <th style="padding: 10px; text-align:center;">Lost</th>
+                        <th style="padding: 10px; text-align:center;">Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        standings.forEach((st, idx) => {
+            const isUser = st.teamId === "Banswara";
+            html += `
+                <tr style="border-bottom: 1px solid var(--border-color); ${isUser ? 'background: rgba(251,191,36,0.15); color: #fbbf24; font-weight: 700;' : ''}">
+                    <td style="padding: 10px;">${idx + 1}</td>
+                    <td style="padding: 10px;">${st.name} ${isUser ? '<span style="font-size:0.75rem; background:#fbbf24; color:#000; padding:1px 6px; border-radius:3px; margin-left:6px;">YOUR TEAM</span>' : ''}</td>
+                    <td style="padding: 10px; text-align:center;">${st.played}</td>
+                    <td style="padding: 10px; text-align:center; color: var(--emerald);">${st.won}</td>
+                    <td style="padding: 10px; text-align:center; color: var(--rose);">${st.lost}</td>
+                    <td style="padding: 10px; text-align:center; font-size: 1.1rem; font-weight: 800; color: ${isUser ? '#fbbf24' : 'var(--sky)'};">${st.points}</td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+
+        const btnT20 = document.getElementById("btn-standings-t20");
+        const btnTest = document.getElementById("btn-standings-test");
+        if (btnT20 && btnTest) {
+            btnT20.onclick = () => {
+                btnT20.className = "btn btn-primary active";
+                btnTest.className = "btn btn-secondary";
+                this.renderDashStandings("T20");
+            };
+            btnTest.onclick = () => {
+                btnTest.className = "btn btn-primary active";
+                btnT20.className = "btn btn-secondary";
+                this.renderDashStandings("TEST");
+            };
+        }
+    }
+
+    renderDashFixtures() {
+        const container = document.getElementById("dash-fixtures-container");
+        if (!container) return;
+
+        let html = `<div style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; padding-right: 5px;">`;
+        GLOBAL_LEAGUE.calendar.forEach(d => {
+            if (d.matches.length === 0) return;
+            const isCurrentDay = d.day === GLOBAL_LEAGUE.currentDay;
+            html += `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid ${isCurrentDay ? 'rgba(251,191,36,0.5)' : 'var(--border-color)'}; border-radius: 6px; padding: 12px 15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <h4 style="margin: 0; color: ${isCurrentDay ? '#fbbf24' : 'var(--sky)'}; font-size: 0.95rem;"><i class="fa-solid fa-calendar"></i> Day ${d.day} (${d.dateLabel})</h4>
+                        ${isCurrentDay ? '<span style="font-size:0.75rem; background:#fbbf24; color:#000; font-weight:800; padding:2px 8px; border-radius:4px;">TODAY</span>' : ''}
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px;">
+            `;
+            d.matches.forEach(m => {
+                const homeName = DOMESTIC_TEAMS[m.homeTeam] ? DOMESTIC_TEAMS[m.homeTeam].name : m.homeTeam;
+                const awayName = DOMESTIC_TEAMS[m.awayTeam] ? DOMESTIC_TEAMS[m.awayTeam].name : m.awayTeam;
+                const isUserMatch = m.homeTeam === "Banswara" || m.awayTeam === "Banswara";
+                html += `
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isUserMatch ? 'rgba(251,191,36,0.4)' : 'var(--border-dim)'}; border-radius: 5px; padding: 8px 12px; font-size: 0.85rem;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span style="font-size:0.7rem; font-weight:700; color: ${m.format === 'T20' ? 'var(--sky)' : '#fbbf24'};">${m.format} MATCH</span>
+                            <span style="font-size:0.7rem; opacity:0.7;">${m.isCompleted ? 'Finished' : 'Scheduled'}</span>
+                        </div>
+                        <div style="font-weight:${isUserMatch ? '700' : '500'}; color: ${isUserMatch ? '#fbbf24' : '#fff'};">
+                            ${homeName} vs ${awayName}
+                        </div>
+                        ${m.summary ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">${m.summary}</div>` : ''}
+                    </div>
+                `;
+            });
+            html += `</div></div>`;
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    renderScoutRoster(teamId) {
+        const container = document.getElementById("scout-roster-container");
+        if (!container) return;
+
+        const team = DOMESTIC_TEAMS[teamId];
+        if (!team) return;
+
+        let html = `
+            <div style="margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="margin:0; color:var(--sky); font-family:var(--font-title); font-size:1.1rem;">${team.name} Squad Roster (Home Ground: ${team.homeGround})</h4>
+            </div>
+            <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.82rem;">
+                <thead>
+                    <tr style="background: rgba(255,255,255,0.06); text-align: left;">
+                        <th style="padding: 8px;">Player Name</th>
+                        <th style="padding: 8px;">Role</th>
+                        <th style="padding: 8px;">Style</th>
+                        <th style="padding: 8px; text-align:center;">Bat Rating</th>
+                        <th style="padding: 8px; text-align:center;">Spin Skill</th>
+                        <th style="padding: 8px; text-align:center;">Pace Skill</th>
+                        <th style="padding: 8px; text-align:center;">Bowl Rating</th>
+                        <th style="padding: 8px; text-align:center;">Control</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        team.roster.forEach(p => {
+            html += `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px; font-weight: 600;">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
+                    <td style="padding: 8px;"><span class="badge bg-secondary" style="font-size:0.68rem;">${p.role}</span></td>
+                    <td style="padding: 8px; font-size: 0.75rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
+                    <td style="padding: 8px; text-align:center; font-weight:700; color: var(--sky);">${p.battingRating}</td>
+                    <td style="padding: 8px; text-align:center;">${p.spinSkill}</td>
+                    <td style="padding: 8px; text-align:center;">${p.paceSkill}</td>
+                    <td style="padding: 8px; text-align:center; font-weight:700; color: #fb7185;">${p.bowlingRating}</td>
+                    <td style="padding: 8px; text-align:center;">${p.control}</td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    }
+
+    renderBanswaraRoster() {
+        const container = document.getElementById("banswara-roster-container");
+        if (!container) return;
+        const team = DOMESTIC_TEAMS["Banswara"];
+        if (!team) return;
+
+        let html = `
+            <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.82rem;">
+                <thead>
+                    <tr style="background: rgba(255,255,255,0.06); text-align: left;">
+                        <th style="padding: 8px;">Player Name</th>
+                        <th style="padding: 8px;">Role</th>
+                        <th style="padding: 8px;">Style</th>
+                        <th style="padding: 8px; text-align:center;">Bat Rating</th>
+                        <th style="padding: 8px; text-align:center;">Spin Skill</th>
+                        <th style="padding: 8px; text-align:center;">Pace Skill</th>
+                        <th style="padding: 8px; text-align:center;">Bowl Rating</th>
+                        <th style="padding: 8px; text-align:center;">Control</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        team.roster.forEach(p => {
+            html += `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px; font-weight: 600; color: #fbbf24;">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
+                    <td style="padding: 8px;"><span class="badge bg-secondary" style="font-size:0.68rem;">${p.role}</span></td>
+                    <td style="padding: 8px; font-size: 0.75rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
+                    <td style="padding: 8px; text-align:center; font-weight:700; color: var(--sky);">${p.battingRating}</td>
+                    <td style="padding: 8px; text-align:center;">${p.spinSkill}</td>
+                    <td style="padding: 8px; text-align:center;">${p.paceSkill}</td>
+                    <td style="padding: 8px; text-align:center; font-weight:700; color: #fb7185;">${p.bowlingRating}</td>
+                    <td style="padding: 8px; text-align:center;">${p.control}</td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
     }
 
     renderRoster(team) {

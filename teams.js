@@ -1,5 +1,5 @@
 /* =========================================================
-   CRICKET SIM PRO: DOMESTIC TEAMS, ATTRIBUTES & LEAGUE SYSTEM
+   CRICKET SIM PRO: DOMESTIC TEAMS, ATTRIBUTES & SEASON ENGINE
    ========================================================= */
 
 class Player {
@@ -14,7 +14,7 @@ class Player {
         this.battingRating = config.battingRating || 70;
         this.spinSkill = config.spinSkill || 70;
         this.paceSkill = config.paceSkill || 70;
-        this.aggression = config.aggression || 65; // 1-100 attacking intent
+        this.aggression = config.aggression || 65; // Attacking intent
         this.preferredSectors = config.preferredSectors || [0, 6]; // Preferred shot sectors
         this.weakSectors = config.weakSectors || [3, 7]; // Weak shot sectors
 
@@ -24,7 +24,7 @@ class Player {
         this.speed = config.speed || 70;     // Pace or turn rate
         this.variation = config.variation || 60; // Cutters, yorkers, doosras
 
-        // Legacy compatibility getters/setters:
+        // Legacy compatibility properties:
         this.batting = this.battingRating;
         this.bowling = this.bowlingRating;
 
@@ -70,15 +70,15 @@ class Player {
 }
 
 // =========================================================
-// 8 INDIAN DOMESTIC TEAMS (15 PLAYERS EACH)
+// 8 INDIAN STATE DOMESTIC TEAMS (RANJI TROPHY STYLE)
 // =========================================================
 
 const DOMESTIC_TEAMS = {
     "Banswara": {
         id: "Banswara",
-        name: "Banswara Warriors",
+        name: "Banswara",
         shortName: "BAN",
-        homeGround: "Banswara Stadium",
+        homeGround: "Banswara Cricket Ground",
         color: "#fbbf24",
         isUserSelectable: true,
         roster: [
@@ -100,10 +100,36 @@ const DOMESTIC_TEAMS = {
         ]
     },
 
-    "Chennai": {
-        id: "Chennai",
-        name: "Chennai Warriors",
-        shortName: "CHE",
+    "Punjab": {
+        id: "Punjab",
+        name: "Punjab",
+        shortName: "PUN",
+        homeGround: "PCA Stadium Mohali",
+        color: "#f97316",
+        isUserSelectable: false,
+        roster: [
+            new Player({ name: "Abhishek Sharma", role: "ALL_ROUNDER", battingStyle: "LEFT_HAND", bowlingStyle: "LEFT_ARM_ORTHODOX", battingRating: 87, spinSkill: 88, paceSkill: 86, aggression: 90, preferredSectors: [4, 5, 6], weakSectors: [1], bowlingRating: 74, control: 76, speed: 72, variation: 75 }),
+            new Player({ name: "Prabhsimran Singh", role: "WICKET_KEEPER", battingStyle: "RIGHT_HAND", bowlingStyle: "NONE", isWicketkeeper: true, battingRating: 82, spinSkill: 83, paceSkill: 81, aggression: 86, preferredSectors: [0, 1, 6], weakSectors: [4], bowlingRating: 15, control: 40, speed: 30, variation: 20 }),
+            new Player({ name: "Nehal Wadhera", role: "BATSMAN", battingStyle: "LEFT_HAND", bowlingStyle: "LEG_SPIN", battingRating: 81, spinSkill: 83, paceSkill: 79, aggression: 82, preferredSectors: [4, 5, 6], weakSectors: [0], bowlingRating: 40, control: 55, speed: 60, variation: 50 }),
+            new Player({ name: "Arshdeep Singh", role: "BOWLER", battingStyle: "LEFT_HAND", bowlingStyle: "LEFT_ARM_FAST", battingRating: 35, spinSkill: 30, paceSkill: 40, aggression: 65, preferredSectors: [0], weakSectors: [6], bowlingRating: 88, control: 89, speed: 86, variation: 92 }),
+            new Player({ name: "Harpreet Brar", role: "ALL_ROUNDER", battingStyle: "LEFT_HAND", bowlingStyle: "LEFT_ARM_ORTHODOX", battingRating: 73, spinSkill: 75, paceSkill: 71, aggression: 72, preferredSectors: [4, 5], weakSectors: [2], bowlingRating: 82, control: 85, speed: 74, variation: 80 }),
+            new Player({ name: "Naman Dhir", role: "ALL_ROUNDER", battingStyle: "RIGHT_HAND", bowlingStyle: "OFF_SPIN", battingRating: 77, spinSkill: 78, paceSkill: 76, aggression: 80, preferredSectors: [1, 6], weakSectors: [3], bowlingRating: 70, control: 72, speed: 70, variation: 68 }),
+            new Player({ name: "Anmolpreet Singh", role: "BATSMAN", battingStyle: "RIGHT_HAND", bowlingStyle: "OFF_SPIN", battingRating: 76, spinSkill: 78, paceSkill: 74, aggression: 70, preferredSectors: [6, 7], weakSectors: [2], bowlingRating: 30, control: 50, speed: 55, variation: 40 }),
+            new Player({ name: "Siddharth Kaul", role: "BOWLER", battingStyle: "RIGHT_HAND", bowlingStyle: "RIGHT_ARM_FAST", battingRating: 32, spinSkill: 28, paceSkill: 36, aggression: 50, preferredSectors: [0], weakSectors: [5], bowlingRating: 81, control: 82, speed: 84, variation: 83 }),
+            new Player({ name: "Mayank Markande", role: "BOWLER", battingStyle: "RIGHT_HAND", bowlingStyle: "LEG_SPIN", battingRating: 30, spinSkill: 26, paceSkill: 34, aggression: 45, preferredSectors: [0], weakSectors: [7], bowlingRating: 82, control: 80, speed: 76, variation: 85 }),
+            new Player({ name: "Sanvir Singh", role: "ALL_ROUNDER", battingStyle: "RIGHT_HAND", bowlingStyle: "RIGHT_ARM_MEDIUM", battingRating: 74, spinSkill: 72, paceSkill: 76, aggression: 76, preferredSectors: [0, 6], weakSectors: [3], bowlingRating: 73, control: 75, speed: 76, variation: 72 }),
+            new Player({ name: "Gurkeerat Mann", role: "BATSMAN", battingStyle: "RIGHT_HAND", bowlingStyle: "OFF_SPIN", battingRating: 75, spinSkill: 77, paceSkill: 73, aggression: 72, preferredSectors: [1, 6], weakSectors: [4], bowlingRating: 45, control: 60, speed: 62, variation: 55 }),
+            new Player({ name: "Baltej Singh", role: "BOWLER", battingStyle: "RIGHT_HAND", bowlingStyle: "RIGHT_ARM_MEDIUM", battingRating: 28, spinSkill: 24, paceSkill: 32, aggression: 40, preferredSectors: [0], weakSectors: [6], bowlingRating: 77, control: 79, speed: 78, variation: 75 }),
+            new Player({ name: "Ramandeep Singh", role: "ALL_ROUNDER", battingStyle: "RIGHT_HAND", bowlingStyle: "RIGHT_ARM_MEDIUM", battingRating: 75, spinSkill: 73, paceSkill: 77, aggression: 84, preferredSectors: [0, 1], weakSectors: [5], bowlingRating: 75, control: 76, speed: 79, variation: 74 }),
+            new Player({ name: "Gurnoor Brar", role: "BOWLER", battingStyle: "LEFT_HAND", bowlingStyle: "RIGHT_ARM_FAST", battingRating: 26, spinSkill: 22, paceSkill: 30, aggression: 45, preferredSectors: [0], weakSectors: [7], bowlingRating: 76, control: 74, speed: 86, variation: 73 }),
+            new Player({ name: "Ashwani Kumar", role: "BOWLER", battingStyle: "LEFT_HAND", bowlingStyle: "LEFT_ARM_FAST", battingRating: 24, spinSkill: 20, paceSkill: 28, aggression: 40, preferredSectors: [0], weakSectors: [6], bowlingRating: 75, control: 74, speed: 84, variation: 74 })
+        ]
+    },
+
+    "TamilNadu": {
+        id: "TamilNadu",
+        name: "Tamil Nadu",
+        shortName: "TN",
         homeGround: "MA Chidambaram Stadium",
         color: "#facc15",
         isUserSelectable: false,
@@ -126,11 +152,11 @@ const DOMESTIC_TEAMS = {
         ]
     },
 
-    "Mumbai": {
-        id: "Mumbai",
-        name: "Mumbai Strikers",
-        shortName: "MUM",
-        homeGround: "Wankhede Stadium",
+    "Maharashtra": {
+        id: "Maharashtra",
+        name: "Maharashtra",
+        shortName: "MAH",
+        homeGround: "MCA Stadium Pune",
         color: "#3b82f6",
         isUserSelectable: false,
         roster: [
@@ -152,10 +178,10 @@ const DOMESTIC_TEAMS = {
         ]
     },
 
-    "Bengaluru": {
-        id: "Bengaluru",
-        name: "Bengaluru Royals",
-        shortName: "BLR",
+    "Karnataka": {
+        id: "Karnataka",
+        name: "Karnataka",
+        shortName: "KAR",
         homeGround: "M Chinnaswamy Stadium",
         color: "#ef4444",
         isUserSelectable: false,
@@ -180,7 +206,7 @@ const DOMESTIC_TEAMS = {
 
     "Delhi": {
         id: "Delhi",
-        name: "Delhi Strikers",
+        name: "Delhi",
         shortName: "DEL",
         homeGround: "Arun Jaitley Stadium",
         color: "#6366f1",
@@ -204,10 +230,10 @@ const DOMESTIC_TEAMS = {
         ]
     },
 
-    "Kolkata": {
-        id: "Kolkata",
-        name: "Kolkata Knights",
-        shortName: "KOL",
+    "Bengal": {
+        id: "Bengal",
+        name: "Bengal",
+        shortName: "BEN",
         homeGround: "Eden Gardens",
         color: "#a855f7",
         isUserSelectable: false,
@@ -230,37 +256,11 @@ const DOMESTIC_TEAMS = {
         ]
     },
 
-    "Punjab": {
-        id: "Punjab",
-        name: "Punjab Lions",
-        shortName: "PUN",
-        homeGround: "PCA Stadium Mohali",
-        color: "#f97316",
-        isUserSelectable: false,
-        roster: [
-            new Player({ name: "Abhishek Sharma", role: "ALL_ROUNDER", battingStyle: "LEFT_HAND", bowlingStyle: "LEFT_ARM_ORTHODOX", battingRating: 87, spinSkill: 88, paceSkill: 86, aggression: 90, preferredSectors: [4, 5, 6], weakSectors: [1], bowlingRating: 74, control: 76, speed: 72, variation: 75 }),
-            new Player({ name: "Prabhsimran Singh", role: "WICKET_KEEPER", battingStyle: "RIGHT_HAND", bowlingStyle: "NONE", isWicketkeeper: true, battingRating: 82, spinSkill: 83, paceSkill: 81, aggression: 86, preferredSectors: [0, 1, 6], weakSectors: [4], bowlingRating: 15, control: 40, speed: 30, variation: 20 }),
-            new Player({ name: "Nehal Wadhera", role: "BATSMAN", battingStyle: "LEFT_HAND", bowlingStyle: "LEG_SPIN", battingRating: 81, spinSkill: 83, paceSkill: 79, aggression: 82, preferredSectors: [4, 5, 6], weakSectors: [0], bowlingRating: 40, control: 55, speed: 60, variation: 50 }),
-            new Player({ name: "Arshdeep Singh", role: "BOWLER", battingStyle: "LEFT_HAND", bowlingStyle: "LEFT_ARM_FAST", battingRating: 35, spinSkill: 30, paceSkill: 40, aggression: 65, preferredSectors: [0], weakSectors: [6], bowlingRating: 88, control: 89, speed: 86, variation: 92 }),
-            new Player({ name: "Harpreet Brar", role: "ALL_ROUNDER", battingStyle: "LEFT_HAND", bowlingStyle: "LEFT_ARM_ORTHODOX", battingRating: 73, spinSkill: 75, paceSkill: 71, aggression: 72, preferredSectors: [4, 5], weakSectors: [2], bowlingRating: 82, control: 85, speed: 74, variation: 80 }),
-            new Player({ name: "Naman Dhir", role: "ALL_ROUNDER", battingStyle: "RIGHT_HAND", bowlingStyle: "OFF_SPIN", battingRating: 77, spinSkill: 78, paceSkill: 76, aggression: 80, preferredSectors: [1, 6], weakSectors: [3], bowlingRating: 70, control: 72, speed: 70, variation: 68 }),
-            new Player({ name: "Anmolpreet Singh", role: "BATSMAN", battingStyle: "RIGHT_HAND", bowlingStyle: "OFF_SPIN", battingRating: 76, spinSkill: 78, paceSkill: 74, aggression: 70, preferredSectors: [6, 7], weakSectors: [2], bowlingRating: 30, control: 50, speed: 55, variation: 40 }),
-            new Player({ name: "Siddharth Kaul", role: "BOWLER", battingStyle: "RIGHT_HAND", bowlingStyle: "RIGHT_ARM_FAST", battingRating: 32, spinSkill: 28, paceSkill: 36, aggression: 50, preferredSectors: [0], weakSectors: [5], bowlingRating: 81, control: 82, speed: 84, variation: 83 }),
-            new Player({ name: "Mayank Markande", role: "BOWLER", battingStyle: "RIGHT_HAND", bowlingStyle: "LEG_SPIN", battingRating: 30, spinSkill: 26, paceSkill: 34, aggression: 45, preferredSectors: [0], weakSectors: [7], bowlingRating: 82, control: 80, speed: 76, variation: 85 }),
-            new Player({ name: "Sanvir Singh", role: "ALL_ROUNDER", battingStyle: "RIGHT_HAND", bowlingStyle: "RIGHT_ARM_MEDIUM", battingRating: 74, spinSkill: 72, paceSkill: 76, aggression: 76, preferredSectors: [0, 6], weakSectors: [3], bowlingRating: 73, control: 75, speed: 76, variation: 72 }),
-            new Player({ name: "Gurkeerat Mann", role: "BATSMAN", battingStyle: "RIGHT_HAND", bowlingStyle: "OFF_SPIN", battingRating: 75, spinSkill: 77, paceSkill: 73, aggression: 72, preferredSectors: [1, 6], weakSectors: [4], bowlingRating: 45, control: 60, speed: 62, variation: 55 }),
-            new Player({ name: "Baltej Singh", role: "BOWLER", battingStyle: "RIGHT_HAND", bowlingStyle: "RIGHT_ARM_MEDIUM", battingRating: 28, spinSkill: 24, paceSkill: 32, aggression: 40, preferredSectors: [0], weakSectors: [6], bowlingRating: 77, control: 79, speed: 78, variation: 75 }),
-            new Player({ name: "Ramandeep Singh", role: "ALL_ROUNDER", battingStyle: "RIGHT_HAND", bowlingStyle: "RIGHT_ARM_MEDIUM", battingRating: 75, spinSkill: 73, paceSkill: 77, aggression: 84, preferredSectors: [0, 1], weakSectors: [5], bowlingRating: 75, control: 76, speed: 79, variation: 74 }),
-            new Player({ name: "Gurnoor Brar", role: "BOWLER", battingStyle: "LEFT_HAND", bowlingStyle: "RIGHT_ARM_FAST", battingRating: 26, spinSkill: 22, paceSkill: 30, aggression: 45, preferredSectors: [0], weakSectors: [7], bowlingRating: 76, control: 74, speed: 86, variation: 73 }),
-            new Player({ name: "Ashwani Kumar", role: "BOWLER", battingStyle: "LEFT_HAND", bowlingStyle: "LEFT_ARM_FAST", battingRating: 24, spinSkill: 20, paceSkill: 28, aggression: 40, preferredSectors: [0], weakSectors: [6], bowlingRating: 75, control: 74, speed: 84, variation: 74 })
-        ]
-    },
-
-    "Hyderabad": {
-        id: "Hyderabad",
-        name: "Hyderabad Titans",
-        shortName: "HYD",
-        homeGround: "Rajiv Gandhi International Stadium",
+    "UttarPradesh": {
+        id: "UttarPradesh",
+        name: "Uttar Pradesh",
+        shortName: "UP",
+        homeGround: "Green Park Kanpur",
         color: "#06b6d4",
         isUserSelectable: false,
         roster: [
@@ -284,93 +284,199 @@ const DOMESTIC_TEAMS = {
 };
 
 // =========================================================
-// LEAGUE MANAGER & ROUND ROBIN FIXTURE GENERATOR
+// LEAGUE MANAGER, CALENDAR & ADVANCE DATE ENGINE
 // =========================================================
 
 class LeagueManager {
     constructor() {
         this.teams = Object.keys(DOMESTIC_TEAMS); // 8 Team IDs
-        this.t20Fixtures = [];
-        this.testFixtures = [];
-        this.standings = {};
+        this.currentDay = 1; // Season Calendar Day (1..42)
+        this.t20Standings = {};
+        this.testStandings = {};
+        this.calendar = []; // Daily calendar schedule
 
         this.initStandings();
-        this.generateFixtures();
+        this.generateSeasonCalendar();
     }
 
     initStandings() {
         this.teams.forEach(teamId => {
-            this.standings[teamId] = {
+            const team = DOMESTIC_TEAMS[teamId];
+            const initObj = () => ({
                 teamId: teamId,
-                name: DOMESTIC_TEAMS[teamId].name,
-                shortName: DOMESTIC_TEAMS[teamId].shortName,
+                name: team.name,
+                shortName: team.shortName,
                 played: 0,
                 won: 0,
                 lost: 0,
-                tied: 0,
-                points: 0,
-                runsScored: 0,
-                oversFaced: 0,
-                runsConceded: 0,
-                oversBowled: 0
-            };
+                points: 0
+            });
+            this.t20Standings[teamId] = initObj();
+            this.testStandings[teamId] = initObj();
         });
     }
 
-    generateFixtures() {
-        // Round Robin algorithm for 8 teams (7 rounds, 4 matches per round = 28 matches)
+    generateSeasonCalendar() {
+        // Generate round-robin pairings for 8 teams (7 rounds)
         const teamList = [...this.teams];
         const numTeams = teamList.length;
         const numRounds = numTeams - 1;
         const matchesPerRound = numTeams / 2;
 
         let rotation = [...teamList];
+        let dayCounter = 1;
 
+        // Both Test League (Ranji) and T20 League run in parallel across the season calendar
         for (let round = 1; round <= numRounds; round++) {
-            const roundT20Matches = [];
-            const roundTestMatches = [];
-
-            for (let matchIdx = 0; matchIdx < matchesPerRound; matchIdx++) {
-                const home = rotation[matchIdx];
-                const away = rotation[numTeams - 1 - matchIdx];
-
-                roundT20Matches.push({
-                    id: `T20-R${round}-M${matchIdx + 1}`,
+            // 1. Test League Match Day (Ranji trophy 4-day match slot)
+            const testMatches = [];
+            for (let m = 0; m < matchesPerRound; m++) {
+                testMatches.push({
+                    id: `TEST-R${round}-M${m+1}`,
                     round: round,
-                    homeTeam: home,
-                    awayTeam: away,
-                    format: "T20",
-                    isCompleted: false,
-                    winner: null
-                });
-
-                roundTestMatches.push({
-                    id: `TEST-R${round}-M${matchIdx + 1}`,
-                    round: round,
-                    homeTeam: home,
-                    awayTeam: away,
                     format: "TEST",
+                    homeTeam: rotation[m],
+                    awayTeam: rotation[numTeams - 1 - m],
+                    day: dayCounter,
                     isCompleted: false,
-                    winner: null
+                    winner: null,
+                    summary: ""
                 });
             }
+            this.calendar.push({ day: dayCounter, dateLabel: `Oct ${10 + dayCounter}`, matches: testMatches });
+            dayCounter += 4; // 4 days for Test match
 
-            this.t20Fixtures.push({ round: round, matches: roundT20Matches });
-            this.testFixtures.push({ round: round, matches: roundTestMatches });
+            // Rest day
+            this.calendar.push({ day: dayCounter, dateLabel: `Oct ${10 + dayCounter}`, matches: [] });
+            dayCounter += 1;
 
-            // Rotate array keeping index 0 fixed
+            // 2. T20 League Match Day
+            const t20Matches = [];
+            for (let m = 0; m < matchesPerRound; m++) {
+                t20Matches.push({
+                    id: `T20-R${round}-M${m+1}`,
+                    round: round,
+                    format: "T20",
+                    homeTeam: rotation[m],
+                    awayTeam: rotation[numTeams - 1 - m],
+                    day: dayCounter,
+                    isCompleted: false,
+                    winner: null,
+                    summary: ""
+                });
+            }
+            this.calendar.push({ day: dayCounter, dateLabel: `Oct ${10 + dayCounter}`, matches: t20Matches });
+            dayCounter += 2; // Rest/travel
+
+            // Rotate teams array keeping index 0 fixed
             rotation = [rotation[0], rotation[numTeams - 1], ...rotation.slice(1, numTeams - 1)];
         }
     }
 
-    getStandingsSorted() {
-        return Object.values(this.standings).sort((a, b) => {
+    getCurrentDayMatches() {
+        const dayEntry = this.calendar.find(d => d.day === this.currentDay);
+        return dayEntry ? dayEntry.matches : [];
+    }
+
+    getNextUserMatch() {
+        for (let i = 0; i < this.calendar.length; i++) {
+            const dayEntry = this.calendar[i];
+            if (dayEntry.day >= this.currentDay) {
+                const userMatch = dayEntry.matches.find(m => !m.isCompleted && (m.homeTeam === "Banswara" || m.awayTeam === "Banswara"));
+                if (userMatch) {
+                    return userMatch;
+                }
+            }
+        }
+        return null;
+    }
+
+    advanceOneDay() {
+        const currentMatches = this.getCurrentDayMatches();
+        
+        // Auto-simulate non-user AI matches for current day
+        currentMatches.forEach(m => {
+            if (!m.isCompleted && m.homeTeam !== "Banswara" && m.awayTeam !== "Banswara") {
+                this.simulateAIMatch(m);
+            }
+        });
+
+        this.currentDay += 1;
+    }
+
+    advanceToNextUserMatch() {
+        const nextUserMatch = this.getNextUserMatch();
+        if (!nextUserMatch) return;
+
+        while (this.currentDay < nextUserMatch.day) {
+            this.advanceOneDay();
+        }
+    }
+
+    simulateAIMatch(match) {
+        const home = DOMESTIC_TEAMS[match.homeTeam];
+        const away = DOMESTIC_TEAMS[match.awayTeam];
+        if (!home || !away) return;
+
+        // Quick AI result generator based on team strength
+        const homeStrength = home.roster.reduce((sum, p) => sum + p.battingRating + p.bowlingRating, 0);
+        const awayStrength = away.roster.reduce((sum, p) => sum + p.battingRating + p.bowlingRating, 0);
+
+        const homeBonus = (Math.random() * 40) + 10;
+        const awayBonus = (Math.random() * 40);
+
+        const winner = (homeStrength + homeBonus) >= (awayStrength + awayBonus) ? match.homeTeam : match.awayTeam;
+        const loser = winner === match.homeTeam ? match.awayTeam : match.homeTeam;
+
+        match.isCompleted = true;
+        match.winner = winner;
+        match.summary = `${DOMESTIC_TEAMS[winner].name} defeated ${DOMESTIC_TEAMS[loser].name}`;
+
+        // Update standings
+        const standings = match.format === "T20" ? this.t20Standings : this.testStandings;
+        if (standings[winner]) {
+            standings[winner].played += 1;
+            standings[winner].won += 1;
+            standings[winner].points += 2;
+        }
+        if (standings[loser]) {
+            standings[loser].played += 1;
+            standings[loser].lost += 1;
+        }
+    }
+
+    recordMatchResult(matchId, winnerTeamId, loserTeamId, format, summary) {
+        // Find match in calendar
+        this.calendar.forEach(d => {
+            d.matches.forEach(m => {
+                if (m.id === matchId) {
+                    m.isCompleted = true;
+                    m.winner = winnerTeamId;
+                    m.summary = summary;
+                }
+            });
+        });
+
+        const standings = format === "T20" ? this.t20Standings : this.testStandings;
+        if (standings[winnerTeamId]) {
+            standings[winnerTeamId].played += 1;
+            standings[winnerTeamId].won += 1;
+            standings[winnerTeamId].points += 2;
+        }
+        if (standings[loserTeamId]) {
+            standings[loserTeamId].played += 1;
+            standings[loserTeamId].lost += 1;
+        }
+    }
+
+    getSortedStandings(format = "T20") {
+        const standingsObj = format === "T20" ? this.t20Standings : this.testStandings;
+        return Object.values(standingsObj).sort((a, b) => {
             if (b.points !== a.points) return b.points - a.points;
-            // Tiebreak on Wins
             return b.won - a.won;
         });
     }
 }
 
-// Global League Instance
+// Global Season Engine Instance
 const GLOBAL_LEAGUE = new LeagueManager();

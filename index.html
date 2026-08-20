@@ -17,96 +17,168 @@
 </head>
 <body>
     <div id="app-container">
-        <!-- SCREEN 1: SETUP & TOSS -->
-        <section id="setup-screen" class="glass-panel fade-in">
-            <div class="setup-header">
-                <i class="fa-solid fa-circle-nodes logo-icon"></i>
-                <h1>CRICKET SIM <span>PRO</span></h1>
-                <p>Advanced Management & Match Simulation Engine</p>
+        <!-- SCREEN 1: MANAGER DASHBOARD LANDING PAGE -->
+        <section id="setup-screen" class="glass-panel fade-in" style="max-width: 1200px; margin: 0 auto; padding: 25px;">
+            <!-- Top Dashboard Header -->
+            <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+                <div class="team-brand" style="display: flex; align-items: center; gap: 15px;">
+                    <div style="background: rgba(251,191,36,0.2); border: 2px solid #fbbf24; color: #fbbf24; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h1 style="margin: 0; font-family: var(--font-title); font-size: 1.8rem; letter-spacing: 1px;">BANSWARA <span style="color: #fbbf24;">HEAD COACH DASHBOARD</span></h1>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">Domestic T20 & Ranji Trophy Test Leagues</p>
+                    </div>
+                </div>
+
+                <!-- FIFA-style Date & Simulation HUD -->
+                <div class="date-hud glass-card" style="display: flex; align-items: center; gap: 15px; padding: 10px 18px; border: 1px solid rgba(251,191,36,0.3); border-radius: var(--radius-md);">
+                    <div style="text-align: right;">
+                        <span id="season-date-label" style="display: block; font-family: var(--font-title); font-size: 1.1rem; color: #fbbf24;">Day 1 | Oct 11</span>
+                        <span style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase;">Season Calendar</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btn-advance-1day" class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;"><i class="fa-solid fa-forward-step"></i> +1 Day</button>
+                        <button id="btn-advance-match" class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 12px;"><i class="fa-solid fa-forward-fast"></i> Sim to Match</button>
+                    </div>
+                </div>
             </div>
-            
-            <div class="setup-grid">
-                <!-- Left: Format & Settings -->
-                <div class="setup-card settings-card">
-                    <h2><i class="fa-solid fa-sliders"></i> Match Configuration</h2>
-                    <div class="form-group">
-                        <label for="match-format">Select Format</label>
-                        <select id="match-format">
-                            <option value="T20" selected>Twenty20 (T20)</option>
-                            <option value="TEST">Test Match (4 Innings)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="pitch-type">Pitch Condition</label>
-                        <select id="pitch-type">
-                            <option value="FLAT">Flat Pitch (Batting Friendly)</option>
-                            <option value="GREEN">Green Pitch (Bowling Friendly)</option>
-                            <option value="RANDOM" selected>Random (Pitch Report On Toss)</option>
-                        </select>
-                    </div>
-                </div>
 
-                <!-- Center: Toss Choice -->
-                <div class="setup-card toss-card">
-                    <h2><i class="fa-solid fa-coins"></i> The Coin Toss</h2>
-                    <p class="instruction">Choose your side to toss the coin</p>
-                    <div class="toss-buttons">
-                        <button id="toss-heads" class="btn btn-secondary">Heads</button>
-                        <button id="toss-tails" class="btn btn-secondary">Tails</button>
-                    </div>
-                    <div id="toss-animation-container">
-                        <div id="coin" class="coin">
-                            <div class="front">H</div>
-                            <div class="back">T</div>
+            <!-- Navigation Tabs -->
+            <div class="dash-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <button id="tab-dash-home" class="tab-btn active"><i class="fa-solid fa-house"></i> Overview & Next Match</button>
+                <button id="tab-dash-standings" class="tab-btn"><i class="fa-solid fa-trophy"></i> League Standings</button>
+                <button id="tab-dash-fixtures" class="tab-btn"><i class="fa-solid fa-calendar-days"></i> Season Fixtures</button>
+                <button id="tab-dash-scout" class="tab-btn"><i class="fa-solid fa-binoculars"></i> Opposition Scout</button>
+                <button id="tab-dash-roster" class="tab-btn"><i class="fa-solid fa-users"></i> Banswara Squad</button>
+            </div>
+
+            <!-- TAB 1: OVERVIEW & NEXT MATCH -->
+            <div id="dash-pane-home" class="dash-pane">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <!-- Next Match Feature Card -->
+                    <div class="setup-card" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span id="next-match-format-badge" class="badge" style="background: var(--sky); color: #000; font-weight: 800; font-size: 0.85rem; padding: 4px 10px; border-radius: 4px;">T20 LEAGUE</span>
+                            <span id="next-match-day-badge" style="font-size: 0.85rem; color: var(--text-secondary);"><i class="fa-solid fa-calendar"></i> Day 1 (Oct 11)</span>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-around; align-items: center; padding: 25px 0; border-top: 1px solid var(--border-dim); border-bottom: 1px solid var(--border-dim); background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 20px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 2.2rem; color: #fbbf24;"><i class="fa-solid fa-shield-halved"></i></div>
+                                <h3 style="margin: 5px 0 0 0; font-family: var(--font-title); font-size: 1.3rem;">BANSWARA</h3>
+                                <span style="font-size: 0.75rem; color: var(--text-secondary);">HOME</span>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-secondary);">VS</div>
+                            <div style="text-align: center;">
+                                <div id="next-match-opp-icon" style="font-size: 2.2rem; color: var(--sky);"><i class="fa-solid fa-user-ninja"></i></div>
+                                <h3 id="next-match-opp-name" style="margin: 5px 0 0 0; font-family: var(--font-title); font-size: 1.3rem;">MAHARASHTRA</h3>
+                                <span style="font-size: 0.75rem; color: var(--text-secondary);">AWAY</span>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label for="pitch-type"><i class="fa-solid fa-mountain-sun"></i> Pitch Condition</label>
+                                <select id="pitch-type" style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff;">
+                                    <option value="FLAT">Flat Pitch (Batting Friendly)</option>
+                                    <option value="GREEN">Green Pitch (Seam/Bounce)</option>
+                                    <option value="RANDOM" selected>Random Condition</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; flex-direction: column; justify-content: flex-end;">
+                                <label><i class="fa-solid fa-location-dot"></i> Venue</label>
+                                <div id="next-match-venue" style="padding: 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-dim); border-radius: 4px; font-size: 0.85rem;">Banswara Cricket Ground</div>
+                            </div>
+                        </div>
+
+                        <!-- Toss Trigger Block -->
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 15px; text-align: center;">
+                            <p style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-secondary);">Proceed to match setup and call the Coin Toss</p>
+                            <div class="toss-buttons" style="justify-content: center; gap: 15px;">
+                                <button id="toss-heads" class="btn btn-primary btn-large" style="padding: 10px 25px;"><i class="fa-solid fa-coins"></i> Toss Heads</button>
+                                <button id="toss-tails" class="btn btn-secondary btn-large" style="padding: 10px 25px;"><i class="fa-solid fa-coins"></i> Toss Tails</button>
+                            </div>
+                            <div id="toss-animation-container" style="margin-top: 10px;">
+                                <div id="coin" class="coin"><div class="front">H</div><div class="back">T</div></div>
+                            </div>
+                            <div id="toss-result-text" class="toss-result" style="margin-top: 10px;"></div>
+                            <div id="toss-decision-container" class="hidden" style="margin-top: 10px;">
+                                <p style="font-weight: 700; color: #fbbf24;">You won the toss! Choose your decision:</p>
+                                <div class="decision-buttons" style="justify-content: center; gap: 15px; margin-top: 5px;">
+                                    <button id="choose-bat" class="btn btn-primary">Bat First</button>
+                                    <button id="choose-bowl" class="btn btn-primary">Bowl First</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div id="toss-result-text" class="toss-result"></div>
-                    <div id="toss-decision-container" class="hidden">
-                        <p>You won the toss! Choose your decision:</p>
-                        <div class="decision-buttons">
-                            <button id="choose-bat" class="btn btn-primary">Bat</button>
-                            <button id="choose-bowl" class="btn btn-primary">Bowl</button>
+
+                    <!-- Side Stats & League Standings Preview -->
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="setup-card" style="padding: 15px;">
+                            <h3 style="margin-top: 0; font-family: var(--font-title); font-size: 1rem; color: #fbbf24;"><i class="fa-solid fa-trophy"></i> Banswara Season Ranks</h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
+                                <div style="display: flex; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 4px;">
+                                    <span>T20 League Rank:</span>
+                                    <span id="rank-t20-badge" style="font-weight: 800; color: var(--sky);">1st (0 PTS)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 4px;">
+                                    <span>Ranji Test Rank:</span>
+                                    <span id="rank-test-badge" style="font-weight: 800; color: #fbbf24;">1st (0 PTS)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setup-card" style="padding: 15px; flex: 1;">
+                            <h3 style="margin-top: 0; font-family: var(--font-title); font-size: 1rem;"><i class="fa-solid fa-newspaper"></i> Today's Season Feed</h3>
+                            <div id="feed-log-container" style="font-size: 0.8rem; color: var(--text-secondary); max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                                <div style="background: rgba(255,255,255,0.02); padding: 6px 10px; border-left: 3px solid var(--sky); border-radius: 2px;">Season initialized! Domestic T20 & Ranji Test leagues are underway.</div>
+                            </div>
                         </div>
                     </div>
-                </div >
-
-                <!-- Right: Domestic Teams Preview & League Selection -->
-                <div class="setup-card teams-card">
-                    <h2><i class="fa-solid fa-trophy"></i> Domestic League & Teams</h2>
-                    
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="user-team-select"><i class="fa-solid fa-shield-halved"></i> Your Team (Locked)</label>
-                        <select id="user-team-select" disabled style="background: rgba(251,191,36,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.4); font-weight: 700;">
-                            <option value="Banswara">Banswara Warriors (Your Team)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 12px;">
-                        <label for="opponent-team-select"><i class="fa-solid fa-user-ninja"></i> Opponent Team</label>
-                        <select id="opponent-team-select" style="background: rgba(0,0,0,0.3); color: var(--text-primary); border: 1px solid var(--border-color);">
-                            <option value="Chennai">Chennai Warriors</option>
-                            <option value="Mumbai" selected>Mumbai Strikers</option>
-                            <option value="Bengaluru">Bengaluru Royals</option>
-                            <option value="Delhi">Delhi Strikers</option>
-                            <option value="Kolkata">Kolkata Knights</option>
-                            <option value="Punjab">Punjab Lions</option>
-                            <option value="Hyderabad">Hyderabad Titans</option>
-                        </select>
-                    </div>
-
-                    <div class="teams-tabs" style="margin-bottom: 8px;">
-                        <button id="tab-our-team" class="tab-btn active">Banswara Roster</button>
-                        <button id="tab-opp-team" class="tab-btn">Opponent Roster</button>
-                    </div>
-
-                    <div class="roster-list-wrapper">
-                        <ul id="roster-list" class="roster-list">
-                            <!-- Populated dynamically via JS -->
-                        </ul>
-                    </div>
-
-                    <button id="btn-view-league" class="btn btn-secondary" style="width: 100%; margin-top: 10px; font-size: 0.82rem;"><i class="fa-solid fa-table-list"></i> View Round Robin League Standings</button>
                 </div>
+            </div>
+
+            <!-- TAB 2: LEAGUE STANDINGS -->
+            <div id="dash-pane-standings" class="dash-pane hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btn-standings-t20" class="btn btn-primary active" style="font-size: 0.85rem;">T20 League Points Table</button>
+                        <button id="btn-standings-test" class="btn btn-secondary" style="font-size: 0.85rem;">Ranji Trophy Test Points Table</button>
+                    </div>
+                </div>
+                <div id="dash-standings-table-container"></div>
+            </div>
+
+            <!-- TAB 3: FIXTURES & SCHEDULE -->
+            <div id="dash-pane-fixtures" class="dash-pane hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0; font-family: var(--font-title);"><i class="fa-solid fa-calendar-days"></i> Full Season Calendar & Results</h3>
+                </div>
+                <div id="dash-fixtures-container"></div>
+            </div>
+
+            <!-- TAB 4: OPPOSITION SCOUT -->
+            <div id="dash-pane-scout" class="dash-pane hidden">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <label for="scout-team-select" style="font-weight: 700; white-space: nowrap;"><i class="fa-solid fa-magnifying-glass-chart"></i> Select Opponent State Team:</label>
+                    <select id="scout-team-select" style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff; padding: 8px 15px; font-size: 0.9rem; border-radius: 4px;">
+                        <option value="Punjab">Punjab</option>
+                        <option value="TamilNadu">Tamil Nadu</option>
+                        <option value="Maharashtra" selected>Maharashtra</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Bengal">Bengal</option>
+                        <option value="UttarPradesh">Uttar Pradesh</option>
+                    </select>
+                </div>
+                <div id="scout-roster-container"></div>
+            </div>
+
+            <!-- TAB 5: BANSWARA SQUAD -->
+            <div id="dash-pane-roster" class="dash-pane hidden">
+                <h3 style="margin-top: 0; font-family: var(--font-title); color: #fbbf24;"><i class="fa-solid fa-shield-halved"></i> Banswara Squad (15 Players)</h3>
+                <div id="banswara-roster-container"></div>
             </div>
         </section>
 
