@@ -453,7 +453,7 @@ class MatchManager {
         const container = document.getElementById("modal-team-roster-container");
         if (!modal || !container || !team) return;
 
-        if (title) title.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:${team.color || 'var(--sky)'}; margin-right:8px;"></i> ${team.name} Squad Roster (Home: ${team.homeGround})`;
+        if (title) title.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:${team.color || 'var(--sky)'}; margin-right:8px;"></i> ${team.name} Squad Roster (Home Ground: ${team.homeGround})`;
 
         let html = `
             <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
@@ -482,6 +482,22 @@ class MatchManager {
         html += `</tbody></table>`;
         container.innerHTML = html;
         modal.classList.remove("hidden");
+        modal.style.display = "flex";
+
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.classList.add("hidden");
+                modal.style.display = "";
+            }
+        };
+
+        const closeBtn = document.getElementById("close-team-roster-modal");
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                modal.classList.add("hidden");
+                modal.style.display = "";
+            };
+        }
     }
 
     renderDashStandings(format = "T20") {
