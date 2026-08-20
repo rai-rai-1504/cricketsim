@@ -1007,11 +1007,11 @@ class MatchManager {
         const battingTeam = this.userBatsFirst ? ourRoster : oppRoster;
         
         if (this.userBatsFirst) {
-            // Initial state: Slots start EMPTY (-1)!
-            this.selectedOpener1Index = -1;
-            this.selectedOpener2Index = -1;
-            if (this.opener1Select) this.opener1Select.value = -1;
-            if (this.opener2Select) this.opener2Select.value = -1;
+            // Default to top 2 Playing XI batters (editable & overwritable via drag-and-drop or click!)
+            this.selectedOpener1Index = 0;
+            this.selectedOpener2Index = 1;
+            if (this.opener1Select) this.opener1Select.value = 0;
+            if (this.opener2Select) this.opener2Select.value = 1;
 
             this.renderOpenersSquadList();
             this.validateOpeners();
@@ -2482,11 +2482,10 @@ class MatchManager {
     }
 
     handleStartMatchBtnClick() {
-        const state = this.getCurrentState();
-        if (!state) {
-            this.startInnings();
-        } else if (this.currentInningsIndex === 1 && !state.striker) {
+        if (this.currentInningsIndex === 1 && this.inningsList[1] && !this.inningsList[1].striker) {
             this.startSecondInningsAfterSelection();
+        } else {
+            this.startInnings();
         }
     }
 
