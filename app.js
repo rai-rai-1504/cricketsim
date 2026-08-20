@@ -1224,106 +1224,113 @@ class MatchManager {
     }
 
     startInnings() {
-        const ourRoster = this.getOurTeamRoster();
-        const oppRoster = this.getOpponentTeamRoster();
+        try {
+            const ourRoster = this.getOurTeamRoster();
+            const oppRoster = this.getOpponentTeamRoster();
+            console.log("[startInnings] ourRoster.length=", ourRoster.length, "oppRoster.length=", oppRoster.length);
 
-        const battingTeam = this.userBatsFirst ? ourRoster : oppRoster;
-        const bowlingTeam = this.userBatsFirst ? oppRoster : ourRoster;
+            const battingTeam = this.userBatsFirst ? ourRoster : oppRoster;
+            const bowlingTeam = this.userBatsFirst ? oppRoster : ourRoster;
 
-        const ourShort = DOMESTIC_TEAMS["Banswara"].shortName;
-        const oppShort = DOMESTIC_TEAMS[this.opponentTeamId] ? DOMESTIC_TEAMS[this.opponentTeamId].shortName : "OPP";
+            const ourShort = DOMESTIC_TEAMS["Banswara"] ? DOMESTIC_TEAMS["Banswara"].shortName : "BAN";
+            const oppShort = DOMESTIC_TEAMS[this.opponentTeamId] ? DOMESTIC_TEAMS[this.opponentTeamId].shortName : "OPP";
+            console.log("[startInnings] ourShort=", ourShort, "oppShort=", oppShort, "userBatsFirst=", this.userBatsFirst, "format=", this.format);
 
-        // Reset innings states
-        this.inningsList = [];
-        this.currentInningsIndex = 0;
+            // Reset innings states
+            this.inningsList = [];
+            this.currentInningsIndex = 0;
 
-        const batTag = this.userBatsFirst ? `${ourShort} 1st` : `${oppShort} 1st`;
+            const batTag = this.userBatsFirst ? `${ourShort} 1st` : `${oppShort} 1st`;
 
-        if (this.format === "T20") {
             const state1 = new InningsState(battingTeam, bowlingTeam, batTag, this.userBatsFirst);
             this.inningsList.push(state1);
-        } else {
-            // TEST format - 4 Innings
-            const state1 = new InningsState(battingTeam, bowlingTeam, batTag, this.userBatsFirst);
-            this.inningsList.push(state1);
-        }
 
-        const state = this.getCurrentState();
-        
-        // Ensure default active bowler is initialized
-        if (!state.currentBowler && state.bowlingTeam.length > 0) {
-            const bestBowler = [...state.bowlingTeam].sort((a,b) => b.bowlingRating - a.bowlingRating)[0];
-            state.currentBowler = bestBowler || state.bowlingTeam[0];
-        }
+            const state = this.getCurrentState();
+            console.log("[startInnings] state=", state, "state.battingTeam.length=", state.battingTeam.length);
+            
+            // Ensure default active bowler is initialized
+            if (!state.currentBowler && state.bowlingTeam.length > 0) {
+                const bestBowler = [...state.bowlingTeam].sort((a,b) => b.bowlingRating - a.bowlingRating)[0];
+                state.currentBowler = bestBowler || state.bowlingTeam[0];
+            }
 
-        // Assign openers
-        if (state.isUserBatting) {
-            const op1Idx = this.selectedOpener1Index !== -1 ? this.selectedOpener1Index : 0;
-            const op2Idx = this.selectedOpener2Index !== -1 ? this.selectedOpener2Index : 1;
-            state.striker = state.battingTeam[op1Idx] || state.battingTeam[0];
-            state.nonStriker = state.battingTeam[op2Idx] || state.battingTeam[1];
-            state.striker.hasBatted = true;
-            state.nonStriker.hasBatted = true;
+            // Assign openers
+            if (state.isUserBatting) {
+                const op1Idx = this.selectedOpener1Index !== -1 ? this.selectedOpener1Index : 0;
+                const op2Idx = this.selectedOpener2Index !== -1 ? this.selectedOpener2Index : 1;
+                console.log("[startInnings] assigning openers op1Idx=", op1Idx, "op2Idx=", op2Idx);
+                state.striker = state.battingTeam[op1Idx] || state.battingTeam[0];
+                state.nonStriker = state.battingTeam[op2Idx] || state.battingTeam[1];
+                state.striker.hasBatted = true;
+                state.nonStriker.hasBatted = true;
 
-            const m1El = document.getElementById("opener-1-mentality-val");
-            const m2El = document.getElementById("opener-2-mentality-val");
-            state.striker.mentality = m1El ? m1El.value : "normal";
-            state.nonStriker.mentality = m2El ? m2El.value : "normal";
-        } else {
-            // Opponent batting first: select top 2 by batting rating
-            const sortedAI = [...state.battingTeam].sort((a,b) => b.battingRating - a.battingRating);
-            state.striker = sortedAI[0];
-            state.nonStriker = sortedAI[1];
-            state.striker.hasBatted = true;
-            state.nonStriker.hasBatted = true;
-            state.striker.mentality = "normal";
-            state.nonStriker.mentality = "normal";
-        }
+                const m1El = document.getElementById("opener-1-mentality-val");
+                const m2El = document.getElementById("opener-2-mentality-val");
+                state.striker.mentality = m1El ? m1El.value : "normal";
+                state.nonStriker.mentality = m2El ? m2El.value : "normal";
+            } else {
+                // Opponent batting first: select top 2 by batting rating
+                const sortedAI = [...state.battingTeam].sort((a,b) => b.battingRating - a.battingRating);
+                state.striker = sortedAI[0];
+                state.nonStriker = sortedAI[1];
+                state.striker.hasBatted = true;
+                state.nonStriker.hasBatted = true;
+                state.striker.mentality = "normal";
+                state.nonStriker.mentality = "normal";
+            }
 
-        this.logCommentary("Match", `Match starts! Format: ${this.format} | Pitch: ${this.pitch.toUpperCase()}`, "welcome");
-        this.logCommentary("Toss", `${this.userWonToss ? 'You' : 'Opponent'} won the toss and elected to ${this.userBatsFirst ? 'Bat' : 'Bowl'} first.`, "welcome");
-        this.logCommentary("Innings", `Innings 1: ${state.teamName} starts batting. Openers: ${state.striker.name} & ${state.nonStriker.name}.`, "welcome");
+            console.log("[startInnings] striker=", state.striker.name, "nonStriker=", state.nonStriker.name);
 
-        if (this.pitchReportUI) this.pitchReportUI.textContent = `Pitch: ${this.pitch.toUpperCase()}`;
-        if (this.matchTitleUI) this.matchTitleUI.textContent = `${this.userBatsFirst ? `${ourShort} vs ${oppShort}` : `${oppShort} vs ${ourShort}`} - ${this.format}`;
+            this.logCommentary("Match", `Match starts! Format: ${this.format} | Pitch: ${this.pitch.toUpperCase()}`, "welcome");
+            this.logCommentary("Toss", `${this.userWonToss ? 'You' : 'Opponent'} won the toss and elected to ${this.userBatsFirst ? 'Bat' : 'Bowl'} first.`, "welcome");
+            this.logCommentary("Innings", `Innings 1: ${state.teamName} starts batting. Openers: ${state.striker.name} & ${state.nonStriker.name}.`, "welcome");
 
-        // Reset animation state
-        this.isAnimating = false;
-        this.disableActions(false);
+            if (this.pitchReportUI) this.pitchReportUI.textContent = `Pitch: ${this.pitch.toUpperCase()}`;
+            if (this.matchTitleUI) this.matchTitleUI.textContent = `${this.userBatsFirst ? `${ourShort} vs ${oppShort}` : `${oppShort} vs ${ourShort}`} - ${this.format}`;
 
-        // Trigger Dressing Room Pavilion Tunnel Transition
-        const tunnelOverlay = document.getElementById("tunnel-transition-overlay");
-        const progressBar = document.getElementById("tunnel-progress-bar");
-        const subtext = document.getElementById("tunnel-subtext");
-        
-        if (subtext && state.striker && state.nonStriker) {
-            subtext.textContent = `${state.striker.name} & ${state.nonStriker.name} are taking the field!`;
-        }
+            // Reset animation state
+            this.isAnimating = false;
+            this.disableActions(false);
 
-        if (tunnelOverlay && progressBar) {
-            tunnelOverlay.classList.remove("hidden");
-            progressBar.style.width = "0%";
-            setTimeout(() => {
-                progressBar.style.width = "100%";
-            }, 30);
+            // Trigger Dressing Room Pavilion Tunnel Transition
+            const tunnelOverlay = document.getElementById("tunnel-transition-overlay");
+            const progressBar = document.getElementById("tunnel-progress-bar");
+            const subtext = document.getElementById("tunnel-subtext");
+            
+            if (subtext && state.striker && state.nonStriker) {
+                subtext.textContent = `${state.striker.name} & ${state.nonStriker.name} are taking the field!`;
+            }
 
-            setTimeout(() => {
-                tunnelOverlay.classList.add("hidden");
+            if (tunnelOverlay && progressBar) {
+                console.log("[startInnings] showing tunnel overlay");
+                tunnelOverlay.classList.remove("hidden");
+                progressBar.style.width = "0%";
+                setTimeout(() => {
+                    progressBar.style.width = "100%";
+                }, 30);
+
+                setTimeout(() => {
+                    tunnelOverlay.classList.add("hidden");
+                    this.openersScreen.classList.add("hidden");
+                    this.matchScreen.classList.remove("hidden");
+                    
+                    this.setupFieldDragHandler();
+                    this.updateUI();
+                    this.runPitchCountdownAndWalkout();
+                    this.triggerBowlerSelection();
+                }, 1200);
+            } else {
+                console.log("[startInnings] no tunnel overlay, going directly to match screen");
                 this.openersScreen.classList.add("hidden");
                 this.matchScreen.classList.remove("hidden");
-                
                 this.setupFieldDragHandler();
                 this.updateUI();
                 this.runPitchCountdownAndWalkout();
                 this.triggerBowlerSelection();
-            }, 1200);
-        } else {
-            this.openersScreen.classList.add("hidden");
-            this.matchScreen.classList.remove("hidden");
-            this.setupFieldDragHandler();
-            this.updateUI();
-            this.runPitchCountdownAndWalkout();
-            this.triggerBowlerSelection();
+            }
+        } catch(err) {
+            console.error("[startInnings] CRASH:", err);
+            alert("startInnings crashed: " + err.message + "\n\nSee console (F12) for full details.");
         }
     }
 
@@ -2487,10 +2494,18 @@ class MatchManager {
     }
 
     handleStartMatchBtnClick() {
-        if (this.currentInningsIndex === 1 && this.inningsList[1] && !this.inningsList[1].striker) {
-            this.startSecondInningsAfterSelection();
-        } else {
-            this.startInnings();
+        try {
+            console.log("[PAD UP] Button clicked. currentInningsIndex=", this.currentInningsIndex, "inningsList.length=", this.inningsList.length);
+            if (this.currentInningsIndex === 1 && this.inningsList[1] && !this.inningsList[1].striker) {
+                console.log("[PAD UP] Going to startSecondInningsAfterSelection");
+                this.startSecondInningsAfterSelection();
+            } else {
+                console.log("[PAD UP] Going to startInnings. opener1=", this.selectedOpener1Index, "opener2=", this.selectedOpener2Index);
+                this.startInnings();
+            }
+        } catch(err) {
+            console.error("[PAD UP] CRASH in handleStartMatchBtnClick:", err);
+            alert("Error starting match: " + err.message + "\n\nCheck browser console (F12) for details.");
         }
     }
 
@@ -2948,26 +2963,23 @@ class MatchManager {
 
     disableActions(disabled) {
         if (this.isSimulatingMatch) {
-            this.simPlayBtn.disabled = false;
-            this.simBallBtn.disabled = true;
-            this.simOverBtn.disabled = true;
-            this.simBallBtn.style.opacity = 0.5;
-            this.simOverBtn.style.opacity = 0.5;
+            if (this.simPlayBtn) this.simPlayBtn.disabled = false;
+            if (this.simBallBtn) { this.simBallBtn.disabled = true; this.simBallBtn.style.opacity = 0.5; }
+            if (this.simOverBtn) { this.simOverBtn.disabled = true; this.simOverBtn.style.opacity = 0.5; }
             return;
         }
 
-        this.simPlayBtn.disabled = disabled;
-        this.simBallBtn.disabled = disabled;
-        this.simOverBtn.disabled = disabled;
-        
-        if (disabled) {
-            this.simPlayBtn.style.opacity = 0.5;
-            this.simBallBtn.style.opacity = 0.5;
-            this.simOverBtn.style.opacity = 0.5;
-        } else {
-            this.simPlayBtn.style.opacity = 1;
-            this.simBallBtn.style.opacity = 1;
-            this.simOverBtn.style.opacity = 1;
+        if (this.simPlayBtn) {
+            this.simPlayBtn.disabled = disabled;
+            this.simPlayBtn.style.opacity = disabled ? 0.5 : 1;
+        }
+        if (this.simBallBtn) {
+            this.simBallBtn.disabled = disabled;
+            this.simBallBtn.style.opacity = disabled ? 0.5 : 1;
+        }
+        if (this.simOverBtn) {
+            this.simOverBtn.disabled = disabled;
+            this.simOverBtn.style.opacity = disabled ? 0.5 : 1;
         }
     }
 
