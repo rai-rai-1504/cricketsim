@@ -1335,78 +1335,10 @@ class MatchManager {
     }
 
     runPitchCountdownAndWalkout() {
-        this.isAnimating = true;
-        this.disableActions(true);
-
-        // First draw everyone at the tunnel entrance (off-screen bottom)
-        this.drawField(true);
-
-        const countdownGroup = document.getElementById("pitch-countdown-group");
-        const countdownText  = document.getElementById("pitch-countdown-text");
-
-        const steps = ["3", "2", "1", "PLAY!"];
-        const delays = [0, 800, 1600, 2400];
-
-        steps.forEach((label, i) => {
-            setTimeout(() => {
-                if (countdownGroup) countdownGroup.style.display = "block";
-                if (countdownText) {
-                    countdownText.textContent = label;
-                    countdownText.setAttribute("font-size", label === "PLAY!" ? "32" : "52");
-                    countdownText.setAttribute("fill", label === "PLAY!" ? "#C9972B" : "#FFFFFF");
-                }
-            }, delays[i]);
-        });
-
-        // After PLAY! hide countdown, start walk-in spread
-        setTimeout(() => {
-            if (countdownGroup) countdownGroup.style.display = "none";
-            this._triggerWalkoutSpread();
-        }, 3300);
-
-        // Unlock UI after animation completes
-        setTimeout(() => {
-            this.isAnimating = false;
-            this.disableActions(false);
-        }, 5000);
-    }
-
-    _triggerWalkoutSpread() {
-        const state = this.getCurrentState();
-        if (!state) return;
-
-        // Animate fielders spreading from tunnel to positions
-        state.fielderPositions.forEach((pos, index) => {
-            const node = document.getElementById(`fielder-node-${index}`);
-            if (node) {
-                // Stagger each fielder slightly
-                setTimeout(() => {
-                    node.style.transition = "transform 1.2s cubic-bezier(0.25, 1, 0.5, 1)";
-                    node.style.transform  = `translate(${pos.x}px, ${pos.y}px)`;
-                }, index * 80);
-            }
-        });
-
-        // Animate batsmen walking in from tunnel
-        const batterStart = { x: 300, y: 560 };
-        const striker    = document.getElementById("walkout-striker");
-        const nonStriker = document.getElementById("walkout-nonstriker");
-        const ump1       = document.getElementById("walkout-ump1");
-        const ump2       = document.getElementById("walkout-ump2");
-
-        [
-            { el: striker,    tx: 300, ty: 240, delay: 400 },
-            { el: nonStriker, tx: 300, ty: 360, delay: 600 },
-            { el: ump1,       tx: 300, ty: 215, delay: 200 },
-            { el: ump2,       tx: 450, ty: 360, delay: 300 },
-        ].forEach(({ el, tx, ty, delay }) => {
-            if (el) {
-                setTimeout(() => {
-                    el.style.transition = "transform 1.4s cubic-bezier(0.25, 1, 0.5, 1)";
-                    el.style.transform  = `translate(${tx}px, ${ty}px)`;
-                }, delay);
-            }
-        });
+        // Draw field immediately at final positions — no animation
+        this.drawField(false);
+        this.isAnimating = false;
+        this.disableActions(false);
     }
 
     getCurrentState() {
