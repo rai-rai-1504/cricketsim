@@ -734,7 +734,7 @@ class MatchManager {
             standings.forEach((st, idx) => {
                 const isUser = st.teamId === "Banswara";
                 html += `
-                    <tr style="border-bottom: 1px solid var(--border-color); ${isUser ? 'background: rgba(251,191,36,0.12); color: #fbbf24; font-weight: 700;' : ''}">
+                    <tr style="border-bottom: 1px solid var(--border-color); ${isUser ? 'background: #FAF3E0; color: var(--trophy-gold); font-weight: 700;' : ''}">
                         <td style="padding: 8px;">${idx + 1}</td>
                         <td style="padding: 8px;">${st.name} ${isUser ? '(YOU)' : ''}</td>
                         <td style="padding: 8px; text-align:center;">${st.played}</td>
@@ -755,7 +755,7 @@ class MatchManager {
 
             fixtures.forEach(r => {
                 fHtml += `
-                    <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 14px;">
+                    <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 14px; box-shadow: var(--shadow-card);">
                         <h4 style="margin: 0 0 8px 0; color: var(--sky); font-size: 0.9rem;">Round ${r.round} (${format} League)</h4>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
                 `;
@@ -764,9 +764,9 @@ class MatchManager {
                     const awayName = DOMESTIC_TEAMS[m.awayTeam] ? DOMESTIC_TEAMS[m.awayTeam].name : m.awayTeam;
                     const isBanswara = m.homeTeam === "Banswara" || m.awayTeam === "Banswara";
                     fHtml += `
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isBanswara ? 'rgba(251,191,36,0.4)' : 'var(--border-dim)'}; border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="${isBanswara ? 'font-weight: 700; color: #fbbf24;' : ''}">${homeName} vs ${awayName}</span>
-                            <span style="font-size: 0.7rem; opacity: 0.7;">${m.isCompleted ? 'Finished' : 'Upcoming'}</span>
+                        <div style="background: #FAF7F0; border: 1px solid ${isBanswara ? 'var(--trophy-gold)' : 'var(--border-dim)'}; border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="${isBanswara ? 'font-weight: 700; color: var(--trophy-gold);' : 'color: var(--text-primary);'}">${homeName} vs ${awayName}</span>
+                            <span style="font-size: 0.7rem; color: var(--text-secondary);">${m.isCompleted ? 'Finished' : 'Upcoming'}</span>
                         </div>
                     `;
                 });

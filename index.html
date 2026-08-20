@@ -56,29 +56,29 @@
             <div id="dash-pane-home" class="dash-pane">
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
                     <!-- Next Match Feature Card -->
-                    <div class="setup-card" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px;">
+                    <div class="setup-card" style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-card);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <span id="next-match-format-badge" class="badge" style="background: var(--sky); color: #000; font-weight: 800; font-size: 0.85rem; padding: 4px 10px; border-radius: 4px;">T20 LEAGUE</span>
+                            <span id="next-match-format-badge" class="badge" style="background: var(--format-primary); color: #FFFFFF; font-weight: 800; font-size: 0.85rem; padding: 4px 10px; border-radius: 4px;">T20 LEAGUE</span>
                             <span id="next-match-day-badge" style="font-size: 0.85rem; color: var(--text-secondary);"><i class="fa-solid fa-calendar"></i> Day 1 (Oct 11)</span>
                         </div>
 
-                        <div style="display: flex; justify-content: space-around; align-items: center; padding: 25px 0; border-top: 1px solid var(--border-dim); border-bottom: 1px solid var(--border-dim); background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-around; align-items: center; padding: 25px 0; border: 1px solid var(--border-dim); background: #FAF7F0; border-radius: 8px; margin-bottom: 20px;">
                             <div class="team-clickable" data-teamid="Banswara" style="text-align: center; cursor: pointer;" title="Click to view Banswara squad">
-                                <div style="font-size: 2.2rem; color: #fbbf24;"><i class="fa-solid fa-shield-halved"></i></div>
-                                <h3 style="margin: 5px 0 0 0; font-family: var(--font-title); font-size: 1.3rem; text-decoration: underline;">BANSWARA</h3>
+                                <div style="font-size: 2.2rem; color: var(--trophy-gold);"><i class="fa-solid fa-shield-halved"></i></div>
+                                <h3 style="margin: 5px 0 0 0; font-family: var(--font-title); font-size: 1.3rem; text-decoration: underline; color: var(--text-primary);">BANSWARA</h3>
                                 <span style="font-size: 0.75rem; color: var(--text-secondary);">HOME (Click Squad)</span>
                             </div>
                             <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-secondary);">VS</div>
                             <div id="next-match-opp-box" class="team-clickable" data-teamid="Maharashtra" style="text-align: center; cursor: pointer;" title="Click to view opponent squad">
                                 <div id="next-match-opp-icon" style="font-size: 2.2rem; color: var(--sky);"><i class="fa-solid fa-user-ninja"></i></div>
-                                <h3 id="next-match-opp-name" style="margin: 5px 0 0 0; font-family: var(--font-title); font-size: 1.3rem; text-decoration: underline;">MAHARASHTRA</h3>
+                                <h3 id="next-match-opp-name" style="margin: 5px 0 0 0; font-family: var(--font-title); font-size: 1.3rem; text-decoration: underline; color: var(--text-primary);">MAHARASHTRA</h3>
                                 <span style="font-size: 0.75rem; color: var(--text-secondary);">AWAY (Click Squad)</span>
                             </div>
                         </div>
 
                         <!-- Clean Play Match Action -->
                         <div style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: center;">
-                            <button id="btn-launch-prematch" class="btn btn-primary btn-large" style="width: 100%; padding: 16px; font-size: 1.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; box-shadow: 0 0 25px rgba(251,191,36,0.35);">
+                            <button id="btn-launch-prematch" class="btn btn-primary btn-large" style="width: 100%; padding: 16px; font-size: 1.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px;">
                                 <i class="fa-solid fa-play" style="margin-right: 10px;"></i> Play Match
                             </button>
                         </div>
@@ -86,24 +86,24 @@
 
                     <!-- Side Stats & League Standings Preview -->
                     <div style="display: flex; flex-direction: column; gap: 15px;">
-                        <div class="setup-card" style="padding: 15px;">
-                            <h3 style="margin-top: 0; font-family: var(--font-title); font-size: 1rem; color: #fbbf24;"><i class="fa-solid fa-trophy"></i> Banswara Season Ranks</h3>
+                        <div class="setup-card" style="padding: 15px; background: #FFFFFF;">
+                            <h3 style="margin-top: 0; font-family: var(--font-title); font-size: 1rem; color: var(--trophy-gold);"><i class="fa-solid fa-trophy"></i> Banswara Season Ranks</h3>
                             <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
-                                <div style="display: flex; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; background: #FAF7F0; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-dim);">
                                     <span>T20 League Rank:</span>
                                     <span id="rank-t20-badge" style="font-weight: 800; color: var(--sky);">1st (0 PTS)</span>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; background: #FAF7F0; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-dim);">
                                     <span>Ranji Test Rank:</span>
-                                    <span id="rank-test-badge" style="font-weight: 800; color: #fbbf24;">1st (0 PTS)</span>
+                                    <span id="rank-test-badge" style="font-weight: 800; color: var(--trophy-gold);">1st (0 PTS)</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="setup-card" style="padding: 15px; flex: 1;">
-                            <h3 style="margin-top: 0; font-family: var(--font-title); font-size: 1rem;"><i class="fa-solid fa-newspaper"></i> Today's Season Feed</h3>
+                        <div class="setup-card" style="padding: 15px; flex: 1; background: #FFFFFF;">
+                            <h3 style="margin-top: 0; font-family: var(--font-title); font-size: 1rem; color: var(--text-primary);"><i class="fa-solid fa-newspaper"></i> Today's Season Feed</h3>
                             <div id="feed-log-container" style="font-size: 0.8rem; color: var(--text-secondary); max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
-                                <div style="background: rgba(255,255,255,0.02); padding: 6px 10px; border-left: 3px solid var(--sky); border-radius: 2px;">Season initialized! Domestic T20 & Ranji Test leagues are underway.</div>
+                                <div style="background: #FAF7F0; padding: 6px 10px; border-left: 3px solid var(--sky); border-radius: 2px;">Season initialized! Domestic T20 & Ranji Test leagues are underway.</div>
                             </div>
                         </div>
                     </div>
@@ -658,11 +658,11 @@
 
         <!-- PRE-MATCH BRIEFING & SQUAD LINEUPS MODAL -->
         <div id="prematch-modal" class="modal-overlay hidden">
-            <div class="glass-card modal-content" style="max-width: 920px; width: 94%; max-height: 88vh; overflow-y: auto; padding: 25px; border: 1px solid rgba(251,191,36,0.4);">
+            <div class="glass-card modal-content" style="max-width: 920px; width: 94%; max-height: 88vh; overflow-y: auto; padding: 25px; border: 1px solid var(--border-color); background: #FFFFFF; color: var(--text-primary);">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
                     <div>
-                        <span id="prematch-format-badge" class="badge" style="background: var(--sky); color: #000; font-weight: 800; font-size: 0.8rem; padding: 3px 8px; border-radius: 3px; margin-bottom: 4px; display: inline-block;">T20 LEAGUE</span>
-                        <h2 style="margin: 0; font-family: var(--font-title); font-size: 1.5rem; letter-spacing: 1px;"><i class="fa-solid fa-clipboard-user" style="color: #fbbf24; margin-right: 8px;"></i> Pre-Match Briefing & Playing XIs</h2>
+                        <span id="prematch-format-badge" class="badge" style="background: var(--format-primary); color: #FFFFFF; font-weight: 800; font-size: 0.8rem; padding: 4px 10px; border-radius: 4px; margin-bottom: 4px; display: inline-block;">T20 LEAGUE</span>
+                        <h2 style="margin: 0; font-family: var(--font-title); font-size: 1.5rem; letter-spacing: 1px; color: var(--text-primary);"><i class="fa-solid fa-clipboard-user" style="color: var(--trophy-gold); margin-right: 8px;"></i> Pre-Match Briefing & Playing XIs</h2>
                     </div>
                     <button id="close-prematch-modal" class="btn btn-secondary btn-mini" style="padding: 6px 12px;"><i class="fa-solid fa-xmark"></i></button>
                 </div>
@@ -670,8 +670,8 @@
                 <!-- Squad Lineups Grid -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <!-- Left: Banswara Squad (11 Players) -->
-                    <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(251,191,36,0.3); border-radius: 8px; padding: 15px;">
-                        <h3 style="margin: 0 0 12px 0; color: #fbbf24; font-family: var(--font-title); font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="background: #FAF7F0; border: 1px solid var(--border-dim); border-radius: 8px; padding: 15px;">
+                        <h3 style="margin: 0 0 12px 0; color: var(--trophy-gold); font-family: var(--font-title); font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between;">
                             <span><i class="fa-solid fa-shield-halved"></i> Banswara Playing XI</span>
                             <span style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase;">HOME</span>
                         </h3>
@@ -679,7 +679,7 @@
                     </div>
 
                     <!-- Right: Opponent Squad (11 Players) -->
-                    <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                    <div style="background: #FAF7F0; border: 1px solid var(--border-dim); border-radius: 8px; padding: 15px;">
                         <h3 style="margin: 0 0 12px 0; color: var(--sky); font-family: var(--font-title); font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between;">
                             <span id="prematch-opp-heading"><i class="fa-solid fa-user-ninja"></i> Opponent Playing XI</span>
                             <span style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase;">AWAY</span>
@@ -689,11 +689,11 @@
                 </div>
 
                 <!-- Pitch Condition & Venue Block -->
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <div style="background: #FAF7F0; border: 1px solid var(--border-dim); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: center;">
                         <div>
-                            <label for="pitch-type" style="font-size: 0.82rem; font-weight: 700; color: #fbbf24; display: block; margin-bottom: 6px;"><i class="fa-solid fa-mountain-sun"></i> Select Pitch Condition:</label>
-                            <select id="pitch-type" style="background: rgba(0,0,0,0.6); border: 1px solid var(--border-color); color: #fff; padding: 10px;">
+                            <label for="pitch-type" style="font-size: 0.82rem; font-weight: 700; color: var(--trophy-gold); display: block; margin-bottom: 6px;"><i class="fa-solid fa-mountain-sun"></i> Select Pitch Condition:</label>
+                            <select id="pitch-type" style="background: #FFFFFF; border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px;">
                                 <option value="FLAT" selected>Flat Pitch (High-scoring, Batting Paradise)</option>
                                 <option value="GREEN">Green Pitch (Extra Seam & Bounce for Fast Bowlers)</option>
                                 <option value="SPIN">Turning Pitch (Favors Spinners)</option>
@@ -702,13 +702,13 @@
                         </div>
                         <div>
                             <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;"><i class="fa-solid fa-location-dot"></i> Venue Match Location:</label>
-                            <div id="prematch-venue-name" style="padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-dim); border-radius: 4px; font-size: 0.9rem; font-weight: 600;">Banswara Cricket Ground</div>
+                            <div id="prematch-venue-name" style="padding: 10px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">Banswara Cricket Ground</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Proceed Button -->
-                <button id="btn-goto-toss" class="btn btn-primary btn-large" style="width: 100%; padding: 16px; font-size: 1.15rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(251,191,36,0.3);">
+                <button id="btn-goto-toss" class="btn btn-primary btn-large" style="width: 100%; padding: 16px; font-size: 1.15rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
                     <i class="fa-solid fa-coins" style="margin-right: 8px;"></i> Proceed to Coin Toss
                 </button>
             </div>
@@ -716,9 +716,9 @@
 
         <!-- DEDICATED 3D COIN TOSS STAGE MODAL -->
         <div id="toss-stage-modal" class="modal-overlay hidden">
-            <div class="glass-card modal-content" style="max-width: 550px; width: 90%; padding: 30px; text-align: center; border: 1px solid rgba(251,191,36,0.5); box-shadow: 0 0 50px rgba(0,0,0,0.9), 0 0 30px rgba(251,191,36,0.2);">
+            <div class="glass-card modal-content" style="max-width: 550px; width: 90%; padding: 30px; text-align: center; border: 1px solid var(--border-color); background: #FFFFFF; color: var(--text-primary); box-shadow: var(--shadow-modal);">
                 <span style="font-size: 0.8rem; font-weight: 800; color: var(--sky); letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 4px;">OFFICIAL PRE-MATCH PROTOCOL</span>
-                <h2 style="margin: 0 0 10px 0; font-family: var(--font-title); font-size: 2rem; color: #fbbf24; letter-spacing: 1px;"><i class="fa-solid fa-coins"></i> THE COIN TOSS</h2>
+                <h2 style="margin: 0 0 10px 0; font-family: var(--font-title); font-size: 2rem; color: var(--trophy-gold); letter-spacing: 1px;"><i class="fa-solid fa-coins"></i> THE COIN TOSS</h2>
                 <p id="toss-instruction" style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px;">Call Heads or Tails to toss the coin</p>
 
                 <!-- 3D Coin Stage -->
