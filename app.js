@@ -261,8 +261,16 @@ class MatchManager {
         // SVG elements
         this.svgFielders = document.getElementById("svg-fielders");
         this.svgBatsmen = document.getElementById("svg-batsmen");
+        this.svgUmpires = document.getElementById("svg-umpires");
         this.svgBall = document.getElementById("svg-ball");
         
+        // Opener Selection Roster & Slots
+        this.openersSquadList = document.getElementById("openers-squad-list");
+        this.slot1PlayerDisplay = document.getElementById("slot-1-player-display");
+        this.slot2PlayerDisplay = document.getElementById("slot-2-player-display");
+        this.selectedOpener1Index = 0;
+        this.selectedOpener2Index = 1;
+
         // Setup initial event handlers
         this.setupEvents();
         this.updateDashboardUI();
@@ -993,23 +1001,25 @@ class MatchManager {
         ourRoster.forEach(p => p.resetStats());
         oppRoster.forEach(p => p.resetStats());
 
-        // Fill dropdown selections with batters
-        this.opener1Select.innerHTML = "";
-        this.opener2Select.innerHTML = "";
+        if (this.opener1Select) this.opener1Select.innerHTML = "";
+        if (this.opener2Select) this.opener2Select.innerHTML = "";
         
         const battingTeam = this.userBatsFirst ? ourRoster : oppRoster;
         
         if (this.userBatsFirst) {
-            // User selects openers
             battingTeam.forEach((p, idx) => {
                 const opt1 = new Option(`${p.name} (${p.role}) - Rating: ${p.battingRating}`, idx);
                 const opt2 = new Option(`${p.name} (${p.role}) - Rating: ${p.battingRating}`, idx);
-                this.opener1Select.add(opt1);
-                this.opener2Select.add(opt2);
+                if (this.opener1Select) this.opener1Select.add(opt1);
+                if (this.opener2Select) this.opener2Select.add(opt2);
             });
-            this.opener2Select.selectedIndex = 1;
-            this.updateOpenerStats(1);
-            this.updateOpenerStats(2);
+
+            this.selectedOpener1Index = 0;
+            this.selectedOpener2Index = 1;
+            if (this.opener1Select) this.opener1Select.value = 0;
+            if (this.opener2Select) this.opener2Select.value = 1;
+
+            this.renderOpenersSquadList();
             this.validateOpeners();
         } else {
             // AI selects openers (best 2 batters)
@@ -1017,43 +1027,115 @@ class MatchManager {
             const idx1 = battingTeam.indexOf(sortedAI[0]);
             const idx2 = battingTeam.indexOf(sortedAI[1]);
             
-            const opt1 = new Option(`${sortedAI[0].name} (Bat: ${sortedAI[0].battingRating})`, idx1);
-            const opt2 = new Option(`${sortedAI[1].name} (Bat: ${sortedAI[1].battingRating})`, idx2);
-            this.opener1Select.add(opt1);
-            this.opener2Select.add(opt2);
-            this.opener1Select.disabled = true;
-            this.opener2Select.disabled = true;
+            this.selectedOpener1Index = idx1;
+            this.selectedOpener2Index = idx2;
+            if (this.opener1Select) this.opener1Select.value = idx1;
+            if (this.opener2Select) this.opener2Select.value = idx2;
 
-            const div1 = document.getElementById("opener-1-stats");
-            const div2 = document.getElementById("opener-2-stats");
-            div1.textContent = "AI Opener Selection";
-            div2.textContent = "AI Opener Selection";
+            this.renderOpenersSquadList();
+            this.validateOpeners();
         }
     }
 
-    updateOpenerStats(num) {
-        const dropdown = num === 1 ? this.opener1Select : this.opener2Select;
-        const div = document.getElementById(`opener-${num}-stats`);
-        if (!div) return;
+    renderOpenersSquadList() {
+        if (!this.openersSquadList) return;
         const battingTeam = this.userBatsFirst ? this.getOurTeamRoster() : this.getOpponentTeamRoster();
-        const player = battingTeam[dropdown.value];
-        if (player) {
-            div.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-gavel" style="color:var(--sky); margin-right:4px;"></i> Batting Rating: <strong style="font-size:1.05rem; color:var(--sky);">${player.battingRating}</strong></span>
-                    <span><i class="fa-solid fa-baseball" style="color:#fb7185; margin-right:4px;"></i> Bowl Rating: <strong>${player.bowlingRating}</strong></span>
+        this.openersSquadList.innerHTML = "";
+
+        battingTeam.forEach((player, idx) => {
+            const isSlot1 = this.selectedOpener1Index === idx;
+            const isSlot2 = this.selectedOpener2Index === idx;
+
+            const card = document.createElement("div");
+            card.className = "squad-player-pick-item";
+            card.style.cssText = `padding: 12px 14px; border: 1px solid ${isSlot1 || isSlot2 ? 'var(--trophy-gold)' : 'var(--border-color)'}; border-radius: 10px; background: ${isSlot1 || isSlot2 ? '#FFFDF7' : '#FFFFFF'}; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03);`;
+
+            let badgeHTML = "";
+            if (isSlot1) badgeHTML = `<span class="badge" style="background:var(--trophy-gold); color:#FFF; font-size:0.72rem; font-weight:800;">OPENER #1</span>`;
+            else if (isSlot2) badgeHTML = `<span class="badge" style="background:var(--pitch-green); color:#FFF; font-size:0.72rem; font-weight:800;">OPENER #2</span>`;
+            else badgeHTML = `<span class="badge" style="background:#FAF7F0; color:var(--text-secondary); font-size:0.72rem; font-weight:700;">${player.role}</span>`;
+
+            card.innerHTML = `
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <strong style="font-family:var(--font-title); font-size:1.02rem; color:#1C2B22;">${player.name}</strong>
+                        ${badgeHTML}
+                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:4px;">
+                        <span>Bat Rating: <strong style="color:var(--sky);">${player.battingRating}</strong></span> | 
+                        <span>Bowl Rating: <strong>${player.bowlingRating}</strong></span>
+                    </div>
                 </div>
-                <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:6px; display:flex; gap:10px; align-items:center;">
-                    <span>Role: <strong style="color:#1C2B22;">${player.role}</strong></span>
-                    <span>Style: <strong>${player.battingStyle || 'Right Hand'}</strong></span>
-                    ${player.isWicketkeeper ? '<span class="badge" style="background:#FAF3E0; color:var(--trophy-gold); font-weight:800; padding: 2px 6px;"><i class="fa-solid fa-hand-holding"></i> WK</span>' : ''}
+                <div style="display:flex; gap:6px;">
+                    <button class="btn btn-mini pick-slot-1-btn" style="background:${isSlot1 ? 'var(--trophy-gold)' : '#FAF7F0'}; color:${isSlot1 ? '#FFF' : '#1C2B22'}; border:1px solid var(--border-color); font-weight:800; font-size:0.72rem; padding:5px 9px; border-radius:6px; cursor:pointer;">
+                        ${isSlot1 ? 'Opener 1 ✓' : '+ Opener 1'}
+                    </button>
+                    <button class="btn btn-mini pick-slot-2-btn" style="background:${isSlot2 ? 'var(--pitch-green)' : '#FAF7F0'}; color:${isSlot2 ? '#FFF' : '#1C2B22'}; border:1px solid var(--border-color); font-weight:800; font-size:0.72rem; padding:5px 9px; border-radius:6px; cursor:pointer;">
+                        ${isSlot2 ? 'Opener 2 ✓' : '+ Opener 2'}
+                    </button>
+                </div>
+            `;
+
+            card.querySelector(".pick-slot-1-btn").onclick = () => this.assignOpenerSlot(1, idx);
+            card.querySelector(".pick-slot-2-btn").onclick = () => this.assignOpenerSlot(2, idx);
+
+            this.openersSquadList.appendChild(card);
+        });
+
+        this.renderOpenerSlotDisplays();
+    }
+
+    assignOpenerSlot(slotNum, playerIdx) {
+        if (slotNum === 1) {
+            if (this.selectedOpener2Index === playerIdx) {
+                this.selectedOpener2Index = this.selectedOpener1Index;
+            }
+            this.selectedOpener1Index = playerIdx;
+            if (this.opener1Select) this.opener1Select.value = playerIdx;
+        } else {
+            if (this.selectedOpener1Index === playerIdx) {
+                this.selectedOpener1Index = this.selectedOpener2Index;
+            }
+            this.selectedOpener2Index = playerIdx;
+            if (this.opener2Select) this.opener2Select.value = playerIdx;
+        }
+
+        this.renderOpenersSquadList();
+        this.validateOpeners();
+    }
+
+    renderOpenerSlotDisplays() {
+        const battingTeam = this.userBatsFirst ? this.getOurTeamRoster() : this.getOpponentTeamRoster();
+        const p1 = battingTeam[this.selectedOpener1Index];
+        const p2 = battingTeam[this.selectedOpener2Index];
+
+        if (this.slot1PlayerDisplay && p1) {
+            this.slot1PlayerDisplay.innerHTML = `
+                <div class="assigned-chip-content" style="display:flex; justify-content:space-between; align-items:center; background:#FFFFFF; border:1.5px solid var(--trophy-gold); border-radius:10px; padding:12px 16px; box-shadow:0 3px 10px rgba(201,151,43,0.12); animation: popInSlot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                    <div>
+                        <strong style="font-family:var(--font-title); font-size:1.1rem; color:#1C2B22; display:block;">${p1.name}</strong>
+                        <span style="font-size:0.78rem; color:var(--text-secondary); font-weight:600;">${p1.role} | Batting Rating: ${p1.battingRating}</span>
+                    </div>
+                    <span class="badge" style="background:#FAF3E0; color:var(--trophy-gold); border:1px solid var(--trophy-gold); font-weight:800; padding:4px 10px; font-size:0.75rem;">STRIKER</span>
+                </div>
+            `;
+        }
+
+        if (this.slot2PlayerDisplay && p2) {
+            this.slot2PlayerDisplay.innerHTML = `
+                <div class="assigned-chip-content" style="display:flex; justify-content:space-between; align-items:center; background:#FFFFFF; border:1.5px solid var(--pitch-green); border-radius:10px; padding:12px 16px; box-shadow:0 3px 10px rgba(15,110,86,0.12); animation: popInSlot 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                    <div>
+                        <strong style="font-family:var(--font-title); font-size:1.1rem; color:#1C2B22; display:block;">${p2.name}</strong>
+                        <span style="font-size:0.78rem; color:var(--text-secondary); font-weight:600;">${p2.role} | Batting Rating: ${p2.battingRating}</span>
+                    </div>
+                    <span class="badge" style="background:#E6F4F1; color:var(--pitch-green); border:1px solid var(--pitch-green); font-weight:800; padding:4px 10px; font-size:0.75rem;">NON-STRIKER</span>
                 </div>
             `;
         }
     }
 
     validateOpeners() {
-        if (this.opener1Select.value === this.opener2Select.value) {
+        if (this.selectedOpener1Index === this.selectedOpener2Index) {
             this.startMatchBtn.disabled = true;
             this.startMatchBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i> CHOOSE DIFFERENT OPENERS';
             this.startMatchBtn.style.opacity = 0.5;
@@ -1091,17 +1173,23 @@ class MatchManager {
 
         const state = this.getCurrentState();
         
+        // Ensure default active bowler is initialized
+        if (!state.currentBowler && bowlingTeam.length > 0) {
+            const bestBowler = [...bowlingTeam].sort((a,b) => b.bowlingRating - a.bowlingRating)[0];
+            state.currentBowler = bestBowler || bowlingTeam[0];
+        }
+
         // Assign openers
         if (state.isUserBatting) {
-            const op1Idx = parseInt(this.opener1Select.value);
-            const op2Idx = parseInt(this.opener2Select.value);
-            state.striker = state.battingTeam[op1Idx];
-            state.nonStriker = state.battingTeam[op2Idx];
+            const op1Idx = this.selectedOpener1Index;
+            const op2Idx = this.selectedOpener2Index;
+            state.striker = state.battingTeam[op1Idx] || state.battingTeam[0];
+            state.nonStriker = state.battingTeam[op2Idx] || state.battingTeam[1];
             state.striker.hasBatted = true;
             state.nonStriker.hasBatted = true;
 
-            const m1El = document.getElementById("opener-1-mentality-val") || document.getElementById("opener-1-mentality");
-            const m2El = document.getElementById("opener-2-mentality-val") || document.getElementById("opener-2-mentality");
+            const m1El = document.getElementById("opener-1-mentality-val");
+            const m2El = document.getElementById("opener-2-mentality-val");
             state.striker.mentality = m1El ? m1El.value : "normal";
             state.nonStriker.mentality = m2El ? m2El.value : "normal";
         } else {
@@ -1119,8 +1207,8 @@ class MatchManager {
         this.logCommentary("Toss", `${this.userWonToss ? 'You' : 'Opponent'} won the toss and elected to ${this.userBatsFirst ? 'Bat' : 'Bowl'} first.`, "welcome");
         this.logCommentary("Innings", `Innings 1: ${state.teamName} starts batting. Openers: ${state.striker.name} & ${state.nonStriker.name}.`, "welcome");
 
-        this.pitchReportUI.textContent = `Pitch: ${this.pitch.toUpperCase()}`;
-        this.matchTitleUI.textContent = `${this.userBatsFirst ? `${ourShort} vs ${oppShort}` : `${oppShort} vs ${ourShort}`} - ${this.format}`;
+        if (this.pitchReportUI) this.pitchReportUI.textContent = `Pitch: ${this.pitch.toUpperCase()}`;
+        if (this.matchTitleUI) this.matchTitleUI.textContent = `${this.userBatsFirst ? `${ourShort} vs ${oppShort}` : `${oppShort} vs ${ourShort}`} - ${this.format}`;
 
         // Trigger Dressing Room Pavilion Tunnel Transition
         const tunnelOverlay = document.getElementById("tunnel-transition-overlay");
@@ -1145,16 +1233,20 @@ class MatchManager {
                 
                 this.setupField();
                 this.updateUI();
-                this.drawField();
-                this.triggerBowlerSelection();
+                this.drawField(true); // Run animated walkout spread!
+                if (!this.userBatsFirst) {
+                    this.triggerBowlerSelection();
+                }
             }, 1200);
         } else {
             this.openersScreen.classList.add("hidden");
             this.matchScreen.classList.remove("hidden");
             this.setupField();
             this.updateUI();
-            this.drawField();
-            this.triggerBowlerSelection();
+            this.drawField(true);
+            if (!this.userBatsFirst) {
+                this.triggerBowlerSelection();
+            }
         }
     }
 
@@ -1163,9 +1255,9 @@ class MatchManager {
     }
 
     // =========================================================
-    // FIELD GRAPHICS (SVG) RENDERING
+    // FIELD GRAPHICS (SVG) RENDERING & ANIMATED WALKOUT SPREAD
     // =========================================================
-    drawField() {
+    drawField(isWalkout = false) {
         const state = this.getCurrentState();
         if (!state) return;
 
@@ -1180,40 +1272,96 @@ class MatchManager {
         const batterFill = state.isUserBatting ? batColor : bowlColor;
         const fielderFill = state.isUserBatting ? bowlColor : batColor;
 
-        // Render Batsmen
+        // 1. Render Batsmen
         // Striker at top (300, 240), Non-striker at bottom (300, 360)
-        this.svgBatsmen.innerHTML = `
-            <!-- Striker -->
-            <g transform="translate(300, 240)">
-                <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5" class="pulsate-node" />
-                <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">${state.striker ? this.getInitials(state.striker.name) : 'STR'}*</text>
-            </g>
-            <!-- Non Striker -->
-            <g transform="translate(300, 360)">
-                <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5" />
-                <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">${state.nonStriker ? this.getInitials(state.nonStriker.name) : 'NON'}</text>
-            </g>
-        `;
-
-        // Render Fielders using state positions
-        let fieldersHTML = "";
-        state.fielderPositions.forEach((pos, index) => {
-            let label = pos.name;
-            if (pos.name === "Bowler" && state.currentBowler) {
-                label = this.getInitials(state.currentBowler.name);
-            } else if (pos.name === "Keeper") {
-                const keeper = state.bowlingTeam.find(p => p.isWicketkeeper);
-                label = keeper ? this.getInitials(keeper.name) : "WK";
-            }
-            
-            fieldersHTML += `
-                <g class="${pos.isFixed ? '' : 'draggable-fielder'}" data-idx="${index}" transform="translate(${pos.x}, ${pos.y})">
-                    <circle r="6.5" fill="${fielderFill}" stroke="#fff" stroke-width="1" />
-                    <text y="14" text-anchor="middle" fill="${pos.name === 'Bowler' ? '#F59E0B' : '#9CA3AF'}" font-size="8" font-weight="bold">${label}</text>
+        if (this.svgBatsmen) {
+            this.svgBatsmen.innerHTML = `
+                <!-- Striker -->
+                <g transform="translate(300, 240)">
+                    <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5" class="pulsate-node" />
+                    <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">${state.striker ? this.getInitials(state.striker.name) : 'STR'}*</text>
+                </g>
+                <!-- Non Striker -->
+                <g transform="translate(300, 360)">
+                    <circle r="7" fill="${batterFill}" stroke="#fff" stroke-width="1.5" />
+                    <text y="-12" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">${state.nonStriker ? this.getInitials(state.nonStriker.name) : 'NON'}</text>
                 </g>
             `;
-        });
-        this.svgFielders.innerHTML = fieldersHTML;
+        }
+
+        // 2. Render Umpires (Main Umpire behind bowler's stumps & Square Leg Umpire)
+        if (this.svgUmpires) {
+            this.svgUmpires.innerHTML = `
+                <!-- Main Umpire behind bowler's wickets -->
+                <g transform="translate(300, 215)">
+                    <circle r="6.5" fill="#1E293B" stroke="#FFFFFF" stroke-width="1.5" />
+                    <text y="-10" text-anchor="middle" fill="#F8FAFC" font-size="8" font-weight="bold">UMP</text>
+                </g>
+                <!-- Square Leg Umpire -->
+                <g transform="translate(450, 360)">
+                    <circle r="6.5" fill="#1E293B" stroke="#FFFFFF" stroke-width="1.5" />
+                    <text y="-10" text-anchor="middle" fill="#F8FAFC" font-size="8" font-weight="bold">UMP</text>
+                </g>
+            `;
+        }
+
+        // 3. Render Fielders using state positions (with animated walkout option)
+        if (this.svgFielders) {
+            if (isWalkout) {
+                // Starting position: Pitch Center / Tunnel (300, 540)
+                const startX = 300;
+                const startY = 540;
+
+                let fieldersHTML = "";
+                state.fielderPositions.forEach((pos, index) => {
+                    let label = pos.name;
+                    if (pos.name === "Bowler" && state.currentBowler) {
+                        label = this.getInitials(state.currentBowler.name);
+                    } else if (pos.name === "Keeper") {
+                        const keeper = state.bowlingTeam.find(p => p.isWicketkeeper);
+                        label = keeper ? this.getInitials(keeper.name) : "WK";
+                    }
+                    
+                    fieldersHTML += `
+                        <g id="fielder-node-${index}" class="${pos.isFixed ? '' : 'draggable-fielder'}" data-idx="${index}" transform="translate(${startX}, ${startY})" style="transition: transform 1.3s cubic-bezier(0.25, 1, 0.5, 1);">
+                            <circle r="6.5" fill="${fielderFill}" stroke="#fff" stroke-width="1.5" />
+                            <text y="14" text-anchor="middle" fill="${pos.name === 'Bowler' ? '#F59E0B' : '#FFFFFF'}" font-size="8" font-weight="bold">${label}</text>
+                        </g>
+                    `;
+                });
+
+                this.svgFielders.innerHTML = fieldersHTML;
+
+                // Trigger smooth walkout spread animation to designated coordinates!
+                setTimeout(() => {
+                    state.fielderPositions.forEach((pos, index) => {
+                        const node = document.getElementById(`fielder-node-${index}`);
+                        if (node) {
+                            node.setAttribute("transform", `translate(${pos.x}, ${pos.y})`);
+                        }
+                    });
+                }, 60);
+            } else {
+                let fieldersHTML = "";
+                state.fielderPositions.forEach((pos, index) => {
+                    let label = pos.name;
+                    if (pos.name === "Bowler" && state.currentBowler) {
+                        label = this.getInitials(state.currentBowler.name);
+                    } else if (pos.name === "Keeper") {
+                        const keeper = state.bowlingTeam.find(p => p.isWicketkeeper);
+                        label = keeper ? this.getInitials(keeper.name) : "WK";
+                    }
+                    
+                    fieldersHTML += `
+                        <g class="${pos.isFixed ? '' : 'draggable-fielder'}" data-idx="${index}" transform="translate(${pos.x}, ${pos.y})">
+                            <circle r="6.5" fill="${fielderFill}" stroke="#fff" stroke-width="1.5" />
+                            <text y="14" text-anchor="middle" fill="${pos.name === 'Bowler' ? '#F59E0B' : '#FFFFFF'}" font-size="8" font-weight="bold">${label}</text>
+                        </g>
+                    `;
+                });
+                this.svgFielders.innerHTML = fieldersHTML;
+            }
+        }
 
         // Render sector lines & gap badges
         this.renderSectorGaps(state);

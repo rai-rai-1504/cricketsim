@@ -138,114 +138,122 @@
 
         <!-- SCREEN 2: OPENERS SELECTION -->
         <!-- SCREEN 2: DRESSING ROOM — PAD UP & OPENER SELECTION STAGE -->
-        <section id="openers-screen" class="glass-panel hidden fade-in" style="max-width: 1100px; margin: 0 auto; padding: 30px; background: #FFFFFF; border: 1px solid var(--border-color); box-shadow: var(--shadow-modal); border-radius: var(--radius-lg);">
-            <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
-                <span class="badge" style="background: var(--format-primary); color: #FFFFFF; font-weight: 800; font-size: 0.8rem; padding: 4px 12px; border-radius: 4px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; display: inline-block;">DRESSING ROOM BRIEFING</span>
-                <h1 style="font-family: var(--font-title); font-size: 2.2rem; margin: 6px 0; color: #1C2B22; letter-spacing: 1px;"><i class="fa-solid fa-shirt" style="color: var(--trophy-gold); margin-right: 10px;"></i> SELECT OPENING BATSMEN TO PAD UP</h1>
-                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Coach, assign your two opening batters and set their match mentality before taking the field.</p>
+        <section id="openers-screen" class="glass-panel hidden fade-in" style="max-width: 1200px; margin: 0 auto; padding: 25px; background: #FFFFFF; border: 1px solid var(--border-color); box-shadow: var(--shadow-modal); border-radius: var(--radius-lg);">
+            <div style="text-align: center; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                <span class="badge" style="background: var(--format-primary); color: #FFFFFF; font-weight: 800; font-size: 0.8rem; padding: 4px 14px; border-radius: 4px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; display: inline-block;">DRESSING ROOM BRIEFING</span>
+                <h1 style="font-family: var(--font-title); font-size: 2.1rem; margin: 4px 0; color: #1C2B22; letter-spacing: 1px;"><i class="fa-solid fa-shirt" style="color: var(--trophy-gold); margin-right: 10px;"></i> SELECT OPENING BATSMEN TO PAD UP</h1>
+                <p style="color: var(--text-secondary); font-size: 0.92rem; margin: 0;">Coach, select two players from your squad on the left to fill the opener spots on the right.</p>
             </div>
 
-            <div class="dressing-room-grid" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 25px; align-items: center; margin-bottom: 30px;">
+            <!-- TWO COLUMN DRESSING ROOM LAYOUT -->
+            <div class="dressing-room-split-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; margin-bottom: 25px;">
                 
-                <!-- OPENER 1 LOCKER CARD (STRIKER) -->
-                <div class="locker-card" style="background: #FFFDF7; border: 2px solid var(--trophy-gold); border-radius: 14px; padding: 22px; box-shadow: 0 6px 20px rgba(201,151,43,0.12); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 0; right: 0; background: var(--trophy-gold); color: #FFFFFF; font-family: var(--font-title); font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-bottom-left-radius: 10px; letter-spacing: 1px;">
-                        LOCKER #01 | STRIKER
-                    </div>
-                    
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
-                        <div style="background: #FAF3E0; border: 1px solid var(--trophy-gold); color: var(--trophy-gold); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-                            <i class="fa-solid fa-user-shield"></i>
-                        </div>
-                        <div>
-                            <h3 style="margin: 0; font-family: var(--font-title); font-size: 1.25rem; color: #1C2B22; letter-spacing: 0.5px;">First Opener</h3>
-                            <span style="font-size: 0.78rem; color: var(--text-secondary);">Facing the 1st delivery</span>
-                        </div>
+                <!-- LEFT COLUMN: SQUAD ROSTER LIST -->
+                <div style="background: #FFFDF9; border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; box-shadow: var(--shadow-card);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                        <h3 style="margin: 0; font-family: var(--font-title); font-size: 1.15rem; color: #1C2B22; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-users" style="color: var(--pitch-green);"></i> Playing XI Squad
+                        </h3>
+                        <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase;">11 Players</span>
                     </div>
 
-                    <!-- Batter Selection Dropdown -->
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="opener-1" style="font-size: 0.78rem; font-weight: 700; color: #1C2B22; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px;">Select Player from Squad:</label>
-                        <select id="opener-1" class="player-dropdown" style="background: #FFFFFF; border: 1px solid var(--border-color); color: #1C2B22; padding: 12px; font-weight: 600; font-size: 0.95rem; border-radius: 8px; width: 100%;"></select>
-                    </div>
-
-                    <!-- Player Mini Stats Card -->
-                    <div id="opener-1-stats" style="background: #FFFFFF; border: 1px solid var(--border-dim); border-radius: 8px; padding: 12px; font-size: 0.88rem; color: #1C2B22; margin-bottom: 18px; font-weight: 600;"></div>
-
-                    <!-- Mentality Selection Pills -->
-                    <div>
-                        <label style="font-size: 0.78rem; font-weight: 700; color: #1C2B22; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px;">Opener Tactical Mentality:</label>
-                        <div class="mentality-selector-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                            <button type="button" class="opener-mentality-btn" data-opener="1" data-mentality="defensive" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
-                                <i class="fa-solid fa-shield" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--sky);"></i> DEFENSIVE
-                            </button>
-                            <button type="button" class="opener-mentality-btn active" data-opener="1" data-mentality="normal" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
-                                <i class="fa-solid fa-scale-balanced" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--pitch-green);"></i> BALANCED
-                            </button>
-                            <button type="button" class="opener-mentality-btn" data-opener="1" data-mentality="attack" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
-                                <i class="fa-solid fa-bolt" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--crimson);"></i> ATTACKING
-                            </button>
-                        </div>
-                        <input type="hidden" id="opener-1-mentality-val" value="normal">
+                    <!-- Scrollable Squad Cards List -->
+                    <div id="openers-squad-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 480px; overflow-y: auto; padding-right: 5px;">
+                        <!-- Injected dynamically by JS -->
                     </div>
                 </div>
 
-                <!-- SEPARATOR / DRESSING ROOM DIVIDER -->
-                <div style="text-align: center; padding: 0 10px;">
-                    <div style="background: #FAF7F0; border: 1px solid var(--border-color); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--trophy-gold); margin: 0 auto 8px auto;">
-                        <i class="fa-solid fa-person-walking-luggage"></i>
-                    </div>
-                    <span style="font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; color: var(--text-secondary); letter-spacing: 1px; text-transform: uppercase; display: block;">PAD UP</span>
-                </div>
-
-                <!-- OPENER 2 LOCKER CARD (NON-STRIKER) -->
-                <div class="locker-card" style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 14px; padding: 22px; box-shadow: var(--shadow-card); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 0; right: 0; background: var(--pitch-green); color: #FFFFFF; font-family: var(--font-title); font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-bottom-left-radius: 10px; letter-spacing: 1px;">
-                        LOCKER #02 | NON-STRIKER
-                    </div>
+                <!-- RIGHT COLUMN: OPENER SLOTS & MENTALITY SELECTION -->
+                <div style="display: flex; flex-direction: column; gap: 18px;">
                     
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
-                        <div style="background: #FAF7F0; border: 1px solid var(--pitch-green); color: var(--pitch-green); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-                            <i class="fa-solid fa-user"></i>
+                    <!-- OPENER SLOT 1 (STRIKER) -->
+                    <div class="locker-card-slot" id="slot-card-1" style="background: #FFFDF7; border: 2px solid var(--trophy-gold); border-radius: 14px; padding: 20px; box-shadow: 0 4px 16px rgba(201,151,43,0.1); position: relative; transition: all 0.3s ease;">
+                        <div style="position: absolute; top: 0; right: 0; background: var(--trophy-gold); color: #FFFFFF; font-family: var(--font-title); font-size: 0.75rem; font-weight: 800; padding: 4px 14px; border-bottom-left-radius: 10px; letter-spacing: 1px;">
+                            SLOT #01 | STRIKER
                         </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                            <div style="background: #FAF3E0; border: 1px solid var(--trophy-gold); color: var(--trophy-gold); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-family: var(--font-title); font-size: 1.15rem; color: #1C2B22;">First Opener</h3>
+                                <span style="font-size: 0.75rem; color: var(--text-secondary);">Facing 1st delivery</span>
+                            </div>
+                        </div>
+
+                        <!-- Assigned Player Chip Container (No text writing below!) -->
+                        <div id="slot-1-player-display" class="opener-assigned-chip" style="margin-bottom: 16px;">
+                            <!-- Injected dynamically -->
+                        </div>
+
+                        <!-- Mentality Selector Pills -->
                         <div>
-                            <h3 style="margin: 0; font-family: var(--font-title); font-size: 1.25rem; color: #1C2B22; letter-spacing: 0.5px;">Second Opener</h3>
-                            <span style="font-size: 0.78rem; color: var(--text-secondary);">Non-striker's end</span>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: #1C2B22; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px;">Tactical Mentality:</label>
+                            <div class="mentality-selector-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                                <button type="button" class="opener-mentality-btn" data-opener="1" data-mentality="defensive" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
+                                    <i class="fa-solid fa-shield" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--sky);"></i> DEFENSIVE
+                                </button>
+                                <button type="button" class="opener-mentality-btn active" data-opener="1" data-mentality="normal" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
+                                    <i class="fa-solid fa-scale-balanced" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--pitch-green);"></i> BALANCED
+                                </button>
+                                <button type="button" class="opener-mentality-btn" data-opener="1" data-mentality="attack" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
+                                    <i class="fa-solid fa-bolt" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--crimson);"></i> ATTACKING
+                                </button>
+                            </div>
+                            <input type="hidden" id="opener-1-mentality-val" value="normal">
                         </div>
                     </div>
 
-                    <!-- Batter Selection Dropdown -->
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="opener-2" style="font-size: 0.78rem; font-weight: 700; color: #1C2B22; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px;">Select Player from Squad:</label>
-                        <select id="opener-2" class="player-dropdown" style="background: #FFFFFF; border: 1px solid var(--border-color); color: #1C2B22; padding: 12px; font-weight: 600; font-size: 0.95rem; border-radius: 8px; width: 100%;"></select>
-                    </div>
-
-                    <!-- Player Mini Stats Card -->
-                    <div id="opener-2-stats" style="background: #FAF7F0; border: 1px solid var(--border-dim); border-radius: 8px; padding: 12px; font-size: 0.88rem; color: #1C2B22; margin-bottom: 18px; font-weight: 600;"></div>
-
-                    <!-- Mentality Selection Pills -->
-                    <div>
-                        <label style="font-size: 0.78rem; font-weight: 700; color: #1C2B22; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px;">Opener Tactical Mentality:</label>
-                        <div class="mentality-selector-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                            <button type="button" class="opener-mentality-btn" data-opener="2" data-mentality="defensive" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
-                                <i class="fa-solid fa-shield" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--sky);"></i> DEFENSIVE
-                            </button>
-                            <button type="button" class="opener-mentality-btn active" data-opener="2" data-mentality="normal" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
-                                <i class="fa-solid fa-scale-balanced" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--pitch-green);"></i> BALANCED
-                            </button>
-                            <button type="button" class="opener-mentality-btn" data-opener="2" data-mentality="attack" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
-                                <i class="fa-solid fa-bolt" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--crimson);"></i> ATTACKING
-                            </button>
+                    <!-- OPENER SLOT 2 (NON-STRIKER) -->
+                    <div class="locker-card-slot" id="slot-card-2" style="background: #FFFFFF; border: 2px solid var(--pitch-green); border-radius: 14px; padding: 20px; box-shadow: var(--shadow-card); position: relative; transition: all 0.3s ease;">
+                        <div style="position: absolute; top: 0; right: 0; background: var(--pitch-green); color: #FFFFFF; font-family: var(--font-title); font-size: 0.75rem; font-weight: 800; padding: 4px 14px; border-bottom-left-radius: 10px; letter-spacing: 1px;">
+                            SLOT #02 | NON-STRIKER
                         </div>
-                        <input type="hidden" id="opener-2-mentality-val" value="normal">
+
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                            <div style="background: #FAF7F0; border: 1px solid var(--pitch-green); color: var(--pitch-green); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-family: var(--font-title); font-size: 1.15rem; color: #1C2B22;">Second Opener</h3>
+                                <span style="font-size: 0.75rem; color: var(--text-secondary);">Non-striker's end</span>
+                            </div>
+                        </div>
+
+                        <!-- Assigned Player Chip Container (No text writing below!) -->
+                        <div id="slot-2-player-display" class="opener-assigned-chip" style="margin-bottom: 16px;">
+                            <!-- Injected dynamically -->
+                        </div>
+
+                        <!-- Mentality Selector Pills -->
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: #1C2B22; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px;">Tactical Mentality:</label>
+                            <div class="mentality-selector-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                                <button type="button" class="opener-mentality-btn" data-opener="2" data-mentality="defensive" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
+                                    <i class="fa-solid fa-shield" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--sky);"></i> DEFENSIVE
+                                </button>
+                                <button type="button" class="opener-mentality-btn active" data-opener="2" data-mentality="normal" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
+                                    <i class="fa-solid fa-scale-balanced" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--pitch-green);"></i> BALANCED
+                                </button>
+                                <button type="button" class="opener-mentality-btn" data-opener="2" data-mentality="attack" style="padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border-color); background: #F7F3E8; font-family: var(--font-title); font-size: 0.78rem; font-weight: 800; cursor: pointer; text-align: center;">
+                                    <i class="fa-solid fa-bolt" style="display: block; font-size: 1rem; margin-bottom: 4px; color: var(--crimson);"></i> ATTACKING
+                                </button>
+                            </div>
+                            <input type="hidden" id="opener-2-mentality-val" value="normal">
+                        </div>
                     </div>
+
+                    <!-- Hidden legacy selects for state sync -->
+                    <select id="opener-1" style="display: none;"></select>
+                    <select id="opener-2" style="display: none;"></select>
+
+                    <!-- START MATCH BUTTON -->
+                    <button id="start-match-btn" class="btn btn-primary btn-large" style="width: 100%; padding: 16px; font-size: 1.15rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; box-shadow: 0 6px 22px rgba(15,110,86,0.3); margin-top: 5px;">
+                        <i class="fa-solid fa-person-walking-arrow-right" style="margin-right: 10px; font-size: 1.3rem;"></i> Pad Up & Walk Out to Bat
+                    </button>
                 </div>
             </div>
-
-            <!-- Start Match Action Button -->
-            <button id="start-match-btn" class="btn btn-primary btn-large" style="width: 100%; padding: 18px; font-size: 1.25rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; box-shadow: 0 6px 22px rgba(15,110,86,0.3);">
-                <i class="fa-solid fa-person-walking-arrow-right" style="margin-right: 12px; font-size: 1.4rem;"></i> Pad Up & Walk Out to Bat
-            </button>
         </section>
 
         <!-- SCREEN 3: MAIN SIMULATION DASHBOARD -->
@@ -459,6 +467,7 @@
                             <g id="svg-gap-labels"></g>
                             <g id="svg-fielders"></g>
                             <g id="svg-batsmen"></g>
+                            <g id="svg-umpires"></g>
                             <circle id="svg-ball" r="5.5" fill="#E74C3C" stroke="#fff" stroke-width="1" style="display: none; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));" />
                             
                             <!-- Boundary Flash Overlays -->
