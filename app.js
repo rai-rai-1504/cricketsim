@@ -969,6 +969,7 @@ class MatchManager {
     showOpenersSelection() {
         this.setupScreen.classList.add("hidden");
         this.openersScreen.classList.remove("hidden");
+        document.body.dataset.format = this.format || "T20";
 
         const ourRoster = this.getOurTeamRoster();
         const oppRoster = this.getOpponentTeamRoster();
