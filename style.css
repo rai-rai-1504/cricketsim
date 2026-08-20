@@ -760,3 +760,27 @@ select:focus, input:focus {
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeIn 0.35s ease-out forwards; }
+
+/* Dressing Room Background Image & Panel Styling */
+#openers-screen.dressing-room-bg-active {
+    background: linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.82)), url('./dressing_room_bg.jpg') center/cover no-repeat !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+    border-radius: 20px !important;
+}
+
+#openers-screen .dressing-room-header-title {
+    color: #FFFFFF !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+#openers-screen .dressing-room-header-sub {
+    color: #E2E8F0 !important;
+}
+
+.dressing-room-panel-card {
+    background: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25) !important;
+}

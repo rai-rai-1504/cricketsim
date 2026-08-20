@@ -138,18 +138,18 @@
 
         <!-- SCREEN 2: OPENERS SELECTION -->
         <!-- SCREEN 2: DRESSING ROOM — PAD UP & OPENER SELECTION STAGE -->
-        <section id="openers-screen" class="glass-panel hidden fade-in" style="max-width: 1200px; margin: 0 auto; padding: 25px; background: #FFFFFF; border: 1px solid var(--border-color); box-shadow: var(--shadow-modal); border-radius: var(--radius-lg);">
-            <div style="text-align: center; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
-                <span class="badge" style="background: var(--format-primary); color: #FFFFFF; font-weight: 800; font-size: 0.8rem; padding: 4px 14px; border-radius: 4px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; display: inline-block;">DRESSING ROOM BRIEFING</span>
-                <h1 style="font-family: var(--font-title); font-size: 2.1rem; margin: 4px 0; color: #1C2B22; letter-spacing: 1px;"><i class="fa-solid fa-shirt" style="color: var(--trophy-gold); margin-right: 10px;"></i> SELECT OPENING BATSMEN TO PAD UP</h1>
-                <p style="color: var(--text-secondary); font-size: 0.92rem; margin: 0;">Coach, select two players from your squad on the left to fill the opener spots on the right.</p>
+        <section id="openers-screen" class="glass-panel hidden fade-in dressing-room-bg-active" style="max-width: 1200px; margin: 0 auto; padding: 28px;">
+            <div style="text-align: center; margin-bottom: 25px; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 16px;">
+                <span class="badge" style="background: var(--format-primary); color: #FFFFFF; font-weight: 800; font-size: 0.8rem; padding: 5px 16px; border-radius: 4px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">DRESSING ROOM BRIEFING</span>
+                <h1 class="dressing-room-header-title" style="font-family: var(--font-title); font-size: 2.2rem; margin: 6px 0; letter-spacing: 1px;"><i class="fa-solid fa-shirt" style="color: var(--trophy-gold); margin-right: 10px;"></i> SELECT OPENING BATSMEN TO PAD UP</h1>
+                <p class="dressing-room-header-sub" style="font-size: 0.95rem; margin: 0; font-weight: 500;">Coach, select two players from your Playing XI on the left to fill the opener spots on the right.</p>
             </div>
 
             <!-- TWO COLUMN DRESSING ROOM LAYOUT -->
             <div class="dressing-room-split-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; margin-bottom: 25px;">
                 
                 <!-- LEFT COLUMN: SQUAD ROSTER LIST -->
-                <div style="background: #FFFDF9; border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; box-shadow: var(--shadow-card);">
+                <div class="dressing-room-panel-card" style="border-radius: 16px; padding: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
                         <h3 style="margin: 0; font-family: var(--font-title); font-size: 1.15rem; color: #1C2B22; display: flex; align-items: center; gap: 8px;">
                             <i class="fa-solid fa-users" style="color: var(--pitch-green);"></i> Playing XI Squad
@@ -167,13 +167,13 @@
                 <div style="display: flex; flex-direction: column; gap: 18px;">
                     
                     <!-- OPENER SLOT 1 (STRIKER) -->
-                    <div class="locker-card-slot" id="slot-card-1" style="background: #FFFDF7; border: 2px solid var(--trophy-gold); border-radius: 14px; padding: 20px; box-shadow: 0 4px 16px rgba(201,151,43,0.1); position: relative; transition: all 0.3s ease;">
-                        <div style="position: absolute; top: 0; right: 0; background: var(--trophy-gold); color: #FFFFFF; font-family: var(--font-title); font-size: 0.75rem; font-weight: 800; padding: 4px 14px; border-bottom-left-radius: 10px; letter-spacing: 1px;">
+                    <div class="locker-card-slot dressing-room-panel-card" id="slot-card-1" style="border: 2px solid var(--trophy-gold) !important; border-radius: 16px; padding: 20px; position: relative; transition: all 0.3s ease;">
+                        <div style="position: absolute; top: 0; right: 0; background: var(--trophy-gold); color: #FFFFFF; font-family: var(--font-title); font-size: 0.75rem; font-weight: 800; padding: 5px 16px; border-bottom-left-radius: 12px; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                             SLOT #01 | STRIKER
                         </div>
 
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                            <div style="background: #FAF3E0; border: 1px solid var(--trophy-gold); color: var(--trophy-gold); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                            <div style="background: #FAF3E0; border: 1px solid var(--trophy-gold); color: var(--trophy-gold); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; box-shadow: 0 2px 8px rgba(201,151,43,0.2);">
                                 <i class="fa-solid fa-user-shield"></i>
                             </div>
                             <div>
@@ -206,13 +206,13 @@
                     </div>
 
                     <!-- OPENER SLOT 2 (NON-STRIKER) -->
-                    <div class="locker-card-slot" id="slot-card-2" style="background: #FFFFFF; border: 2px solid var(--pitch-green); border-radius: 14px; padding: 20px; box-shadow: var(--shadow-card); position: relative; transition: all 0.3s ease;">
-                        <div style="position: absolute; top: 0; right: 0; background: var(--pitch-green); color: #FFFFFF; font-family: var(--font-title); font-size: 0.75rem; font-weight: 800; padding: 4px 14px; border-bottom-left-radius: 10px; letter-spacing: 1px;">
+                    <div class="locker-card-slot dressing-room-panel-card" id="slot-card-2" style="border: 2px solid var(--pitch-green) !important; border-radius: 16px; padding: 20px; position: relative; transition: all 0.3s ease;">
+                        <div style="position: absolute; top: 0; right: 0; background: var(--pitch-green); color: #FFFFFF; font-family: var(--font-title); font-size: 0.75rem; font-weight: 800; padding: 5px 16px; border-bottom-left-radius: 12px; letter-spacing: 1px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                             SLOT #02 | NON-STRIKER
                         </div>
 
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                            <div style="background: #FAF7F0; border: 1px solid var(--pitch-green); color: var(--pitch-green); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                            <div style="background: #FAF7F0; border: 1px solid var(--pitch-green); color: var(--pitch-green); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; box-shadow: 0 2px 8px rgba(15,110,86,0.2);">
                                 <i class="fa-solid fa-user"></i>
                             </div>
                             <div>
@@ -249,7 +249,7 @@
                     <select id="opener-2" style="display: none;"></select>
 
                     <!-- START MATCH BUTTON -->
-                    <button id="start-match-btn" class="btn btn-primary btn-large" style="width: 100%; padding: 16px; font-size: 1.15rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; box-shadow: 0 6px 22px rgba(15,110,86,0.3); margin-top: 5px;">
+                    <button id="start-match-btn" class="btn btn-primary btn-large" style="width: 100%; padding: 16px; font-size: 1.15rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; box-shadow: 0 8px 25px rgba(15,110,86,0.4); margin-top: 5px;">
                         <i class="fa-solid fa-person-walking-arrow-right" style="margin-right: 10px; font-size: 1.3rem;"></i> Pad Up & Walk Out to Bat
                     </button>
                 </div>
