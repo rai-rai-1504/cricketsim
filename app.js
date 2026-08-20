@@ -3,86 +3,6 @@
    ========================================================= */
 
 // =========================================================
-// PLAYER ROSTERS (From now lets talk about building a team.txt)
-// =========================================================
-
-class Player {
-    constructor(name, batting, bowling, isWicketkeeper = false) {
-        this.name = name;
-        this.batting = batting; // 0-100
-        this.bowling = bowling; // 0-100
-        this.isWicketkeeper = isWicketkeeper;
-        this.resetStats();
-    }
-
-    resetStats() {
-        this.runsScored = 0;
-        this.ballsFaced = 0;
-        this.fours = 0;
-        this.sixes = 0;
-        this.isOut = false;
-        this.hasBatted = false;
-        
-        this.oversBowled = 0;
-        this.ballsBowled = 0;
-        this.runsConceded = 0;
-        this.wickets = 0;
-        this.maidens = 0;
-        this.mentality = "normal"; // "defensive", "normal", "attack"
-    }
-
-    getStrikeRate() {
-        if (this.ballsFaced === 0) return "0.0";
-        return ((this.runsScored / this.ballsFaced) * 100).toFixed(1);
-    }
-
-    getEconomyRate() {
-        const overs = this.getOversFloat();
-        if (overs === 0) return "0.0";
-        return (this.runsConceded / overs).toFixed(2);
-    }
-
-    getOversString() {
-        const completedOvers = Math.floor(this.ballsBowled / 6);
-        const remainingBalls = this.ballsBowled % 6;
-        return `${completedOvers}.${remainingBalls}`;
-    }
-
-    getOversFloat() {
-        return (Math.floor(this.ballsBowled / 6) + (this.ballsBowled % 6) / 6);
-    }
-}
-
-// Global Team Constants
-const OUR_TEAM_ROSTER = [
-    new Player("Daksh Dosi", 75, 87, false),
-    new Player("Shatam Rai", 80, 20, false),
-    new Player("Akash Sinha", 75, 65, true), // Wicketkeeper
-    new Player("Pranath V", 60, 10, false),
-    new Player("Vinod Prajapati", 45, 86, false),
-    new Player("Krishiv", 76, 25, false),
-    new Player("Kushagra", 31, 81, false),
-    new Player("Ratna Deep", 85, 79, false),
-    new Player("Rohit Yadav", 15, 77, false),
-    new Player("Krishna Dubey", 35, 87, false),
-    new Player("Teena Naruka", 89, 69, false)
-];
-
-const OPPONENT_TEAM_ROSTER = [
-    new Player("Vandan", 84, 46, false),
-    new Player("Atharva Bhavesh", 72, 65, false),
-    new Player("Paradox", 88, 39, false),
-    new Player("Anto", 61, 78, false),
-    new Player("Soumyajyoti Dey", 75, 52, false),
-    new Player("Vaibhav Nagpal", 69, 81, false),
-    new Player("Sai Siddhant", 83, 57, false),
-    new Player("Arpita Ghosh", 66, 74, false),
-    new Player("Harishkumarverma", 58, 85, false),
-    new Player("Vecna", 77, 63, true), // Wicketkeeper
-    new Player("Pushkal Gupta", 54, 88, false)
-];
-
-// =========================================================
 // COMMENTARY DATABASE
 // =========================================================
 const commentaryLines = {
@@ -198,8 +118,8 @@ class MatchManager {
     constructor() {
         this.format = "T20"; // "T20" or "TEST"
         this.pitch = "FLAT"; // "FLAT" or "GREEN"
-        this.userTeam = "IND";
-        this.oppTeam = "AUS";
+        this.userTeamId = "Banswara";
+        this.opponentTeamId = "Mumbai";
         this.userWonToss = false;
         this.userBatsFirst = false;
 
@@ -209,6 +129,15 @@ class MatchManager {
         this.isAnimating = false;
         
         this.initDOM();
+    }
+
+    getOurTeamRoster() {
+        return DOMESTIC_TEAMS["Banswara"].roster;
+    }
+
+    getOpponentTeamRoster() {
+        const oppId = this.opponentTeamId || "Mumbai";
+        return DOMESTIC_TEAMS[oppId] ? DOMESTIC_TEAMS[oppId].roster : DOMESTIC_TEAMS["Mumbai"].roster;
     }
 
     initDOM() {
@@ -221,6 +150,7 @@ class MatchManager {
         // Toss and Configuration inputs
         this.matchFormatSelect = document.getElementById("match-format");
         this.pitchTypeSelect = document.getElementById("pitch-type");
+        this.opponentTeamSelect = document.getElementById("opponent-team-select");
         this.tossHeadsBtn = document.getElementById("toss-heads");
         this.tossTailsBtn = document.getElementById("toss-tails");
         this.coin = document.getElementById("coin");
@@ -231,6 +161,10 @@ class MatchManager {
         this.tabOurTeam = document.getElementById("tab-our-team");
         this.tabOppTeam = document.getElementById("tab-opp-team");
         this.rosterList = document.getElementById("roster-list");
+
+        this.btnViewLeague = document.getElementById("btn-view-league");
+        this.leagueModal = document.getElementById("league-modal");
+        this.closeLeagueModal = document.getElementById("close-league-modal");
 
         // Openers Selection
         this.opener1Select = document.getElementById("opener-1");
@@ -337,6 +271,28 @@ class MatchManager {
             this.renderRoster("OPP");
         });
 
+        if (this.opponentTeamSelect) {
+            this.opponentTeamSelect.addEventListener("change", (e) => {
+                this.opponentTeamId = e.target.value;
+                if (this.tabOppTeam && this.tabOppTeam.classList.contains("active")) {
+                    this.renderRoster("OPP");
+                }
+            });
+        }
+
+        if (this.btnViewLeague) {
+            this.btnViewLeague.addEventListener("click", () => {
+                this.renderLeagueModal();
+                if (this.leagueModal) this.leagueModal.classList.remove("hidden");
+            });
+        }
+
+        if (this.closeLeagueModal) {
+            this.closeLeagueModal.addEventListener("click", () => {
+                if (this.leagueModal) this.leagueModal.classList.add("hidden");
+            });
+        }
+
         this.tossHeadsBtn.addEventListener("click", () => this.handleToss("heads"));
         this.tossTailsBtn.addEventListener("click", () => this.handleToss("tails"));
 
@@ -413,19 +369,88 @@ class MatchManager {
     }
 
     renderRoster(team) {
+        if (!this.rosterList) return;
         this.rosterList.innerHTML = "";
-        const list = team === "OUR" ? OUR_TEAM_ROSTER : OPPONENT_TEAM_ROSTER;
+        const teamObj = team === "OUR" ? DOMESTIC_TEAMS["Banswara"] : (DOMESTIC_TEAMS[this.opponentTeamId] || DOMESTIC_TEAMS["Mumbai"]);
+        const list = teamObj.roster;
         list.forEach(p => {
             const li = document.createElement("li");
+            const roleBadge = p.role === "ALL_ROUNDER" ? "AR" : (p.role === "WICKET_KEEPER" ? "WK" : (p.role === "BATSMAN" ? "BAT" : "BOWL"));
             li.innerHTML = `
-                <span class="player-name-col">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="Wicketkeeper"></i>' : ''}</span>
+                <span class="player-name-col">${p.name} <span class="badge bg-secondary" style="font-size:0.68rem; padding: 1px 4px; border-radius: 3px;">${roleBadge}</span> ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="Wicketkeeper"></i>' : ''}</span>
                 <span class="ratings-col">
-                    <span class="bat" title="Batting Rating"><i class="fa-solid fa-gavel"></i> ${p.batting}</span>
-                    <span class="bowl" title="Bowling Rating"><i class="fa-solid fa-baseball"></i> ${p.bowling}</span>
+                    <span class="bat" title="Batting Rating (${p.battingStyle})"><i class="fa-solid fa-gavel"></i> ${p.battingRating}</span>
+                    <span class="bowl" title="Bowling Rating (${p.bowlingStyle})"><i class="fa-solid fa-baseball"></i> ${p.bowlingRating}</span>
                 </span>
             `;
             this.rosterList.appendChild(li);
         });
+    }
+
+    renderLeagueModal() {
+        const standingsWrapper = document.getElementById("league-standings-table-wrapper");
+        const fixturesWrapper = document.getElementById("league-fixtures-wrapper");
+
+        if (standingsWrapper) {
+            const standings = GLOBAL_LEAGUE.getStandingsSorted();
+            let html = `
+                <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.05); text-align: left;">
+                            <th style="padding: 8px;">Pos</th>
+                            <th style="padding: 8px;">Team</th>
+                            <th style="padding: 8px; text-align:center;">P</th>
+                            <th style="padding: 8px; text-align:center;">W</th>
+                            <th style="padding: 8px; text-align:center;">L</th>
+                            <th style="padding: 8px; text-align:center;">PTS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            standings.forEach((st, idx) => {
+                const isUser = st.teamId === "Banswara";
+                html += `
+                    <tr style="border-bottom: 1px solid var(--border-color); ${isUser ? 'background: rgba(251,191,36,0.12); color: #fbbf24; font-weight: 700;' : ''}">
+                        <td style="padding: 8px;">${idx + 1}</td>
+                        <td style="padding: 8px;">${st.name} ${isUser ? '(YOU)' : ''}</td>
+                        <td style="padding: 8px; text-align:center;">${st.played}</td>
+                        <td style="padding: 8px; text-align:center;">${st.won}</td>
+                        <td style="padding: 8px; text-align:center;">${st.lost}</td>
+                        <td style="padding: 8px; text-align:center; font-weight: 800;">${st.points}</td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            standingsWrapper.innerHTML = html;
+        }
+
+        if (fixturesWrapper) {
+            const format = this.format || "T20";
+            const fixtures = format === "T20" ? GLOBAL_LEAGUE.t20Fixtures : GLOBAL_LEAGUE.testFixtures;
+            let fHtml = `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+
+            fixtures.forEach(r => {
+                fHtml += `
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 14px;">
+                        <h4 style="margin: 0 0 8px 0; color: var(--sky); font-size: 0.9rem;">Round ${r.round} (${format} League)</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
+                `;
+                r.matches.forEach(m => {
+                    const homeName = DOMESTIC_TEAMS[m.homeTeam] ? DOMESTIC_TEAMS[m.homeTeam].name : m.homeTeam;
+                    const awayName = DOMESTIC_TEAMS[m.awayTeam] ? DOMESTIC_TEAMS[m.awayTeam].name : m.awayTeam;
+                    const isBanswara = m.homeTeam === "Banswara" || m.awayTeam === "Banswara";
+                    fHtml += `
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isBanswara ? 'rgba(251,191,36,0.4)' : 'var(--border-dim)'}; border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="${isBanswara ? 'font-weight: 700; color: #fbbf24;' : ''}">${homeName} vs ${awayName}</span>
+                            <span style="font-size: 0.7rem; opacity: 0.7;">${m.isCompleted ? 'Finished' : 'Upcoming'}</span>
+                        </div>
+                    `;
+                });
+                fHtml += `</div></div>`;
+            });
+            fHtml += `</div>`;
+            fixturesWrapper.innerHTML = fHtml;
+        }
     }
 
     handleToss(call) {
@@ -476,21 +501,24 @@ class MatchManager {
         this.setupScreen.classList.add("hidden");
         this.openersScreen.classList.remove("hidden");
 
+        const ourRoster = this.getOurTeamRoster();
+        const oppRoster = this.getOpponentTeamRoster();
+
         // Initialize Roster reset
-        OUR_TEAM_ROSTER.forEach(p => p.resetStats());
-        OPPONENT_TEAM_ROSTER.forEach(p => p.resetStats());
+        ourRoster.forEach(p => p.resetStats());
+        oppRoster.forEach(p => p.resetStats());
 
         // Fill dropdown selections with batters
         this.opener1Select.innerHTML = "";
         this.opener2Select.innerHTML = "";
         
-        const battingTeam = this.userBatsFirst ? OUR_TEAM_ROSTER : OPPONENT_TEAM_ROSTER;
+        const battingTeam = this.userBatsFirst ? ourRoster : oppRoster;
         
         if (this.userBatsFirst) {
             // User selects openers
             battingTeam.forEach((p, idx) => {
-                const opt1 = new Option(`${p.name} (Bat: ${p.batting})`, idx);
-                const opt2 = new Option(`${p.name} (Bat: ${p.batting})`, idx);
+                const opt1 = new Option(`${p.name} (${p.role}) - Rating: ${p.battingRating}`, idx);
+                const opt2 = new Option(`${p.name} (${p.role}) - Rating: ${p.battingRating}`, idx);
                 this.opener1Select.add(opt1);
                 this.opener2Select.add(opt2);
             });
@@ -500,12 +528,12 @@ class MatchManager {
             this.validateOpeners();
         } else {
             // AI selects openers (best 2 batters)
-            const sortedAI = [...battingTeam].sort((a,b) => b.batting - a.batting);
+            const sortedAI = [...battingTeam].sort((a,b) => b.battingRating - a.battingRating);
             const idx1 = battingTeam.indexOf(sortedAI[0]);
             const idx2 = battingTeam.indexOf(sortedAI[1]);
             
-            const opt1 = new Option(`${sortedAI[0].name} (Bat: ${sortedAI[0].batting})`, idx1);
-            const opt2 = new Option(`${sortedAI[1].name} (Bat: ${sortedAI[1].batting})`, idx2);
+            const opt1 = new Option(`${sortedAI[0].name} (Bat: ${sortedAI[0].battingRating})`, idx1);
+            const opt2 = new Option(`${sortedAI[1].name} (Bat: ${sortedAI[1].battingRating})`, idx2);
             this.opener1Select.add(opt1);
             this.opener2Select.add(opt2);
             this.opener1Select.disabled = true;
@@ -521,10 +549,10 @@ class MatchManager {
     updateOpenerStats(num) {
         const dropdown = num === 1 ? this.opener1Select : this.opener2Select;
         const div = document.getElementById(`opener-${num}-stats`);
-        const battingTeam = this.userBatsFirst ? OUR_TEAM_ROSTER : OPPONENT_TEAM_ROSTER;
+        const battingTeam = this.userBatsFirst ? this.getOurTeamRoster() : this.getOpponentTeamRoster();
         const player = battingTeam[dropdown.value];
         if (player) {
-            div.textContent = `Batting: ${player.batting} | Bowling: ${player.bowling}`;
+            div.textContent = `Batting: ${player.battingRating} | Bowling: ${player.bowlingRating} | Role: ${player.role}`;
         }
     }
 
@@ -544,19 +572,27 @@ class MatchManager {
         this.openersScreen.classList.add("hidden");
         this.matchScreen.classList.remove("hidden");
 
-        const battingTeam = this.userBatsFirst ? OUR_TEAM_ROSTER : OPPONENT_TEAM_ROSTER;
-        const bowlingTeam = this.userBatsFirst ? OPPONENT_TEAM_ROSTER : OUR_TEAM_ROSTER;
+        const ourRoster = this.getOurTeamRoster();
+        const oppRoster = this.getOpponentTeamRoster();
+
+        const battingTeam = this.userBatsFirst ? ourRoster : oppRoster;
+        const bowlingTeam = this.userBatsFirst ? oppRoster : ourRoster;
+
+        const ourShort = DOMESTIC_TEAMS["Banswara"].shortName;
+        const oppShort = DOMESTIC_TEAMS[this.opponentTeamId] ? DOMESTIC_TEAMS[this.opponentTeamId].shortName : "OPP";
 
         // Reset innings states
         this.inningsList = [];
         this.currentInningsIndex = 0;
 
+        const batTag = this.userBatsFirst ? `${ourShort} 1st` : `${oppShort} 1st`;
+
         if (this.format === "T20") {
-            const state1 = new InningsState(battingTeam, bowlingTeam, this.userBatsFirst ? "IND 1st" : "AUS 1st", this.userBatsFirst);
+            const state1 = new InningsState(battingTeam, bowlingTeam, batTag, this.userBatsFirst);
             this.inningsList.push(state1);
         } else {
             // TEST format - 4 Innings
-            const state1 = new InningsState(battingTeam, bowlingTeam, this.userBatsFirst ? "IND 1st" : "AUS 1st", this.userBatsFirst);
+            const state1 = new InningsState(battingTeam, bowlingTeam, batTag, this.userBatsFirst);
             this.inningsList.push(state1);
         }
 
@@ -574,7 +610,7 @@ class MatchManager {
             state.nonStriker.mentality = document.getElementById("opener-2-mentality").value;
         } else {
             // Opponent batting first: select top 2 by batting rating
-            const sortedAI = [...state.battingTeam].sort((a,b) => b.batting - a.batting);
+            const sortedAI = [...state.battingTeam].sort((a,b) => b.battingRating - a.battingRating);
             state.striker = sortedAI[0];
             state.nonStriker = sortedAI[1];
             state.striker.hasBatted = true;
@@ -588,7 +624,7 @@ class MatchManager {
         this.logCommentary("Innings", `Innings 1: ${state.teamName} starts batting. Openers: ${state.striker.name} & ${state.nonStriker.name}.`, "welcome");
 
         this.pitchReportUI.textContent = `Pitch: ${this.pitch.toUpperCase()}`;
-        this.matchTitleUI.textContent = `${this.userBatsFirst ? 'IND vs AUS' : 'AUS vs IND'} - ${this.format}`;
+        this.matchTitleUI.textContent = `${this.userBatsFirst ? `${ourShort} vs ${oppShort}` : `${oppShort} vs ${ourShort}`} - ${this.format}`;
 
         this.drawField();
         this.triggerBowlerSelection();
@@ -1561,9 +1597,14 @@ class MatchManager {
                 // Trigger 2nd innings setup
                 this.logCommentary("Match Update", `Target set: ${state.totalRuns + 1} runs needed.`, "welcome");
                 
-                const nextBattingTeam = this.userBatsFirst ? OPPONENT_TEAM_ROSTER : OUR_TEAM_ROSTER;
-                const nextBowlingTeam = this.userBatsFirst ? OUR_TEAM_ROSTER : OPPONENT_TEAM_ROSTER;
-                const state2 = new InningsState(nextBattingTeam, nextBowlingTeam, this.userBatsFirst ? "AUS 2nd" : "IND 2nd", !this.userBatsFirst, state.totalRuns + 1);
+                const ourRoster = this.getOurTeamRoster();
+                const oppRoster = this.getOpponentTeamRoster();
+                const ourShort = DOMESTIC_TEAMS["Banswara"].shortName;
+                const oppShort = DOMESTIC_TEAMS[this.opponentTeamId] ? DOMESTIC_TEAMS[this.opponentTeamId].shortName : "OPP";
+
+                const nextBattingTeam = this.userBatsFirst ? oppRoster : ourRoster;
+                const nextBowlingTeam = this.userBatsFirst ? ourRoster : oppRoster;
+                const state2 = new InningsState(nextBattingTeam, nextBowlingTeam, this.userBatsFirst ? `${oppShort} 2nd` : `${ourShort} 2nd`, !this.userBatsFirst, state.totalRuns + 1);
                 
                 this.inningsList.push(state2);
                 this.currentInningsIndex = 1;
@@ -1572,7 +1613,7 @@ class MatchManager {
                 if (state2.isUserBatting) {
                     this.showSecondInningsOpenerSelection();
                 } else {
-                    const sortedAI = [...state2.battingTeam].sort((a,b) => b.batting - a.batting);
+                    const sortedAI = [...state2.battingTeam].sort((a,b) => b.battingRating - a.battingRating);
                     state2.striker = sortedAI[0];
                     state2.nonStriker = sortedAI[1];
                     state2.striker.hasBatted = true;
@@ -1602,15 +1643,15 @@ class MatchManager {
         this.openersScreen.classList.remove("hidden");
         this.matchScreen.classList.add("hidden");
 
-        const battingTeam = OUR_TEAM_ROSTER;
+        const battingTeam = this.getOurTeamRoster();
         this.opener1Select.innerHTML = "";
         this.opener2Select.innerHTML = "";
         this.opener1Select.disabled = false;
         this.opener2Select.disabled = false;
         
         battingTeam.forEach((p, idx) => {
-            const opt1 = new Option(`${p.name} (Bat: ${p.batting})`, idx);
-            const opt2 = new Option(`${p.name} (Bat: ${p.batting})`, idx);
+            const opt1 = new Option(`${p.name} (${p.role}) - Rating: ${p.battingRating}`, idx);
+            const opt2 = new Option(`${p.name} (${p.role}) - Rating: ${p.battingRating}`, idx);
             this.opener1Select.add(opt1);
             this.opener2Select.add(opt2);
         });
@@ -1651,14 +1692,18 @@ class MatchManager {
     setupNextTestInnings() {
         const state = this.getCurrentState();
         const nextIdx = this.currentInningsIndex + 1;
+        const ourRoster = this.getOurTeamRoster();
+        const oppRoster = this.getOpponentTeamRoster();
+        const ourShort = DOMESTIC_TEAMS["Banswara"].shortName;
+        const oppShort = DOMESTIC_TEAMS[this.opponentTeamId] ? DOMESTIC_TEAMS[this.opponentTeamId].shortName : "OPP";
         
         // Define team names based on order
-        const batName = this.userBatsFirst ? (nextIdx % 2 === 0 ? "IND 2nd" : "AUS 2nd") : (nextIdx % 2 === 0 ? "AUS 2nd" : "IND 2nd");
+        const batName = this.userBatsFirst ? (nextIdx % 2 === 0 ? `${ourShort} 2nd` : `${oppShort} 2nd`) : (nextIdx % 2 === 0 ? `${oppShort} 2nd` : `${ourShort} 2nd`);
         const isUserBatting = this.userBatsFirst ? (nextIdx % 2 === 0) : (nextIdx % 2 !== 0);
 
         // Reset rosters before each innings
-        const nextBattingTeam = isUserBatting ? OUR_TEAM_ROSTER : OPPONENT_TEAM_ROSTER;
-        const nextBowlingTeam = isUserBatting ? OPPONENT_TEAM_ROSTER : OUR_TEAM_ROSTER;
+        const nextBattingTeam = isUserBatting ? ourRoster : oppRoster;
+        const nextBowlingTeam = isUserBatting ? oppRoster : ourRoster;
         
         nextBattingTeam.forEach(p => p.resetStats());
         

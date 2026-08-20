@@ -70,18 +70,42 @@
                     </div>
                 </div >
 
-                <!-- Right: Teams Preview -->
+                <!-- Right: Domestic Teams Preview & League Selection -->
                 <div class="setup-card teams-card">
-                    <h2><i class="fa-solid fa-users"></i> Rosters</h2>
-                    <div class="teams-tabs">
-                        <button id="tab-our-team" class="tab-btn active">IND (Our Team)</button>
-                        <button id="tab-opp-team" class="tab-btn">AUS (Opponent)</button>
+                    <h2><i class="fa-solid fa-trophy"></i> Domestic League & Teams</h2>
+                    
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="user-team-select"><i class="fa-solid fa-shield-halved"></i> Your Team (Locked)</label>
+                        <select id="user-team-select" disabled style="background: rgba(251,191,36,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.4); font-weight: 700;">
+                            <option value="Banswara">Banswara Warriors (Your Team)</option>
+                        </select>
                     </div>
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="opponent-team-select"><i class="fa-solid fa-user-ninja"></i> Opponent Team</label>
+                        <select id="opponent-team-select" style="background: rgba(0,0,0,0.3); color: var(--text-primary); border: 1px solid var(--border-color);">
+                            <option value="Chennai">Chennai Warriors</option>
+                            <option value="Mumbai" selected>Mumbai Strikers</option>
+                            <option value="Bengaluru">Bengaluru Royals</option>
+                            <option value="Delhi">Delhi Strikers</option>
+                            <option value="Kolkata">Kolkata Knights</option>
+                            <option value="Punjab">Punjab Lions</option>
+                            <option value="Hyderabad">Hyderabad Titans</option>
+                        </select>
+                    </div>
+
+                    <div class="teams-tabs" style="margin-bottom: 8px;">
+                        <button id="tab-our-team" class="tab-btn active">Banswara Roster</button>
+                        <button id="tab-opp-team" class="tab-btn">Opponent Roster</button>
+                    </div>
+
                     <div class="roster-list-wrapper">
                         <ul id="roster-list" class="roster-list">
                             <!-- Populated dynamically via JS -->
                         </ul>
                     </div>
+
+                    <button id="btn-view-league" class="btn btn-secondary" style="width: 100%; margin-top: 10px; font-size: 0.82rem;"><i class="fa-solid fa-table-list"></i> View Round Robin League Standings</button>
                 </div>
             </div>
         </section>
@@ -574,10 +598,28 @@
                     <i class="fa-solid fa-rotate-left"></i> Play Another Match
                 </button>
             </div>
-        </section>
+        <!-- LEAGUE STANDINGS & FIXTURES MODAL -->
+        <div id="league-modal" class="modal-overlay hidden">
+            <div class="glass-card modal-content" style="max-width: 850px; width: 92%; max-height: 85vh; overflow-y: auto; padding: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px;">
+                    <h2 style="margin: 0; font-family: var(--font-title);"><i class="fa-solid fa-trophy" style="color: #fbbf24;"></i> Indian Domestic League Standings</h2>
+                    <button id="close-league-modal" class="btn btn-secondary btn-mini" style="padding: 4px 10px;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div id="league-standings-table-wrapper" style="margin-bottom: 20px;">
+                    <!-- Standings table injected via JS -->
+                </div>
+
+                <h3 style="font-family: var(--font-title); margin-bottom: 10px;"><i class="fa-solid fa-calendar-days"></i> Round Robin Fixture Schedule (7 Rounds)</h3>
+                <div id="league-fixtures-wrapper">
+                    <!-- Fixtures injected via JS -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Main Application Javascript -->
+    <script src="teams.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
