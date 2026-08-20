@@ -530,17 +530,14 @@ class MatchManager {
             <div style="margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;">
                 <h4 style="margin:0; color:var(--sky); font-family:var(--font-title); font-size:1.1rem;">${team.name} Squad Roster (Home Ground: ${team.homeGround})</h4>
             </div>
-            <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.82rem;">
+            <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
                 <thead>
                     <tr style="background: rgba(255,255,255,0.06); text-align: left;">
-                        <th style="padding: 8px;">Player Name</th>
-                        <th style="padding: 8px;">Role</th>
-                        <th style="padding: 8px;">Style</th>
-                        <th style="padding: 8px; text-align:center;">Bat Rating</th>
-                        <th style="padding: 8px; text-align:center;">Aggression</th>
-                        <th style="padding: 8px; text-align:center;">Bowl Rating</th>
-                        <th style="padding: 8px; text-align:center;">Speed</th>
-                        <th style="padding: 8px; text-align:center;">Variation</th>
+                        <th style="padding: 10px;">Player Name</th>
+                        <th style="padding: 10px;">Role</th>
+                        <th style="padding: 10px;">Style</th>
+                        <th style="padding: 10px; text-align:center;">Bat Rating</th>
+                        <th style="padding: 10px; text-align:center;">Bowl Rating</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -548,14 +545,11 @@ class MatchManager {
         team.roster.forEach(p => {
             html += `
                 <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 8px; font-weight: 600;">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
-                    <td style="padding: 8px;"><span class="badge bg-secondary" style="font-size:0.68rem;">${p.role}</span></td>
-                    <td style="padding: 8px; font-size: 0.75rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
-                    <td style="padding: 8px; text-align:center; font-weight:700; color: var(--sky);">${p.battingRating}</td>
-                    <td style="padding: 8px; text-align:center;">${p.aggression}</td>
-                    <td style="padding: 8px; text-align:center; font-weight:700; color: #fb7185;">${p.bowlingRating}</td>
-                    <td style="padding: 8px; text-align:center;">${p.speed}</td>
-                    <td style="padding: 8px; text-align:center;">${p.variation}</td>
+                    <td style="padding: 10px; font-weight: 600;">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
+                    <td style="padding: 10px;"><span class="badge bg-secondary" style="font-size:0.7rem;">${p.role}</span></td>
+                    <td style="padding: 10px; font-size: 0.78rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
+                    <td style="padding: 10px; text-align:center; font-weight:800; font-size: 1rem; color: var(--sky);">${p.battingRating}</td>
+                    <td style="padding: 10px; text-align:center; font-weight:800; font-size: 1rem; color: #fb7185;">${p.bowlingRating}</td>
                 </tr>
             `;
         });
@@ -570,17 +564,14 @@ class MatchManager {
         if (!team) return;
 
         let html = `
-            <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.82rem;">
+            <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
                 <thead>
                     <tr style="background: rgba(255,255,255,0.06); text-align: left;">
-                        <th style="padding: 8px;">Player Name</th>
-                        <th style="padding: 8px;">Role</th>
-                        <th style="padding: 8px;">Style</th>
-                        <th style="padding: 8px; text-align:center;">Bat Rating</th>
-                        <th style="padding: 8px; text-align:center;">Aggression</th>
-                        <th style="padding: 8px; text-align:center;">Bowl Rating</th>
-                        <th style="padding: 8px; text-align:center;">Speed</th>
-                        <th style="padding: 8px; text-align:center;">Variation</th>
+                        <th style="padding: 10px;">Player Name</th>
+                        <th style="padding: 10px;">Role</th>
+                        <th style="padding: 10px;">Style</th>
+                        <th style="padding: 10px; text-align:center;">Bat Rating</th>
+                        <th style="padding: 10px; text-align:center;">Bowl Rating</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -588,14 +579,11 @@ class MatchManager {
         team.roster.forEach(p => {
             html += `
                 <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 8px; font-weight: 600; color: #fbbf24;">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
-                    <td style="padding: 8px;"><span class="badge bg-secondary" style="font-size:0.68rem;">${p.role}</span></td>
-                    <td style="padding: 8px; font-size: 0.75rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
-                    <td style="padding: 8px; text-align:center; font-weight:700; color: var(--sky);">${p.battingRating}</td>
-                    <td style="padding: 8px; text-align:center;">${p.aggression}</td>
-                    <td style="padding: 8px; text-align:center; font-weight:700; color: #fb7185;">${p.bowlingRating}</td>
-                    <td style="padding: 8px; text-align:center;">${p.speed}</td>
-                    <td style="padding: 8px; text-align:center;">${p.variation}</td>
+                    <td style="padding: 10px; font-weight: 600; color: #fbbf24;">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
+                    <td style="padding: 10px;"><span class="badge bg-secondary" style="font-size:0.7rem;">${p.role}</span></td>
+                    <td style="padding: 10px; font-size: 0.78rem; color: var(--text-secondary);">${p.battingStyle} / ${p.bowlingStyle}</td>
+                    <td style="padding: 10px; text-align:center; font-weight:800; font-size: 1rem; color: var(--sky);">${p.battingRating}</td>
+                    <td style="padding: 10px; text-align:center; font-weight:800; font-size: 1rem; color: #fb7185;">${p.bowlingRating}</td>
                 </tr>
             `;
         });

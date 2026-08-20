@@ -10,18 +10,11 @@ class Player {
         this.bowlingStyle = config.bowlingStyle || "NONE"; // "RIGHT_ARM_FAST", "LEFT_ARM_FAST", "RIGHT_ARM_MEDIUM", "OFF_SPIN", "LEG_SPIN", "LEFT_ARM_ORTHODOX", "NONE"
         this.isWicketkeeper = config.isWicketkeeper || false;
 
-        // Batting Attributes (1-100)
+        // Core Ratings (1-100)
         this.battingRating = config.battingRating || 70;
-        this.aggression = config.aggression || 65; // Attacking intent
-        this.preferredSectors = config.preferredSectors || [0, 6]; // Preferred shot sectors
-        this.weakSectors = config.weakSectors || [3, 7]; // Weak shot sectors
-
-        // Bowling Attributes (1-100)
         this.bowlingRating = config.bowlingRating || 50;
-        this.speed = config.speed || 70;     // Pace or turn rate
-        this.variation = config.variation || 60; // Cutters, yorkers, doosras
 
-        // Legacy compatibility properties:
+        // Backward compatibility getters:
         this.batting = this.battingRating;
         this.bowling = this.bowlingRating;
 
