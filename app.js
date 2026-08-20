@@ -170,11 +170,22 @@ class MatchManager {
         this.nextMatchVenue = document.getElementById("next-match-venue");
         this.scoutTeamSelect = document.getElementById("scout-team-select");
 
+        // Pre-Match & 3D Toss Stage Elements
+        this.btnLaunchPrematch = document.getElementById("btn-launch-prematch");
+        this.prematchModal = document.getElementById("prematch-modal");
+        this.closePrematchModal = document.getElementById("close-prematch-modal");
+        this.btnGotoToss = document.getElementById("btn-goto-toss");
+        
+        this.tossStageModal = document.getElementById("toss-stage-modal");
+        this.coin3D = document.getElementById("coin-3d");
+        this.tossCallButtons = document.getElementById("toss-call-buttons");
         this.tossHeadsBtn = document.getElementById("toss-heads");
         this.tossTailsBtn = document.getElementById("toss-tails");
-        this.coin = document.getElementById("coin");
         this.tossResultText = document.getElementById("toss-result-text");
         this.tossDecisionContainer = document.getElementById("toss-decision-container");
+        this.tossOppProceedContainer = document.getElementById("toss-opp-proceed-container");
+        this.btnTossProceedMatch = document.getElementById("btn-toss-proceed-match");
+        
         this.chooseBatBtn = document.getElementById("choose-bat");
         this.chooseBowlBtn = document.getElementById("choose-bowl");
         this.pitchTypeSelect = document.getElementById("pitch-type");
@@ -295,6 +306,25 @@ class MatchManager {
             });
         }
 
+        // Pre-Match & Toss handlers
+        if (this.btnLaunchPrematch) {
+            this.btnLaunchPrematch.addEventListener("click", () => this.openPrematchBriefing());
+        }
+
+        if (this.closePrematchModal) {
+            this.closePrematchModal.addEventListener("click", () => {
+                if (this.prematchModal) this.prematchModal.classList.add("hidden");
+            });
+        }
+
+        if (this.btnGotoToss) {
+            this.btnGotoToss.addEventListener("click", () => this.openTossStage());
+        }
+
+        if (this.btnTossProceedMatch) {
+            this.btnTossProceedMatch.addEventListener("click", () => this.showOpenersSelection());
+        }
+
         const closeTeamRosterModal = document.getElementById("close-team-roster-modal");
         if (closeTeamRosterModal) {
             closeTeamRosterModal.addEventListener("click", () => {
@@ -311,8 +341,8 @@ class MatchManager {
             }
         });
 
-        this.tossHeadsBtn.addEventListener("click", () => this.handleToss("heads"));
-        this.tossTailsBtn.addEventListener("click", () => this.handleToss("tails"));
+        if (this.tossHeadsBtn) this.tossHeadsBtn.addEventListener("click", () => this.handleToss("heads"));
+        if (this.tossTailsBtn) this.tossTailsBtn.addEventListener("click", () => this.handleToss("tails"));
 
         this.chooseBatBtn.addEventListener("click", () => this.handleTossDecision("bat"));
         this.chooseBowlBtn.addEventListener("click", () => this.handleTossDecision("bowl"));
@@ -747,47 +777,192 @@ class MatchManager {
         }
     }
 
-    handleToss(call) {
-        this.tossHeadsBtn.disabled = true;
-        this.tossTailsBtn.disabled = true;
-        this.matchFormatSelect.disabled = true;
-        this.pitchTypeSelect.disabled = true;
+    openPrematchBriefing() {
+        const nextMatch = GLOBAL_LEAGUE.getNextUserMatch();
+        if (!nextMatch) return;
 
-        this.format = this.matchFormatSelect.value;
-        const selectedPitch = this.pitchTypeSelect.value;
+        const oppId = nextMatch.homeTeam === "Banswara" ? nextMatch.awayTeam : nextMatch.homeTeam;
+        this.opponentTeamId = oppId;
+        const oppTeam = DOMESTIC_TEAMS[oppId];
+        const banswaraTeam = DOMESTIC_TEAMS["Banswara"];
+
+        // Update format badge & venue
+        const formatBadge = document.getElementById("prematch-format-badge");
+        if (formatBadge) {
+            formatBadge.textContent = nextMatch.format === "T20" ? "DOMESTIC T20 LEAGUE" : "RANJI TROPHY TEST";
+            formatBadge.style.background = nextMatch.format === "T20" ? "var(--sky)" : "#fbbf24";
+        }
+        this.format = nextMatch.format;
+
+        const venueDiv = document.getElementById("prematch-venue-name");
+        if (venueDiv) {
+            venueDiv.textContent = nextMatch.homeTeam === "Banswara" ? "Banswara Cricket Ground" : oppTeam.homeGround;
+        }
+
+        const oppHeading = document.getElementById("prematch-opp-heading");
+        if (oppHeading && oppTeam) {
+            oppHeading.innerHTML = `<i class="fa-solid fa-user-ninja" style="color:var(--sky);"></i> ${oppTeam.name} Playing XI`;
+        }
+
+        // Render Banswara Playing XI (Top 11)
+        const ourSquadDiv = document.getElementById("prematch-our-squad");
+        if (ourSquadDiv && banswaraTeam) {
+            let html = `
+                <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.8rem;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.06); text-align: left;">
+                            <th style="padding: 6px;">#</th>
+                            <th style="padding: 6px;">Player</th>
+                            <th style="padding: 6px;">Role</th>
+                            <th style="padding: 6px; text-align:center;">Bat</th>
+                            <th style="padding: 6px; text-align:center;">Bowl</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            banswaraTeam.roster.slice(0, 11).forEach((p, idx) => {
+                html += `
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 6px; color: var(--text-secondary);">${idx + 1}</td>
+                        <td style="padding: 6px; font-weight: 600; color: #fbbf24;">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
+                        <td style="padding: 6px;"><span class="badge bg-secondary" style="font-size:0.65rem;">${p.role}</span></td>
+                        <td style="padding: 6px; text-align:center; font-weight:700; color: var(--sky);">${p.battingRating}</td>
+                        <td style="padding: 6px; text-align:center; font-weight:700; color: #fb7185;">${p.bowlingRating}</td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            ourSquadDiv.innerHTML = html;
+        }
+
+        // Render Opponent Playing XI (Top 11)
+        const oppSquadDiv = document.getElementById("prematch-opp-squad");
+        if (oppSquadDiv && oppTeam) {
+            let html = `
+                <table class="scorecard-table" style="width:100%; border-collapse: collapse; font-size: 0.8rem;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.06); text-align: left;">
+                            <th style="padding: 6px;">#</th>
+                            <th style="padding: 6px;">Player</th>
+                            <th style="padding: 6px;">Role</th>
+                            <th style="padding: 6px; text-align:center;">Bat</th>
+                            <th style="padding: 6px; text-align:center;">Bowl</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            oppTeam.roster.slice(0, 11).forEach((p, idx) => {
+                html += `
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 6px; color: var(--text-secondary);">${idx + 1}</td>
+                        <td style="padding: 6px; font-weight: 600;">${p.name} ${p.isWicketkeeper ? '<i class="fa-solid fa-hand-holding" title="WK"></i>' : ''}</td>
+                        <td style="padding: 6px;"><span class="badge bg-secondary" style="font-size:0.65rem;">${p.role}</span></td>
+                        <td style="padding: 6px; text-align:center; font-weight:700; color: var(--sky);">${p.battingRating}</td>
+                        <td style="padding: 6px; text-align:center; font-weight:700; color: #fb7185;">${p.bowlingRating}</td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            oppSquadDiv.innerHTML = html;
+        }
+
+        const modal = document.getElementById("prematch-modal");
+        if (modal) {
+            modal.classList.remove("hidden");
+            modal.style.display = "flex";
+        }
+    }
+
+    openTossStage() {
+        const prematchModal = document.getElementById("prematch-modal");
+        if (prematchModal) prematchModal.classList.add("hidden");
+
+        const tossModal = document.getElementById("toss-stage-modal");
+        if (!tossModal) return;
+
+        // Reset Toss UI
+        const coin3D = document.getElementById("coin-3d");
+        if (coin3D) coin3D.className = "coin-3d";
+
+        const tossResultText = document.getElementById("toss-result-text");
+        if (tossResultText) tossResultText.innerHTML = "";
+
+        const tossInstruction = document.getElementById("toss-instruction");
+        if (tossInstruction) tossInstruction.textContent = "Call Heads or Tails to toss the coin";
+
+        const tossCallButtons = document.getElementById("toss-call-buttons");
+        if (tossCallButtons) tossCallButtons.classList.remove("hidden");
+
+        const decisionContainer = document.getElementById("toss-decision-container");
+        if (decisionContainer) decisionContainer.classList.add("hidden");
+
+        const oppProceedContainer = document.getElementById("toss-opp-proceed-container");
+        if (oppProceedContainer) oppProceedContainer.classList.add("hidden");
+
+        if (this.tossHeadsBtn) this.tossHeadsBtn.disabled = false;
+        if (this.tossTailsBtn) this.tossTailsBtn.disabled = false;
+
+        tossModal.classList.remove("hidden");
+        tossModal.style.display = "flex";
+    }
+
+    handleToss(call) {
+        if (this.tossHeadsBtn) this.tossHeadsBtn.disabled = true;
+        if (this.tossTailsBtn) this.tossTailsBtn.disabled = true;
+
+        const pitchSelect = document.getElementById("pitch-type");
+        const selectedPitch = pitchSelect ? pitchSelect.value : "FLAT";
         this.pitch = selectedPitch === "RANDOM" ? (Math.random() > 0.5 ? "FLAT" : "GREEN") : selectedPitch;
 
         const tossResult = Math.random() > 0.5 ? "heads" : "tails";
-        this.coin.className = "coin"; // Reset class
-        
-        // Triggers the CSS flip animations
-        setTimeout(() => {
-            this.coin.classList.add(tossResult === "heads" ? "spin-heads" : "spin-tails");
-        }, 10);
+        const coin3D = document.getElementById("coin-3d");
+        if (coin3D) {
+            coin3D.className = "coin-3d"; // Reset animation class
+            setTimeout(() => {
+                coin3D.classList.add(tossResult === "heads" ? "spin-heads-3d" : "spin-tails-3d");
+            }, 20);
+        }
+
+        const tossInstruction = document.getElementById("toss-instruction");
+        if (tossInstruction) tossInstruction.textContent = "Coin flipping in the air...";
 
         setTimeout(() => {
-            this.tossResultText.textContent = `Coin landed on ${tossResult.toUpperCase()}!`;
-            
+            const oppId = this.opponentTeamId || "Maharashtra";
+            const oppTeam = DOMESTIC_TEAMS[oppId];
+            const oppName = oppTeam ? oppTeam.name : oppId;
+
+            const tossResultText = document.getElementById("toss-result-text");
+            const tossCallButtons = document.getElementById("toss-call-buttons");
+            if (tossCallButtons) tossCallButtons.classList.add("hidden");
+
             if (call === tossResult) {
                 this.userWonToss = true;
-                this.tossResultText.textContent += " You won the toss!";
-                this.tossDecisionContainer.classList.remove("hidden");
+                if (tossResultText) {
+                    tossResultText.innerHTML = `
+                        <div style="color:#fbbf24; font-size:1.3rem; font-weight:800; margin-bottom:4px;">IT'S ${tossResult.toUpperCase()}!</div>
+                        <div style="color:var(--emerald); font-weight:700;">🎉 You won the coin toss!</div>
+                    `;
+                }
+                if (this.tossDecisionContainer) this.tossDecisionContainer.classList.remove("hidden");
             } else {
                 this.userWonToss = false;
                 const oppChoice = Math.random() > 0.5 ? "bat" : "bowl";
-                this.tossResultText.textContent += ` Opponent won the toss and chooses to ${oppChoice.toUpperCase()}`;
-                
                 this.userBatsFirst = oppChoice === "bowl";
-                setTimeout(() => {
-                    this.showOpenersSelection();
-                }, 2000);
+
+                if (tossResultText) {
+                    tossResultText.innerHTML = `
+                        <div style="color:#fbbf24; font-size:1.3rem; font-weight:800; margin-bottom:4px;">IT'S ${tossResult.toUpperCase()}!</div>
+                        <div style="color:var(--sky); font-weight:700;">${oppName} won the toss and elected to ${oppChoice.toUpperCase()} first!</div>
+                    `;
+                }
+                if (this.tossOppProceedContainer) this.tossOppProceedContainer.classList.remove("hidden");
             }
-        }, 2100);
+        }, 3200);
     }
 
     handleTossDecision(choice) {
         this.userBatsFirst = choice === "bat";
-        this.tossDecisionContainer.classList.add("hidden");
+        if (this.tossStageModal) this.tossStageModal.classList.add("hidden");
         this.showOpenersSelection();
     }
 

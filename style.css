@@ -162,17 +162,76 @@ select { width: 100%; background-color: rgba(0,0,0,0.4); color: var(--text-prima
 select:focus { border-color: var(--neon-green); box-shadow: 0 0 0 2px rgba(74,222,128,0.12); }
 
 /* Toss */
-.toss-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.toss-buttons { display: flex; gap: 14px; margin-top: 14px; }
-#toss-animation-container { perspective: 1000px; width: 100px; height: 100px; margin: 28px 0; }
-.coin { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.1s linear; }
-.coin div { width: 100%; height: 100%; position: absolute; border-radius: 50%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 2rem; font-weight: 700; border: 4px solid var(--amber); box-shadow: 0 0 22px rgba(251,191,36,0.45); }
-.coin .front { background: radial-gradient(circle, #fcd34d, #f59e0b); color: #451a03; }
-.coin .back  { background: radial-gradient(circle, #fde68a, #d97706); color: #451a03; transform: rotateY(180deg); }
-@keyframes spinHeads { 0% { transform: rotateY(0); } 100% { transform: rotateY(1800deg); } }
-@keyframes spinTails { 0% { transform: rotateY(0); } 100% { transform: rotateY(1980deg); } }
-.spin-heads { animation: spinHeads 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-.spin-tails { animation: spinTails 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+/* 3D Gold Metallic Coin Toss Stage */
+.toss-coin-stage {
+    perspective: 1200px;
+    width: 130px;
+    height: 130px;
+    margin: 25px auto 10px auto;
+    position: relative;
+}
+.coin-3d {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.1s linear;
+}
+.coin-3d .face {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-title);
+    border: 5px solid #fef3c7;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 0 25px rgba(251, 191, 36, 0.6);
+}
+.coin-3d .front {
+    background: radial-gradient(circle at 35% 35%, #fffbebe6, #fbbf24 45%, #d97706 80%, #78350f 100%);
+    color: #451a03;
+}
+.coin-3d .back {
+    background: radial-gradient(circle at 35% 35%, #fef3c7, #f59e0b 45%, #b45309 80%, #451a03 100%);
+    color: #451a03;
+    transform: rotateY(180deg);
+}
+
+.coin-shadow {
+    width: 90px;
+    height: 14px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    margin: 0 auto 15px auto;
+    filter: blur(4px);
+    transition: transform 3.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 3.2s ease;
+}
+
+@keyframes spinCoin3DHeads {
+    0% { transform: translateY(0) rotateY(0) rotateX(0); }
+    30% { transform: translateY(-160px) rotateY(1080deg) rotateX(15deg); }
+    70% { transform: translateY(-40px) rotateY(2160deg) rotateX(5deg); }
+    85% { transform: translateY(-10px) rotateY(2480deg); }
+    93% { transform: translateY(-3px) rotateY(2520deg); }
+    100% { transform: translateY(0) rotateY(2520deg); }
+}
+
+@keyframes spinCoin3DTails {
+    0% { transform: translateY(0) rotateY(0) rotateX(0); }
+    30% { transform: translateY(-160px) rotateY(1170deg) rotateX(15deg); }
+    70% { transform: translateY(-40px) rotateY(2340deg) rotateX(5deg); }
+    85% { transform: translateY(-10px) rotateY(2680deg); }
+    93% { transform: translateY(-3px) rotateY(2700deg); }
+    100% { transform: translateY(0) rotateY(2700deg); }
+}
+
+.spin-heads-3d { animation: spinCoin3DHeads 3.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.spin-tails-3d { animation: spinCoin3DTails 3.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
 .toss-result { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; color: var(--amber); margin-bottom: 18px; min-height: 24px; letter-spacing: 0.5px; }
 .decision-buttons { display: flex; gap: 14px; margin-top: 14px; justify-content: center; }
 
